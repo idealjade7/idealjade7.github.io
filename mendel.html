@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>완두 유전 3D 실험실 — 멘델의 독립의 법칙</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --ui:#f3f6ee; --ui-2:#ffffff; --ink:#1b2a17; --muted:#56654f; --line:#d5dfcb;
+  --leaf:#3d7a2a; --leaf-ink:#ffffff; --pod:#c98f00;
+  --stage:#0a140d; --stage-2:#1b3522; --glass:rgba(12,26,16,.74);
+  --font:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --display:'Black Han Sans','IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--ui:#131b11;--ui-2:#1b2618;--ink:#e6efdf;--muted:#9fb096;--line:#2c3a28;--leaf:#7fc462;--leaf-ink:#0e1a0b;--pod:#f0b92b}
+}
+:root[data-theme="dark"]{--ui:#131b11;--ui-2:#1b2618;--ink:#e6efdf;--muted:#9fb096;--line:#2c3a28;--leaf:#7fc462;--leaf-ink:#0e1a0b;--pod:#f0b92b}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;height:100%;display:flex;flex-direction:column;background:var(--ui);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
+:focus-visible{outline:3px solid var(--pod);outline-offset:2px}
+
+.top{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--display);font-size:20px;margin-right:auto;white-space:nowrap}
+.brand small{font-family:var(--font);font-size:12px;color:var(--muted);margin-left:8px;font-weight:500}
+.tbtn{border:1px solid var(--line);background:var(--ui-2);border-radius:10px;padding:7px 12px;font-weight:700;font-size:14px;white-space:nowrap}
+.tbtn.primary{background:var(--ink);color:var(--ui);border-color:var(--ink)}
+.tbtn.go{background:var(--leaf);color:var(--leaf-ink);border-color:var(--leaf)}
+
+.stage{position:relative;flex:1;min-height:0;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,var(--stage-2) 0%,var(--stage) 68%);color:#eef6e8;touch-action:none}
+#gl{display:block;width:100%;height:100%}
+.big{position:absolute;left:16px;top:10px;font-family:var(--display);font-size:clamp(40px,7vw,80px);line-height:1;color:#fff;opacity:.9;pointer-events:none;text-shadow:0 2px 22px rgba(80,160,60,.55)}
+.info{position:absolute;right:12px;top:12px;width:min(370px,calc(100% - 24px));max-height:calc(100% - 24px);overflow:auto;background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:12px 14px;font-size:14px}
+.info h2{margin:0;font-size:17px;display:flex;align-items:center;gap:8px}
+.info .toggle{margin-left:auto;flex:none;white-space:nowrap;border:0;background:rgba(255,255,255,.12);border-radius:8px;padding:3px 9px;font-size:13px;color:inherit}
+.info ul{margin:8px 0 0;padding-left:18px}
+.info li{margin:4px 0}
+.info li b{color:#ffe38a}
+.info.collapsed ul{display:none}
+.data{margin-top:10px}
+.data:empty{display:none}
+.card{background:rgba(255,255,255,.08);border-radius:10px;padding:8px 10px;font-size:13.5px}
+.card+.card{margin-top:8px}
+.rowp{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:8px;border:1px solid transparent;width:100%;background:transparent;text-align:left;color:inherit}
+button.rowp:hover{background:rgba(255,255,255,.06)}
+.rowp[aria-pressed="true"]{border-color:#ffe38a;background:rgba(255,227,138,.12)}
+.rowp .nm{flex:1}
+.rowp .n{font-weight:700;font-size:15px;min-width:2.2em;text-align:right}
+.ico{width:18px;height:18px;flex:none;display:inline-block;border-radius:50%;box-shadow:inset -2px -3px 0 rgba(0,0,0,.18)}
+.ico.y{background:#f0c233}.ico.g{background:#5f9b35}.ico.n{background:#c9bfa6}
+.ico.w{border-radius:0;box-shadow:none;clip-path:polygon(50% 0,62% 14%,80% 8%,82% 28%,100% 36%,88% 52%,98% 70%,78% 76%,72% 96%,54% 86%,36% 100%,28% 80%,6% 78%,14% 58%,0 42%,18% 30%,16% 10%,36% 14%)}
+.ratio{margin-top:6px;font-weight:700;color:#ffe38a}
+.bar{height:6px;border-radius:3px;background:rgba(255,255,255,.12);margin-top:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:#8fd46b}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th,table.t td{padding:3px 4px;text-align:right;border-bottom:1px solid rgba(255,255,255,.1)}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t th{font-weight:500;color:#c9d8bf}
+.legend2{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:#d5e4cb;margin-top:6px}
+.legend2 i{display:inline-block;width:14px;height:8px;border-radius:4px;margin-right:5px;vertical-align:1px}
+
+.hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:rgba(0,0,0,.5);padding:6px 14px;border-radius:999px;font-size:13px;white-space:nowrap;pointer-events:none;transition:opacity .6s}
+.toast{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);max-width:min(520px,calc(100% - 24px));background:#fff;color:#1b2a17;padding:10px 14px;border-radius:14px;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.45);display:none;z-index:5}
+.toast.show{display:block}
+.toast b{display:block;margin-bottom:2px}
+.predict{position:absolute;z-index:6;background:#fff;color:#1b2a17;border-radius:14px;padding:10px;box-shadow:0 10px 36px rgba(0,0,0,.5);width:230px;display:none}
+.predict.show{display:block}
+.predict p{margin:0 0 6px;font-weight:700;font-size:14px}
+.predict button{display:flex;align-items:center;gap:8px;width:100%;border:1px solid #d5dfcb;background:#f6f9f2;border-radius:10px;padding:7px 9px;margin-top:5px;font-size:14px;text-align:left}
+.predict .skip{justify-content:center;background:transparent;border-style:dashed;color:#56654f}
+.glfail[hidden]{display:none}
+.glfail{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:16px}
+
+.dock{border-top:1px solid var(--line);padding:10px 14px 12px;background:var(--ui)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px}
+.tabs button{border:1px solid var(--line);background:var(--ui-2);border-radius:10px;padding:7px 4px;font-weight:700;font-size:14px;line-height:1.25;min-width:0}
+.tabs button small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+.tabs button[aria-current="step"]{background:var(--leaf);color:var(--leaf-ink);border-color:var(--leaf)}
+.tabs button[aria-current="step"] small{color:inherit;opacity:.85}
+.ctrl{display:none;flex-wrap:wrap;gap:6px;align-items:center}
+.ctrl.on{display:flex}
+.ctrl label{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:500;margin-right:4px}
+.ctrl input[type=checkbox]{width:18px;height:18px;accent-color:var(--leaf)}
+.seg{display:inline-flex;background:var(--ui-2);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:999px;font-weight:700;font-size:13.5px}
+.seg button[aria-pressed="true"]{background:var(--leaf);color:var(--leaf-ink)}
+.ctrl .sp{flex:1}
+
+.modal{position:fixed;inset:0;background:rgba(5,12,6,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal.open{display:flex}
+.sheet{background:var(--ui-2);color:var(--ink);border-radius:18px;width:min(560px,100%);max-height:100%;overflow:auto;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.sheet h3{margin:0 0 4px;font-family:var(--display);font-weight:400;font-size:26px}
+.sheet p{margin:6px 0;color:var(--muted);font-size:14px}
+.sheet .close{float:right;border:0;background:transparent;font-size:24px;line-height:1;padding:2px 6px}
+.urlrow{display:flex;gap:6px;margin:10px 0}
+.urlrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--ui)}
+.qrbox{display:flex;justify-content:center;padding:14px;background:#fff;border-radius:14px;margin:8px auto;width:fit-content}
+.qrbox img,.qrbox canvas{display:block;width:min(300px,70vw)!important;height:auto!important;image-rendering:pixelated}
+.qr-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.note{font-size:13px;background:var(--ui);border-radius:10px;padding:8px 10px;color:var(--muted)}
+.bigqr{position:fixed;inset:0;background:#fff;color:#1b2a17;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center}
+.bigqr.open{display:flex}
+.bigqr h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,56px);margin:0}
+.bigqr img{width:min(70vh,80vw);height:auto;image-rendering:pixelated}
+.bigqr p{margin:0;font-size:clamp(15px,2.2vw,22px)}
+.bigqr button{position:absolute;right:16px;top:calc(12px + env(safe-area-inset-top,0px));border:1px solid #d5dfcb;background:#fff;border-radius:10px;padding:8px 14px;font-weight:700;color:#1b2a17}
+.quiz-q{margin:14px 0 6px;font-weight:700}
+.quiz-opts{display:grid;gap:6px}
+.quiz-opts button{text-align:left;border:1px solid var(--line);background:var(--ui);border-radius:10px;padding:9px 12px}
+.quiz-opts button.ok{background:#d3f9d8;border-color:#2b8a3e;color:#123}
+.quiz-opts button.no{background:#ffe3e3;border-color:#c92a2a;color:#123}
+.quiz-why{font-size:13.5px;color:var(--muted);margin-top:6px;min-height:1em}
+.quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+#printSheet{display:none}
+@media print{
+  body{background:#fff;height:auto;overflow:visible}
+  body>*:not(#printSheet){display:none!important}
+  #printSheet{display:block;text-align:center;color:#000;font-family:var(--font);padding-top:20mm}
+  #printSheet h1{font-family:var(--display);font-weight:400;font-size:34pt;margin:0 0 4mm}
+  #printSheet img{width:110mm;height:110mm;image-rendering:pixelated;margin:6mm auto;display:block}
+  #printSheet ol{text-align:left;display:inline-block;font-size:14pt;line-height:1.8}
+  #printSheet .u{font-size:10pt;word-break:break-all;color:#333}
+}
+@media (max-width:720px){
+  .brand small{display:none}
+  .big{font-size:40px;top:8px;left:12px}
+  .info{top:auto;bottom:10px;left:10px;right:10px;width:auto;max-height:44%;font-size:13.5px}
+  .hint{bottom:auto;top:58px;white-space:normal;text-align:center;width:calc(100% - 24px);border-radius:14px}
+  .toast{bottom:auto;top:58px}
+  .tabs button{font-size:13px;padding:6px 2px}
+  .tabs button small{display:none}
+  .info.collapsed .data{display:none}
+  .dock{padding:8px 10px 10px}
+  .tbtn{padding:6px 9px;font-size:13px}
+}
+@media (max-width:420px){.brand{font-size:17px}}
+@media (prefers-reduced-motion:reduce){.hint{transition:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">완두 유전 3D 실험실<small>두 가지 형질 · 모양(R, r)과 색(Y, y)</small></div>
+  <button class="tbtn" id="btnQuiz">확인 문제</button>
+  <button class="tbtn primary" id="btnQR">QR 코드</button>
+</header>
+
+<main class="stage" id="stage">
+  <canvas id="gl" aria-label="완두 유전 3D 모형. 드래그하여 돌리고 두 손가락으로 확대할 수 있습니다."></canvas>
+  <div class="big" id="big"></div>
+  <section class="info" id="info" aria-live="polite">
+    <h2><span id="infoTitle"></span><button class="toggle" id="infoToggle" aria-expanded="true">접기</button></h2>
+    <ul id="infoList"></ul>
+    <div class="data" id="infoData"></div>
+  </section>
+  <div class="hint" id="hint">한 손가락: 돌리기 · 두 손가락: 확대/이동 · 완두와 생식세포를 눌러 보세요</div>
+  <div class="toast" id="toast"></div>
+  <div class="predict" id="predict" role="dialog" aria-label="표현형 예측">
+    <p id="predictQ">이 칸의 완두는 어떤 모양일까요?</p>
+    <div id="predictOpts"></div>
+    <button class="skip" id="predictSkip">예측하지 않고 보기</button>
+  </div>
+  <div class="glfail" id="glFail" hidden>이 기기에서는 3D 화면(WebGL)을 표시할 수 없어요.<br>다른 브라우저(크롬, 사파리)로 다시 열어 주세요.</div>
+</main>
+
+<footer class="dock">
+  <nav class="tabs" id="tabs" aria-label="실험 단계">
+    <button data-sc="A">① 순종 교배<small>P → F1</small></button>
+    <button data-sc="B">② 생식세포<small>F1의 감수 분열</small></button>
+    <button data-sc="C">③ F2 바둑판<small>자화 수분</small></button>
+    <button data-sc="D">④ 많이 심기<small>확률과 비율</small></button>
+  </nav>
+  <div class="ctrl" data-for="A">
+    <button class="tbtn go" id="aMake">생식세포 만들기</button>
+    <button class="tbtn go" id="aFert">수정시키기</button>
+    <button class="tbtn" id="aReset">처음부터</button>
+    <span class="sp"></span>
+    <button class="tbtn" data-reset-view>시점 처음으로</button>
+  </div>
+  <div class="ctrl" data-for="B">
+    <button class="tbtn" id="bFlip">색 유전자 쌍 뒤집기</button>
+    <button class="tbtn" id="bRand">무작위 배열</button>
+    <button class="tbtn go" id="bRun">감수 분열 ▶</button>
+    <button class="tbtn" id="bBack">다시 배열하기</button>
+    <button class="tbtn" id="bFast">빠르게 20번</button>
+    <button class="tbtn" id="bClear">개수 지우기</button>
+  </div>
+  <div class="ctrl" data-for="C">
+    <label><input type="checkbox" id="cPredict" checked>예측하며 채우기</label>
+    <button class="tbtn go" id="cAll">모두 채우기</button>
+    <button class="tbtn" id="cClear">비우기</button>
+    <div class="seg" role="group" aria-label="보기">
+      <button data-cm="all" aria-pressed="true">모두</button>
+      <button data-cm="shape" aria-pressed="false">모양만</button>
+      <button data-cm="color" aria-pressed="false">색만</button>
+    </div>
+  </div>
+  <div class="ctrl" data-for="D">
+    <button class="tbtn go" data-add="16">16개 심기</button>
+    <button class="tbtn go" data-add="100">100개 심기</button>
+    <button class="tbtn go" data-add="556">556개 심기</button>
+    <button class="tbtn" id="dClear">비우기</button>
+    <label><input type="checkbox" id="dMendel">멘델의 결과와 비교</label>
+    <span class="sp"></span>
+    <button class="tbtn" data-reset-view>시점 처음으로</button>
+  </div>
+</footer>
+
+<div class="modal" id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+  <div class="sheet">
+    <button class="close" data-close aria-label="닫기">×</button>
+    <h3 id="qrTitle">학생 접속 QR 코드</h3>
+    <p>학생들이 휴대폰·태블릿 카메라로 찍으면 이 실험실이 열려요.</p>
+    <div class="urlrow">
+      <input id="qrUrl" type="url" inputmode="url" aria-label="접속 주소">
+      <button class="tbtn primary" id="qrMake">QR 만들기</button>
+    </div>
+    <div class="note">칸에 들어 있는 주소가 학생들이 열 수 있는 공개 주소(예: github.io 주소)인지 확인하세요. 다르면 공개 주소를 붙여 넣고 ‘QR 만들기’를 누르세요.</div>
+    <div class="qrbox" id="qrBox"></div>
+    <div class="qr-actions">
+      <button class="tbtn" id="qrBig">화면 가득 띄우기</button>
+      <button class="tbtn" id="qrPrint">인쇄하기</button>
+    </div>
+    <p style="text-align:center;font-size:12.5px">인쇄 창이 뜨지 않으면 ‘화면 가득 띄우기’를 누른 뒤 브라우저 메뉴의 인쇄(Ctrl+P)를 사용하세요.</p>
+  </div>
+</div>
+<div class="bigqr" id="bigQR">
+  <button id="bigClose">닫기</button>
+  <h2>카메라로 찍고 입장하세요</h2>
+  <img id="bigImg" alt="실험실 접속 QR 코드">
+  <p>완두 유전 3D 실험실 · 멘델의 독립의 법칙</p>
+</div>
+<div class="modal" id="quizModal" role="dialog" aria-modal="true" aria-labelledby="quizTitle">
+  <div class="sheet">
+    <button class="close" data-close aria-label="닫기">×</button>
+    <h3 id="quizTitle">확인 문제</h3>
+    <p id="quizProg"></p>
+    <div class="quiz-q" id="quizQ"></div>
+    <div class="quiz-opts" id="quizOpts"></div>
+    <div class="quiz-why" id="quizWhy"></div>
+    <div class="quiz-nav">
+      <button class="tbtn" id="quizPrev">이전</button>
+      <span id="quizScore" style="font-weight:700"></span>
+      <button class="tbtn primary" id="quizNext">다음</button>
+    </div>
+  </div>
+</div>
+<div id="printSheet">
+  <h1>완두 유전 3D 실험실</h1>
+  <p style="font-size:14pt;margin:0">휴대폰·태블릿 카메라로 QR 코드를 찍어 입장하세요</p>
+  <img id="printImg" alt="">
+  <ol>
+    <li>① 순종 교배: 생식세포를 만들고 수정시켜 F1을 확인해요.</li>
+    <li>② 생식세포: 염색체 배열을 바꿔 가며 생식세포 4종류를 만들어요.</li>
+    <li>③ F2 바둑판: 칸마다 완두를 예측하고 확인해요.</li>
+    <li>④ 많이 심기: 많이 심을수록 9 : 3 : 3 : 1에 가까워지는지 봐요.</li>
+  </ol>
+  <p class="u" id="printUrl"></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+
+/* ================= 공통: QR · 퀴즈 ================= */
+function bindCommon(){
+  $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('open'));
+  $$('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){$$('.modal.open').forEach(m=>m.classList.remove('open'));$('#bigQR').classList.remove('open')}});
+  let saved='';try{saved=localStorage.getItem('mendel-qr-url')||''}catch(e){}
+  const onPublic=/github\.io$|netlify\.app$|pages\.dev$/.test(location.hostname);
+  $('#qrUrl').value=onPublic?location.href.split('#')[0]:(saved||location.href);
+  let dataURL='';
+  function makeQR(){
+    const url=$('#qrUrl').value.trim(), box=$('#qrBox'); box.innerHTML='';
+    if(!url){box.textContent='주소를 먼저 넣어 주세요.';return}
+    if(typeof QRCode==='undefined'){box.textContent='QR 도구를 불러오지 못했어요. 인터넷 연결을 확인하고 새로 고침 해 주세요.';return}
+    try{localStorage.setItem('mendel-qr-url',url)}catch(e){}
+    new QRCode(box,{text:url,width:512,height:512,colorDark:'#1b2a17',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    const cv=box.querySelector('canvas'); dataURL=cv?cv.toDataURL('image/png'):'';
+    const img=box.querySelector('img'); if(cv&&img){img.style.display='none';cv.style.display='block'}
+    $('#bigImg').src=dataURL; $('#printImg').src=dataURL; $('#printUrl').textContent=url;
+  }
+  $('#btnQR').onclick=()=>{$('#qrModal').classList.add('open');makeQR()};
+  $('#qrMake').onclick=makeQR;
+  $('#qrUrl').addEventListener('keydown',e=>{if(e.key==='Enter')makeQR()});
+  $('#qrBig').onclick=()=>{if(!dataURL)makeQR();$('#qrModal').classList.remove('open');$('#bigQR').classList.add('open')};
+  $('#bigClose').onclick=()=>$('#bigQR').classList.remove('open');
+  $('#qrPrint').onclick=()=>{if(!dataURL)makeQR();try{window.print()}catch(e){}};
+
+  const QZ=[
+    {q:'둥글고 노란색 순종(RRYY)과 주름지고 초록색 순종(rryy)을 교배하면 F1은?',o:['모두 둥글고 노란색','모두 주름지고 초록색','둥글고 노란색 : 주름지고 초록색 = 1 : 1','네 가지가 모두 나온다'],a:0,w:'F1은 모두 RrYy예요. R이 r에 대해, Y가 y에 대해 우성이라 모두 둥글고 노란색이에요.'},
+    {q:'F1(RrYy)이 만드는 생식세포의 종류와 비는?',o:['RY, ry 2종류 = 1 : 1','RY, Ry, rY, ry 4종류 = 1 : 1 : 1 : 1','RY, Ry, rY, ry 4종류 = 9 : 3 : 3 : 1','Rr, Yy 2종류 = 1 : 1'],a:1,w:'R, r과 Y, y가 서로 독립적으로 나뉘어 들어가므로 4종류가 같은 비율로 만들어져요. 생식세포에는 한 형질의 대립유전자가 하나씩만 들어가요.'},
+    {q:'F1을 자화 수분해 얻은 F2의 표현형 비(둥글고 노란색 : 둥글고 초록색 : 주름지고 노란색 : 주름지고 초록색)는?',o:['1 : 1 : 1 : 1','3 : 1 : 3 : 1','9 : 3 : 3 : 1','9 : 3 : 1 : 3'],a:2,w:'16가지 조합 중 둥글고 노란색 9, 둥글고 초록색 3, 주름지고 노란색 3, 주름지고 초록색 1이에요.'},
+    {q:'F2에서 주름지고 초록색인 완두의 유전자형은?',o:['RRYY','Rryy','rrYy','rryy'],a:3,w:'주름진 모양과 초록색은 열성이라 rr와 yy가 함께 있어야 나타나요.'},
+    {q:'F2에서 모양만 보면 둥근 것 : 주름진 것의 비는?',o:['1 : 1','3 : 1','9 : 7','15 : 1'],a:1,w:'색과 관계없이 모양만 보면 12 : 4 = 3 : 1이에요. 한 형질이 다른 형질의 유전에 영향을 주지 않기 때문이에요(독립의 법칙).'},
+    {q:'F2 완두 1600개를 얻었다면, 이론상 둥글고 초록색인 완두는 몇 개일까?',o:['100개','300개','600개','900개'],a:1,w:'둥글고 초록색은 16개 중 3개의 비율이므로 1600 × 3/16 = 300개예요.'}
+  ];
+  let qi=0; const ans=QZ.map(()=>-1);
+  function renderQ(){
+    const q=QZ[qi]; $('#quizProg').textContent=(qi+1)+' / '+QZ.length; $('#quizQ').textContent=q.q;
+    const box=$('#quizOpts'); box.innerHTML='';
+    q.o.forEach((txt,j)=>{const b=document.createElement('button');b.textContent=txt;
+      if(ans[qi]>=0){if(j===q.a)b.classList.add('ok');else if(j===ans[qi])b.classList.add('no')}
+      b.onclick=()=>{if(ans[qi]>=0)return;ans[qi]=j;renderQ()};box.appendChild(b)});
+    $('#quizWhy').textContent=ans[qi]>=0?(ans[qi]===q.a?'정답이에요! ':'아쉬워요. ')+q.w:'';
+    const done=ans.filter(v=>v>=0).length,right=ans.filter((v,j)=>v===QZ[j].a).length;
+    $('#quizScore').textContent=done?right+' / '+done+' 정답':'';
+    $('#quizPrev').disabled=qi===0; $('#quizNext').textContent=qi===QZ.length-1?'처음부터':'다음';
+  }
+  $('#quizPrev').onclick=()=>{qi=Math.max(0,qi-1);renderQ()};
+  $('#quizNext').onclick=()=>{if(qi===QZ.length-1){qi=0;ans.fill(-1)}else qi++;renderQ()};
+  $('#btnQuiz').onclick=()=>{$('#quizModal').classList.add('open');renderQ()};
+}
+bindCommon();
+
+function webglOK(){try{const c=document.createElement('canvas');return !!(window.WebGLRenderingContext&&(c.getContext('webgl')||c.getContext('experimental-webgl')))}catch(e){return false}}
+if(!window.THREE||!THREE.OrbitControls||!webglOK()){$('#glFail').hidden=false;$('#hint').style.display='none';return}
+
+/* ================= 3D 기본 ================= */
+const V=THREE.Vector3;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), lerp=(a,b,t)=>a+(b-a)*t;
+const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+const sm=(t,a,b)=>ease(clamp((t-a)/(b-a),0,1));
+const stage=$('#stage'), canvas=$('#gl');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(40,1,.1,200);
+const controls=new THREE.OrbitControls(camera,canvas);
+controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=3;controls.maxDistance=40;controls.rotateSpeed=.8;
+scene.add(new THREE.HemisphereLight(0xf2ffe8,0x1d2a14,.85));
+const dl=new THREE.DirectionalLight(0xffffff,.95);dl.position.set(4,8,7);scene.add(dl);
+const dl2=new THREE.DirectionalLight(0xbfe0ff,.35);dl2.position.set(-6,-2,-4);scene.add(dl2);
+
+const tweens=[];
+function tween(from,to,dur,set,done){const tw={from,to,dur,set,done,e:0};tweens.push(tw);return tw}
+function tweenA(a,b,d,s,f){const t=tween(a,b,d,s,f);t.owner='A';return t}
+function runTweens(dt){for(const tw of tweens.slice()){tw.e+=dt;const p=Math.min(1,tw.e/tw.dur);tw.set(lerp(tw.from,tw.to,ease(p)));if(p>=1){tweens.splice(tweens.indexOf(tw),1);if(tw.done)tw.done()}}}
+
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.lineTo(x+w-r,y);g.quadraticCurveTo(x+w,y,x+w,y+r);g.lineTo(x+w,y+h-r);g.quadraticCurveTo(x+w,y+h,x+w-r,y+h);g.lineTo(x+r,y+h);g.quadraticCurveTo(x,y+h,x,y+h-r);g.lineTo(x,y+r);g.quadraticCurveTo(x,y,x+r,y);g.closePath()}
+const FONT="'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif";
+function drawLabel(c,text,o){
+  const g=c.getContext('2d'), fs=64, pad=o.bg?22:6;
+  g.font='700 '+fs+'px '+FONT; const w=Math.ceil(g.measureText(text).width)+pad*2, h=Math.round(fs*1.45);
+  c.width=w;c.height=h; g.font='700 '+fs+'px '+FONT; g.textAlign='center'; g.textBaseline='middle';
+  if(o.bg){g.fillStyle=o.bg;rr(g,2,2,w-4,h-4,h/2-2);g.fill()}
+  if(o.stroke){g.lineWidth=10;g.strokeStyle=o.stroke;g.strokeText(text,w/2,h/2+3)}
+  g.fillStyle=o.fg||'#1b2a17'; g.fillText(text,w/2,h/2+3);
+  return w/h;
+}
+function label(text,o={}){
+  const c=document.createElement('canvas'); const ar=drawLabel(c,text,o);
+  const tex=new THREE.CanvasTexture(c); tex.minFilter=THREE.LinearFilter;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false,depthWrite:false}));
+  const s=o.size||.4; sp.scale.set(s*ar,s,1); sp.renderOrder=20;
+  sp.userData.set=(t)=>{const a=drawLabel(c,t,o);tex.needsUpdate=true;sp.scale.set(s*a,s,1)};
+  return sp;
+}
+const LB={bg:'rgba(255,255,255,.93)',fg:'#1b2a17'};
+const LT={fg:'#eef6e8',stroke:'rgba(0,0,0,.55)'};
+
+/* ---------- 완두 모양 ---------- */
+function peaGeo(wrinkled,seg){
+  const g=new THREE.SphereGeometry(1,seg,Math.round(seg*.75)), p=g.attributes.position, v=new V(), n=new V();
+  const W=[[.9,.3,.2,4.1,.3],[-.2,.95,.25,3.6,1.1],[.3,-.2,.93,4.4,2.0],[.6,.6,-.5,3.2,.7],[-.7,.2,.68,3.9,2.6],[.1,-.8,-.6,4.6,1.7]]
+    .map(a=>({d:new V(a[0],a[1],a[2]).normalize(),f:a[3],p:a[4]}));
+  for(let i=0;i<p.count;i++){
+    n.fromBufferAttribute(p,i).normalize();
+    if(!wrinkled){v.set(n.x*1.02,n.y*.94,n.z)}
+    else{
+      let d=1; for(const w of W)d=Math.min(d,Math.abs(Math.sin(n.dot(w.d)*w.f+w.p)));
+      const crease=THREE.MathUtils.smoothstep(d,0,.42);
+      const r=.83+.13*crease+.04*Math.sin(3*n.x+2*n.y+1)*Math.cos(2.5*n.z);
+      v.copy(n).multiplyScalar(r); v.y*=.84; v.x*=1.05;
+    }
+    p.setXYZ(i,v.x,v.y,v.z);
+  }
+  g.computeVertexNormals(); return g;
+}
+const GEO={R:peaGeo(false,40),W:peaGeo(true,64),Rlo:peaGeo(false,14),Wlo:peaGeo(true,26)};
+const MAT={
+  Y:new THREE.MeshStandardMaterial({color:0xf0c233,roughness:.4,metalness:0}),
+  G:new THREE.MeshStandardMaterial({color:0x5f9b35,roughness:.45,metalness:0}),
+  N:new THREE.MeshStandardMaterial({color:0xcdbfa0,roughness:.6})
+};
+function phen(gt){return {round:gt.includes('R'),yellow:gt.includes('Y')}}
+function phName(p){return (p.round?'둥글고 ':'주름지고 ')+(p.yellow?'노란색':'초록색')}
+function peaMesh(round,yellow,r){const m=new THREE.Mesh(round?GEO.R:GEO.W,yellow?MAT.Y:MAT.G);m.scale.setScalar(r);m.rotation.set(.3,Math.random()*6,.15);return m}
+const bubbleGeo=new THREE.SphereGeometry(1,32,24);
+function gamete(text,r){
+  const g=new THREE.Group();
+  const m=new THREE.Mesh(bubbleGeo,new THREE.MeshStandardMaterial({color:0x9ed9f6,roughness:.25,transparent:true,opacity:.92,emissive:0x2a6f94,emissiveIntensity:.25}));
+  m.scale.setScalar(r); g.add(m);
+  const l=label(text,{fg:'#0b3550',size:r*.95}); g.add(l);
+  g.userData.mesh=m; g.userData.label=l; return g;
+}
+function fresnel(color,base,rim){
+  return new THREE.ShaderMaterial({uniforms:{uColor:{value:new THREE.Color(color)},uBase:{value:base},uRim:{value:rim},uOp:{value:1}},
+    vertexShader:'varying vec3 vN;varying vec3 vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'uniform vec3 uColor;uniform float uBase,uRim,uOp;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),2.0);gl_FragColor=vec4(uColor*(0.8+0.6*f),(uBase+uRim*f)*uOp);}',
+    transparent:true,depthWrite:false,side:THREE.DoubleSide});
+}
+
+/* ---------- 알림 ---------- */
+function say(html,ms){$('#toast').innerHTML=html;$('#toast').classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>$('#toast').classList.remove('show'),ms||5200)}
+function hideSay(){$('#toast').classList.remove('show')}
+
+/* =====================================================
+   ① 순종 교배 (P → F1)
+   ===================================================== */
+const A={g:new THREE.Group(),step:0,busy:false,spin:[]};
+scene.add(A.g);
+(function buildA(){
+  const P1=new V(-2.3,1,0),P2=new V(2.3,1,0);
+  A.P1=P1;A.P2=P2;
+  A.p1=peaMesh(true,true,.72);A.p1.position.copy(P1);
+  A.p2=peaMesh(false,false,.72);A.p2.position.copy(P2);
+  A.p1.userData.tap=()=>say('<b>어버이 RRYY · 둥글고 노란색 순종</b>모양 유전자가 R, R로 같고 색 유전자도 Y, Y로 같아요. 대대로 자가 수분해도 계속 둥글고 노란색만 나와요.');
+  A.p2.userData.tap=()=>say('<b>어버이 rryy · 주름지고 초록색 순종</b>모양 유전자가 r, r이고 색 유전자가 y, y예요. 열성 대립유전자만 가지고 있어서 주름지고 초록색으로 나타나요.');
+  A.g.add(A.p1,A.p2);
+  const l1=label('RRYY',Object.assign({size:.44},LB));l1.position.set(-2.3,2.05,0);
+  const l2=label('rryy',Object.assign({size:.44},LB));l2.position.set(2.3,2.05,0);
+  const t1=label('둥글고 노란색 (순종)',Object.assign({size:.28},LT));t1.position.set(-2.3,.05,0);
+  const t2=label('주름지고 초록색 (순종)',Object.assign({size:.28},LT));t2.position.set(2.3,.05,0);
+  const x=label('×',Object.assign({size:.7},LT));x.position.set(0,1,0);
+  const p=label('어버이(P)',Object.assign({size:.32},LT));p.position.set(0,2.55,0);
+  A.g.add(l1,l2,t1,t2,x,p);
+  A.gm1=gamete('RY',.4);A.gm2=gamete('ry',.4);
+  A.gm1.userData.mesh.userData.tap=A.gm2.userData.mesh.userData.tap=()=>{if(A.step===1)A.fert();else say('<b>생식세포</b>생식세포에는 모양 유전자 하나, 색 유전자 하나만 들어 있어요.')};
+  A.g.add(A.gm1,A.gm2);
+  A.gl=label('생식세포',Object.assign({size:.26},LT));A.gl.position.set(0,-.3,0);A.g.add(A.gl);
+  A.f1=peaMesh(true,true,.7);A.f1.position.set(0,-1.75,0);
+  A.f1.userData.tap=()=>say('<b>F1 · RrYy</b>R과 r이 함께 있으면 R의 형질(둥근 모양)이, Y와 y가 함께 있으면 Y의 형질(노란색)이 나타나요. 그래서 둥근 모양과 노란색이 우성이에요.');
+  A.g.add(A.f1);
+  A.f1l=label('F1 · RrYy',Object.assign({size:.42},LB));A.f1l.position.set(0,-.8,0);
+  A.f1t=label('모두 둥글고 노란색',Object.assign({size:.3},LT));A.f1t.position.set(0,-2.75,0);
+  A.g.add(A.f1l,A.f1t);
+  A.spin=[A.p1,A.p2,A.f1];
+})();
+A.set=function(step){
+  A.step=step; for(let i=tweens.length-1;i>=0;i--)if(tweens[i].owner==='A')tweens.splice(i,1); A.busy=false;
+  const show=step>=1&&step<2;
+  [A.gm1,A.gm2].forEach(g=>{g.visible=show;g.scale.setScalar(1)});
+  A.gm1.position.set(-1,-.3,0);A.gm2.position.set(1,-.3,0);
+  A.gl.visible=show;
+  A.f1.visible=A.f1l.visible=A.f1t.visible=step>=2; A.f1.scale.setScalar(.7);
+  ctrlA();
+};
+function ctrlA(){$('#aMake').disabled=A.step!==0||A.busy;$('#aFert').disabled=A.step!==1||A.busy}
+A.make=function(){
+  if(A.step!==0||A.busy)return; A.busy=true; ctrlA();
+  [A.gm1,A.gm2].forEach(g=>g.visible=true);
+  const t1=new V(-1,-.3,0),t2=new V(1,-.3,0);
+  tweenA(0,1,1.1,v=>{A.gm1.position.lerpVectors(A.P1,t1,v);A.gm2.position.lerpVectors(A.P2,t2,v);A.gm1.scale.setScalar(Math.max(v,.01));A.gm2.scale.setScalar(Math.max(v,.01))},()=>{
+    A.busy=false;A.step=1;A.gl.visible=true;ctrlA();
+    say('<b>생식세포가 만들어졌어요</b>생식세포에는 한 쌍의 대립유전자 중 하나만 들어가요. RRYY는 RY만, rryy는 ry만 만들어요.');
+  });
+};
+A.fert=function(){
+  if(A.step!==1||A.busy)return; A.busy=true; ctrlA(); A.gl.visible=false;
+  const s1=A.gm1.position.clone(),s2=A.gm2.position.clone(),t=new V(0,-1.75,0);
+  tweenA(0,1,.9,v=>{A.gm1.position.lerpVectors(s1,t,v);A.gm2.position.lerpVectors(s2,t,v);A.gm1.scale.setScalar(1-.6*v);A.gm2.scale.setScalar(1-.6*v)},()=>{
+    A.gm1.visible=A.gm2.visible=false; A.f1.visible=true;
+    tweenA(0,1,.7,v=>A.f1.scale.setScalar(Math.max(.01,.7*v*(1+.25*Math.sin(v*Math.PI)))),()=>{
+      A.f1l.visible=A.f1t.visible=true; A.busy=false; A.step=2; ctrlA();
+      say('<b>F1은 모두 RrYy · 둥글고 노란색</b>주름진 모양과 초록색은 F1에서 나타나지 않았어요. 이런 형질을 열성, 나타난 형질을 우성이라고 해요.',7000);
+    });
+  });
+};
+$('#aMake').onclick=A.make; $('#aFert').onclick=A.fert; $('#aReset').onclick=()=>{A.set(0);hideSay()};
+
+/* =====================================================
+   ② F1의 생식세포 (감수 분열과 독립의 법칙)
+   ===================================================== */
+const B={g:new THREE.Group(),m:0,sR:1,sY:1,busy:false,count:{RY:0,Ry:0,rY:0,ry:0},last:null};
+scene.add(B.g);
+const ORI=[0xf08c3a,0x4aa3df]; // 1: RRYY에게서, 2: rryy에게서
+(function buildB(){
+  const cm=fresnel(0x9fd3a0,.05,.55);
+  B.cell=new THREE.Mesh(new THREE.SphereGeometry(1.95,48,32),cm);B.cell.renderOrder=2;
+  B.d=[1,-1].map(sy=>{const m=new THREE.Mesh(new THREE.SphereGeometry(1.25,40,28),fresnel(0x9fd3a0,.05,.55));m.position.set(0,sy*1.6,0);m.renderOrder=2;return m});
+  B.q=[];[1,-1].forEach(sy=>[-1,1].forEach(sx=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.82,36,24),fresnel(0x8fd0f2,.08,.6));m.position.set(sx*1.09,sy*1.6,0);m.renderOrder=2;m.userData.sy=sy;B.q.push(m)}));
+  B.g.add(B.cell,...B.d,...B.q);
+  B.ql=B.q.map(m=>{const l=label('RY',Object.assign({size:.34},LB));l.position.set(m.position.x,m.position.y+(m.userData.sy>0?1.02:-1.02),0);B.g.add(l);return l});
+  const chromGeo=new THREE.SphereGeometry(1,20,14), bandGeo=new THREE.CylinderGeometry(1,1,1,18);
+  B.ch=[{gene:'R',al:'R',o:0,len:.95},{gene:'R',al:'r',o:1,len:.95},{gene:'Y',al:'Y',o:0,len:.6},{gene:'Y',al:'y',o:1,len:.6}];
+  B.parts=[];
+  B.ch.forEach((c,ci)=>{[0,1].forEach(s=>{
+    const g=new THREE.Group();
+    const mat=new THREE.MeshStandardMaterial({color:ORI[c.o],roughness:.45,emissive:ORI[c.o],emissiveIntensity:.08});
+    const body=new THREE.Mesh(chromGeo,mat); body.scale.set(.085,c.len/2,.085); g.add(body);
+    const band=new THREE.Mesh(bandGeo,new THREE.MeshStandardMaterial({color:0xffffff,roughness:.3,emissive:0xffffff,emissiveIntensity:.25}));
+    band.scale.set(.095,.07,.095); band.position.y=c.len*.18; g.add(band);
+    const l=label(c.al,Object.assign({size:.26},LB)); g.add(l);
+    body.userData.tap=()=>B.flip(c.gene);
+    B.g.add(g); B.parts.push({g,ci,s,l,c,mat});
+  })});
+  const title=label('F1 (RrYy)의 세포',Object.assign({size:.3},LT)); title.position.set(0,2.35,0); B.g.add(title); B.title=title;
+})();
+function sideOf(c){return (c.gene==='R'?B.sR:B.sY)*(c.al===c.gene?1:-1)}
+B.apply=function(){
+  const m=B.m, m1=sm(m,0,.42), m2=sm(m,.55,.95);
+  B.parts.forEach(p=>{
+    const c=p.c, side=sideOf(c), pairX=c.gene==='R'?-.55:.55;
+    const z=(1-side*side)*.8*(c.al===c.gene?1:-1);
+    const x=pairX*lerp(1,.62,m1)+(p.s?1:-1)*(.085+m2*1.0);
+    const y=side*lerp(.52,1.6,m1);
+    p.g.position.set(x,y,z);
+    p.l.position.set((p.s?1:-1)*.2,-c.len*.18,0);
+    p.l.visible=true;
+  });
+  B.cell.material.uniforms.uOp.value=1-sm(m,.3,.45); B.cell.scale.set(1,1+.25*m1,1); B.cell.visible=m<.46;
+  B.d.forEach(d=>{d.material.uniforms.uOp.value=sm(m,.3,.45)*(1-sm(m,.8,.95));d.visible=m>.29&&m<.96});
+  B.q.forEach((q,i)=>{q.material.uniforms.uOp.value=sm(m,.8,.95);q.visible=m>.79;B.ql[i].visible=m>.97});
+  B.title.visible=m<.3;
+};
+function topType(){return (B.sR>0?'R':'r')+(B.sY>0?'Y':'y')}
+function botType(){return (B.sR>0?'r':'R')+(B.sY>0?'y':'Y')}
+B.flip=function(gene){
+  if(B.busy)return;
+  if(B.m>0){say('<b>먼저 ‘다시 배열하기’를 눌러요</b>염색체 배열은 감수 분열이 시작되기 전에 정해져요.');return}
+  B.busy=true; ctrlB();
+  const key=gene==='R'?'sR':'sY', from=B[key];
+  tween(from,-from,.8,v=>B[key]=v,()=>{B[key]=-from;B.busy=false;ctrlB();
+    say('<b>배열이 바뀌었어요</b>지금 배열이면 위쪽에는 '+topType()+', 아래쪽에는 '+botType()+' 생식세포가 만들어져요.')});
+};
+B.random=function(){
+  if(B.busy||B.m>0){if(B.m>0)say('<b>먼저 ‘다시 배열하기’를 눌러요</b>');return}
+  const tr=Math.random()<.5?1:-1, ty=Math.random()<.5?1:-1;
+  B.busy=true;ctrlB();
+  const fr=B.sR,fy=B.sY;
+  tween(0,1,.8,v=>{B.sR=fr===tr?fr:lerp(fr,tr,v);B.sY=fy===ty?fy:lerp(fy,ty,v)},()=>{B.sR=tr;B.sY=ty;B.busy=false;ctrlB();
+    say('<b>무작위로 배열했어요</b>두 쌍의 상동 염색체는 서로 상관없이 배열돼요. 이번에는 '+topType()+'와 '+botType()+' 조합이에요.')});
+};
+B.run=function(){
+  if(B.busy||B.m>0)return; B.busy=true;ctrlB(); hideSay();
+  const t=topType(),b=botType();
+  B.ql.forEach((l,i)=>l.userData.set(B.q[i].userData.sy>0?t:b));
+  tween(0,1,3.4,v=>B.m=v,()=>{B.m=1;B.busy=false;B.count[t]+=2;B.count[b]+=2;B.last=[t,b];ctrlB();renderData();
+    say('<b>생식세포 4개 완성: '+t+' 2개, '+b+' 2개</b>상동 염색체가 나뉘면서 R과 r, Y와 y가 서로 다른 생식세포로 들어갔어요. ‘다시 배열하기’로 다른 배열도 해 보세요.',7000)});
+};
+B.back=function(){if(B.busy||B.m===0)return;B.busy=true;ctrlB();tween(B.m,0,.8,v=>B.m=v,()=>{B.m=0;B.busy=false;ctrlB()})};
+B.fast=function(){
+  for(let i=0;i<20;i++){const r=Math.random()<.5,y=Math.random()<.5;const t=(r?'R':'r')+(y?'Y':'y'),b=(r?'r':'R')+(y?'y':'Y');B.count[t]+=2;B.count[b]+=2}
+  renderData(); say('<b>감수 분열 20번 = 생식세포 80개 추가</b>4종류의 개수가 거의 같아지는지 오른쪽 표에서 확인해 보세요.');
+};
+function ctrlB(){
+  $('#bFlip').disabled=$('#bRand').disabled=B.busy||B.m>0;
+  $('#bRun').disabled=B.busy||B.m>0; $('#bBack').disabled=B.busy||B.m===0;
+}
+$('#bFlip').onclick=()=>B.flip('Y');$('#bRand').onclick=B.random;$('#bRun').onclick=B.run;$('#bBack').onclick=B.back;$('#bFast').onclick=B.fast;
+$('#bClear').onclick=()=>{B.count={RY:0,Ry:0,rY:0,ry:0};renderData()};
+
+/* =====================================================
+   ③ F2 바둑판 (자화 수분)
+   ===================================================== */
+const GAM=['RY','Ry','rY','ry'];
+const C={g:new THREE.Group(),cells:[],mode:'all',hl:null,busy:0};
+scene.add(C.g);
+const cx=j=>-1.65+1.1*j, cz=i=>-1.65+1.1*i;
+function pairStr(a,b){return a===a.toUpperCase()?a+b:b+a}
+function gtOf(i,j){const e=GAM[i],p=GAM[j];return pairStr(e[0],p[0])+pairStr(e[1],p[1])}
+(function buildC(){
+  const frame=new THREE.Mesh(new THREE.BoxGeometry(4.75,.14,4.75),new THREE.MeshStandardMaterial({color:0x7c86c0,roughness:.6}));
+  frame.position.y=-.08; C.g.add(frame);
+  for(let i=0;i<4;i++)for(let j=0;j<4;j++){
+    const tm=new THREE.MeshStandardMaterial({color:0xf2f5ea,roughness:.8});
+    const tile=new THREE.Mesh(new THREE.BoxGeometry(1.04,.04,1.04),tm); tile.position.set(cx(j),.01,cz(i));
+    tile.userData.tap=()=>C.tap(i,j);
+    const gt=gtOf(i,j), ph=phen(gt);
+    const pea=peaMesh(ph.round,ph.yellow,.34); pea.position.set(cx(j),.34,cz(i)); pea.visible=false;
+    pea.userData.tap=()=>say('<b>'+gt+' · '+phName(ph)+'</b>'+why(gt));
+    const l=label(gt,Object.assign({size:.22},LB)); l.position.set(cx(j),.06,cz(i)+.42); l.visible=false;
+    C.g.add(tile,pea,l); C.cells.push({i,j,gt,ph,tile,tm,pea,l,filled:false});
+  }
+  C.hm=GAM.map((t,j)=>{const g=gamete(t,.36);g.position.set(cx(j),.42,-2.85);C.g.add(g);return g});
+  C.hf=GAM.map((t,i)=>{const g=gamete(t,.36);g.position.set(-2.85,.42,cz(i));C.g.add(g);return g});
+  C.hm.forEach(g=>g.userData.mesh.userData.tap=()=>say('<b>F1(♂)의 생식세포 '+g.userData.label.userData.text+'</b>꽃가루 쪽 생식세포예요. 4종류가 같은 비율로 만들어져요.'));
+  const a=label('F1(♂, 꽃가루)의 생식세포 →',Object.assign({size:.28},LT)); a.position.set(0,.5,-3.62); C.g.add(a);
+  const b=label('↑ F1(♀, 밑씨)의 생식세포',Object.assign({size:.28},LT)); b.position.set(-2.85,.5,2.55); C.g.add(b);
+  const k=label('♀ \\ ♂',Object.assign({size:.3},LT)); k.position.set(-2.85,.4,-2.85); C.g.add(k);
+})();
+function why(gt){
+  const r=gt.slice(0,2),y=gt.slice(2);
+  const s=r.includes('R')?(r==='RR'?'RR':'Rr')+'이라 R이 있어서 둥근 모양':'rr이라 주름진 모양';
+  const c=y.includes('Y')?(y==='YY'?'YY':'Yy')+'라 Y가 있어서 노란색':'yy라 초록색';
+  return s+', '+c+'이에요.';
+}
+function styleCell(c){
+  const mode=C.mode;
+  c.pea.geometry=mode==='color'?GEO.R:(c.ph.round?GEO.R:GEO.W);
+  c.pea.material=mode==='shape'?MAT.N:(c.ph.yellow?MAT.Y:MAT.G);
+  let on=true;
+  if(C.hl){on=catOf(c.ph)===C.hl}
+  c.tm.color.set(C.hl?(on&&c.filled?0xffe38a:0x6f7a62):0xf2f5ea);
+}
+function catOf(ph){
+  if(C.mode==='shape')return ph.round?'round':'wr';
+  if(C.mode==='color')return ph.yellow?'yellow':'green';
+  return (ph.round?'R':'W')+(ph.yellow?'Y':'G');
+}
+C.reveal=function(c,after){
+  if(c.filled)return; c.filled=true; C.busy++;
+  const hf=C.hf[c.i], hm=C.hm[c.j];
+  const f=gamete(GAM[c.i],.2), m=gamete(GAM[c.j],.2); C.g.add(f,m);
+  const tgt=new V(cx(c.j),.4,cz(c.i)), s1=hf.position.clone(), s2=hm.position.clone();
+  tween(0,1,.55,v=>{f.position.lerpVectors(s1,tgt,v);m.position.lerpVectors(s2,tgt,v);f.position.y=m.position.y=.42+.5*Math.sin(v*Math.PI)},()=>{
+    C.g.remove(f,m); c.pea.visible=true; c.l.visible=true; styleCell(c);
+    tween(0,1,.45,v=>c.pea.scale.setScalar(Math.max(.01,.34*v*(1+.2*Math.sin(v*Math.PI)))),()=>{C.busy--;renderData();if(after)after()});
+  });
+};
+let pending=null;
+C.tap=function(i,j){
+  const c=C.cells[i*4+j];
+  if(c.filled){say('<b>'+c.gt+' · '+phName(c.ph)+'</b>'+why(c.gt));return}
+  if(!$('#cPredict').checked){C.reveal(c);return}
+  pending=c; openPredict(c);
+};
+const OPTS=[{r:true,y:true},{r:true,y:false},{r:false,y:true},{r:false,y:false}];
+function ico(r,y){return '<i class="ico '+(y?'y':'g')+(r?'':' w')+'"></i>'}
+function openPredict(c){
+  $('#predictQ').innerHTML='♀ '+GAM[c.i]+' + ♂ '+GAM[c.j]+' → 어떤 완두일까요?';
+  $('#predictOpts').innerHTML=OPTS.map((o,k)=>'<button data-k="'+k+'">'+ico(o.r,o.y)+phName({round:o.r,yellow:o.y})+'</button>').join('');
+  $$('#predictOpts button').forEach(b=>b.onclick=()=>answer(+b.dataset.k));
+  const pv=$('#predict'); pv.classList.add('show');
+  const r=stage.getBoundingClientRect(); const x=clamp(lastTap.x-r.left-115,8,r.width-238), y=clamp(lastTap.y-r.top-80,8,r.height-260);
+  pv.style.left=x+'px'; pv.style.top=y+'px';
+  pv.querySelector('button').focus();
+}
+function closePredict(){$('#predict').classList.remove('show');pending=null}
+function answer(k){
+  const c=pending; if(!c)return; closePredict();
+  const o=OPTS[k], ok=o.r===c.ph.round&&o.y===c.ph.yellow;
+  C.reveal(c,()=>say((ok?'<b>정답! ':'<b>아쉬워요. 정답은 ')+c.gt+' · '+phName(c.ph)+'</b>'+why(c.gt),6000));
+}
+$('#predictSkip').onclick=()=>{const c=pending;closePredict();if(c)C.reveal(c)};
+C.all=function(){
+  closePredict(); const rest=C.cells.filter(c=>!c.filled); let k=0;
+  rest.forEach((c,n)=>setTimeout(()=>C.reveal(c,++k===rest.length?()=>say('<b>16칸 완성!</b>둥글고 노란색 9 : 둥글고 초록색 3 : 주름지고 노란색 3 : 주름지고 초록색 1',7000):null),n*110));
+};
+C.clear=function(){closePredict();C.cells.forEach(c=>{c.filled=false;c.pea.visible=false;c.l.visible=false});C.hl=null;C.cells.forEach(styleCell);renderData();hideSay()};
+C.setMode=function(m){C.mode=m;C.hl=null;$$('[data-cm]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.cm===m));C.cells.forEach(styleCell);renderData();
+  if(m==='shape')say('<b>모양만 보기</b>색을 모두 같게 칠했어요. 둥근 것과 주름진 것의 비를 세어 보세요.');
+  if(m==='color')say('<b>색만 보기</b>모양을 모두 둥글게 바꿨어요. 노란색과 초록색의 비를 세어 보세요.');
+};
+$('#cAll').onclick=C.all;$('#cClear').onclick=C.clear;$$('[data-cm]').forEach(b=>b.onclick=()=>C.setMode(b.dataset.cm));
+
+/* =====================================================
+   ④ 많이 심어 보기 (확률)
+   ===================================================== */
+const PH=[
+  {k:'RY',name:'둥글고 노란색',r:true,y:true,exp:9,men:315},
+  {k:'Ry',name:'둥글고 초록색',r:true,y:false,exp:3,men:108},
+  {k:'rY',name:'주름지고 노란색',r:false,y:true,exp:3,men:101},
+  {k:'ry',name:'주름지고 초록색',r:false,y:false,exp:1,men:32}
+];
+const CAP=560, PR=.1;
+const D={g:new THREE.Group(),bins:[],queue:0,acc:0,rate:30,n:[0,0,0,0],anim:[],portrait:false};
+scene.add(D.g);
+const DISK=(function(){const pts=[],s=.2;for(let row=-5;row<=5;row++)for(let col=-5;col<=5;col++){const x=(col+(row%2?.5:0))*s,z=row*s*.866;if(Math.hypot(x,z)<.66)pts.push([x,z])}return pts})();
+(function buildD(){
+  const glass=new THREE.MeshStandardMaterial({color:0xd9f2ff,transparent:true,opacity:.14,roughness:.1,side:THREE.DoubleSide,depthWrite:false});
+  const rim=new THREE.MeshStandardMaterial({color:0xe6f6ff,roughness:.3,transparent:true,opacity:.7});
+  PH.forEach((p,b)=>{
+    const g=new THREE.Group();
+    const cyl=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,2.5,40,1,true),glass); cyl.position.y=1.25; cyl.renderOrder=3;
+    const top=new THREE.Mesh(new THREE.TorusGeometry(.8,.025,8,48),rim); top.rotation.x=Math.PI/2; top.position.y=2.5;
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(.82,.82,.06,40),new THREE.MeshStandardMaterial({color:0x2d4a2a,roughness:.8})); base.position.y=-.03;
+    const inst=new THREE.InstancedMesh(p.r?GEO.Rlo:GEO.Wlo,p.y?MAT.Y:MAT.G,CAP); inst.count=0; inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage); inst.frustumCulled=false;
+    const icon=peaMesh(p.r,p.y,.22); icon.position.set(0,-.35,.95);
+    const nm=label(p.name,Object.assign({size:.24},LT)); nm.position.set(0,-.8,.95);
+    const cnt=label('0개',Object.assign({size:.34},LB)); cnt.position.set(0,2.95,0);
+    g.add(cyl,top,base,inst,icon,nm,cnt); D.g.add(g);
+    D.bins.push({g,inst,cnt,seeds:[]});
+  });
+  const hop=label('F1 × F1 (자화 수분)',Object.assign({size:.3},LT)); hop.position.set(0,4.05,0); D.g.add(hop); D.hop=hop;
+})();
+const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_s=new V(PR,PR,PR),_p=new V();
+function slotPos(bin,slot,out){
+  const b=D.bins[bin].g.position, L=Math.floor(slot/DISK.length), d=DISK[slot%DISK.length];
+  const jx=Math.sin(slot*12.9898)*.03, jz=Math.cos(slot*78.233)*.03;
+  return out.set(b.x+d[0]+jx,.1+L*.165,b.z+d[1]+jz);
+}
+function layoutD(){
+  const pos=D.portrait?[[-1.1,-1.9],[1.1,-1.9],[-1.1,1.7],[1.1,1.7]]:[[-3.3,0],[-1.1,0],[1.1,0],[3.3,0]];
+  D.bins.forEach((b,i)=>b.g.position.set(pos[i][0],0,pos[i][1]));
+  D.hop.position.set(0,4.05,D.portrait?-.1:0);
+  D.bins.forEach((b,bi)=>b.seeds.forEach((s,k)=>{if(!s.anim)setSeed(bi,k,slotPos(bi,k,_p))}));
+}
+function setSeed(bi,k,pos){
+  const s=D.bins[bi].seeds[k]; _q.setFromEuler(s.rot);
+  _m.compose(_p.copy(pos).sub(D.bins[bi].g.position),_q,_s); D.bins[bi].inst.setMatrixAt(k,_m); D.bins[bi].inst.instanceMatrix.needsUpdate=true;
+}
+function plant(){
+  const eR=Math.random()<.5,eY=Math.random()<.5,pR=Math.random()<.5,pY=Math.random()<.5;
+  const round=eR||pR, yellow=eY||pY, bi=round?(yellow?0:1):(yellow?2:3);
+  D.n[bi]++;
+  const bin=D.bins[bi];
+  if(bin.seeds.length<CAP){
+    const k=bin.seeds.length;
+    const s={rot:new THREE.Euler(Math.random()*6,Math.random()*6,Math.random()*6),anim:{t:0,dur:.75+Math.random()*.25,from:new V((Math.random()-.5)*.4,3.7,(D.portrait?.1:0)+(Math.random()-.5)*.3)}};
+    bin.seeds.push(s); bin.inst.count=bin.seeds.length; D.anim.push([bi,k]);
+  }
+}
+const _t=new V();
+function updateD(dt){
+  if(D.queue>0){D.acc+=dt*D.rate;let k=Math.min(D.queue,Math.floor(D.acc));D.acc-=k;D.queue-=k;while(k-->0)plant();renderData()}
+  for(let a=D.anim.length-1;a>=0;a--){
+    const [bi,k]=D.anim[a], s=D.bins[bi].seeds[k]; s.anim.t+=dt; const u=Math.min(1,s.anim.t/s.anim.dur);
+    slotPos(bi,k,_t); const f=s.anim.from;
+    _p.set(lerp(f.x,_t.x,u),lerp(f.y,_t.y,u*u)+.6*Math.sin(Math.PI*u)*(1-u),lerp(f.z,_t.z,u));
+    setSeed(bi,k,_p);
+    if(u>=1){s.anim=null;D.anim.splice(a,1)}
+  }
+}
+function addSeeds(n){D.queue+=n;D.rate=Math.max(30,(D.queue)/3.2);hideSay()}
+$$('[data-add]').forEach(b=>b.onclick=()=>addSeeds(+b.dataset.add));
+$('#dClear').onclick=()=>{D.queue=0;D.anim.length=0;D.n=[0,0,0,0];D.bins.forEach(b=>{b.seeds.length=0;b.inst.count=0});renderData()};
+$('#dMendel').onchange=renderData;
+
+/* =====================================================
+   화면 전환 · 설명 · 데이터 표
+   ===================================================== */
+const SC={
+  A:{g:A.g,big:'P → F1',title:'순종끼리 교배하기',target:new V(0,-.2,0),dir:new V(0,.12,1),hw:3.7,hh:3.5,
+     hint:'‘생식세포 만들기’ → ‘수정시키기’ 순서로 눌러 보세요. 완두를 누르면 설명이 나와요',
+     items:['둥글고 노란색 순종(<b>RRYY</b>)과 주름지고 초록색 순종(<b>rryy</b>)을 교배해요.',
+      '완두의 모양은 R(둥근)과 r(주름진), 색은 Y(노란)과 y(초록)라는 <b>대립유전자</b>가 정해요. 한 형질에 대립유전자 2개를 가져요.',
+      '생식세포에는 한 쌍의 대립유전자 중 <b>하나씩만</b> 들어가요. RRYY → RY, rryy → ry',
+      'F1(잡종 1대)은 모두 <b>RrYy</b>이고 모두 <b>둥글고 노란색</b>이에요. 둥근 모양과 노란색이 <b>우성</b>, 주름진 모양과 초록색이 <b>열성</b>이에요.']},
+  B:{g:B.g,big:'생식세포',title:'F1이 생식세포를 만들 때',target:new V(0,0,0),dir:new V(0,.05,1),hw:2.8,hh:3.1,
+     hint:'염색체를 누르면 배열이 바뀌어요. ‘감수 분열 ▶’로 생식세포를 만들어 보세요',
+     items:['F1(RrYy)의 모양 유전자(R, r)와 색 유전자(Y, y)는 <b>서로 다른 상동 염색체 쌍</b>에 있어요.',
+      '감수 분열 때 상동 염색체가 나뉘면서 R과 r, Y와 y가 서로 다른 생식세포로 들어가요(<b>분리의 법칙</b>).',
+      '두 쌍은 서로 영향을 주지 않고 <b>따로따로</b> 나뉘어요. 배열에 따라 (RY, ry) 또는 (Ry, rY)가 만들어져요.',
+      '그래서 생식세포 <b>RY : Ry : rY : ry = 1 : 1 : 1 : 1</b>이에요(<b>독립의 법칙</b>).']},
+  C:{g:C.g,big:'F2',title:'F1 자화 수분 → F2',target:new V(-.55,0,-.35),dir:new V(0,1.15,.8),hw:3.5,hh:3.5,
+     hint:'빈칸을 누르고 어떤 완두가 나올지 예측해 보세요',
+     items:['F1의 ♀ 생식세포 4종류와 ♂ 생식세포 4종류가 <b>무작위로</b> 만나 16가지 조합이 생겨요.',
+      'R이 하나라도 있으면 둥근 모양, Y가 하나라도 있으면 노란색이에요.',
+      '표현형의 비: 둥글고 노란색 <b>9</b> : 둥글고 초록색 <b>3</b> : 주름지고 노란색 <b>3</b> : 주름지고 초록색 <b>1</b>',
+      '‘모양만’, ‘색만’ 보기로 세어 보면 각각 <b>3 : 1</b>이에요. 모양과 색은 서로 영향을 주지 않고 유전돼요.']},
+  D:{g:D.g,big:'확률',title:'많이 심어 보기',target:new V(0,1.4,0),dir:new V(0,.35,1),hw:4.4,hh:2.9,
+     hint:'버튼을 눌러 F2 완두를 심어 보세요. 심을 때마다 생식세포가 무작위로 만나요',
+     items:['완두 하나하나는 ♀와 ♂ 생식세포가 <b>무작위로</b> 만나서 생겨요.',
+      '적게 심으면 비율이 9 : 3 : 3 : 1과 꽤 다를 수 있어요. <b>많이 심을수록</b> 9 : 3 : 3 : 1에 가까워져요.',
+      '멘델은 F2에서 완두 <b>556개</b>를 얻었고, 그 결과는 315 : 108 : 101 : 32로 약 9 : 3 : 3 : 1이었어요.']}
+};
+let cur='A';
+function setScene(k){
+  cur=k; closePredict(); hideSay();
+  Object.keys(SC).forEach(s=>SC[s].g.visible=s===k);
+  $$('#tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.sc===k?'step':'false'));
+  $$('.ctrl').forEach(c=>c.classList.toggle('on',c.dataset.for===k));
+  const s=SC[k]; $('#big').textContent=s.big; $('#infoTitle').textContent=s.title;
+  $('#infoList').innerHTML=s.items.map(t=>'<li>'+t+'</li>').join('');
+  $('#hint').textContent=s.hint; $('#hint').style.opacity=1; clearTimeout(setScene.h); setScene.h=setTimeout(()=>$('#hint').style.opacity=0,7000);
+  renderData(); fit(true);
+}
+$$('#tabs button').forEach(b=>b.onclick=()=>setScene(b.dataset.sc));
+$$('[data-reset-view]').forEach(b=>b.onclick=()=>fit(true));
+
+function pct(a,t){return t?(a/t*100).toFixed(1):'0.0'}
+function renderData(){
+  const el=$('#infoData'); let h='';
+  if(cur==='A'){
+    h='<div class="card">P의 생식세포: RRYY → <b>RY</b> 한 종류, rryy → <b>ry</b> 한 종류<br>F1의 유전자형: <b>RrYy</b> (잡종)</div>';
+  }else if(cur==='B'){
+    const t=B.count, tot=t.RY+t.Ry+t.rY+t.ry;
+    h='<div class="card"><b>만든 생식세포 (총 '+tot+'개)</b>'+GAM.map(k=>'<div class="rowp" style="padding:3px 0"><span class="nm">'+k+'</span><span class="n">'+t[k]+'</span><span style="width:52px;text-align:right;color:#c9d8bf">'+pct(t[k],tot)+'%</span></div><div class="bar"><i style="width:'+(tot?t[k]/tot*100:0)+'%"></i></div>').join('')+
+      (tot>=40?'<div class="ratio">많이 만들수록 4종류가 각각 약 25%(1 : 1 : 1 : 1)에 가까워져요</div>':'')+'</div>'+
+      '<div class="legend2"><span><i style="background:#f08c3a"></i>RRYY 어버이에게서 온 염색체</span><span><i style="background:#4aa3df"></i>rryy 어버이에게서 온 염색체</span></div>';
+  }else if(cur==='C'){
+    const f=C.cells.filter(c=>c.filled); let cats;
+    if(C.mode==='shape')cats=[{k:'round',n:'둥근 모양',i:ico(true,false).replace('ico g','ico n')},{k:'wr',n:'주름진 모양',i:ico(false,false).replace('ico g','ico n')}];
+    else if(C.mode==='color')cats=[{k:'yellow',n:'노란색',i:ico(true,true)},{k:'green',n:'초록색',i:ico(true,false)}];
+    else cats=PH.map(p=>({k:(p.r?'R':'W')+(p.y?'Y':'G'),n:p.name,i:ico(p.r,p.y)}));
+    const cnt=cats.map(c=>f.filter(x=>catOf(x.ph)===c.k).length);
+    h='<div class="card"><b>채운 칸 '+f.length+' / 16</b> <span style="color:#c9d8bf;font-size:12.5px">(줄을 누르면 해당 칸이 빛나요)</span>'+
+      cats.map((c,i)=>'<button class="rowp" data-hl="'+c.k+'" aria-pressed="'+(C.hl===c.k)+'">'+c.i+'<span class="nm">'+c.n+'</span><span class="n">'+cnt[i]+'</span></button>').join('');
+    if(f.length===16){
+      if(C.mode==='shape')h+='<div class="ratio">둥근 : 주름진 = 12 : 4 = 3 : 1</div>';
+      else if(C.mode==='color')h+='<div class="ratio">노란색 : 초록색 = 12 : 4 = 3 : 1</div>';
+      else h+='<div class="ratio">9 : 3 : 3 : 1 · 유전자형은 9가지</div>';
+    }
+    h+='</div>';
+  }else if(cur==='D'){
+    const n=D.n, tot=n[0]+n[1]+n[2]+n[3];
+    h='<div class="card"><table class="t"><tr><th>표현형</th><th>개수</th><th>비율</th><th>이론</th></tr>'+
+      PH.map((p,i)=>'<tr><td>'+ico(p.r,p.y)+' '+p.name+'</td><td>'+n[i]+'</td><td>'+pct(n[i],tot)+'%</td><td>'+(p.exp/16*100).toFixed(2)+'%</td></tr>').join('')+
+      '<tr><td>합계</td><td>'+tot+'</td><td></td><td></td></tr></table>';
+    if(tot){h+='<div class="ratio">주름지고 초록색을 1로 하면 → '+(n[3]?n.map(v=>(v/n[3]).toFixed(1)).join(' : '):'아직 주름지고 초록색이 없어요')+'</div>'}
+    if($('#dMendel').checked)h+='<div style="margin-top:6px">멘델의 결과(556개): 315 : 108 : 101 : 32<br>→ 1로 하면 9.8 : 3.4 : 3.2 : 1 (이론 9 : 3 : 3 : 1)</div>';
+    h+='</div>';
+    D.bins.forEach((b,i)=>b.cnt.userData.set(n[i]+'개'+(n[i]>CAP?' (일부만 표시)':'')));
+  }
+  el.innerHTML=h;
+  $$('[data-hl]').forEach(b=>b.onclick=()=>{C.hl=C.hl===b.dataset.hl?null:b.dataset.hl;C.cells.forEach(styleCell);renderData()});
+}
+$('#infoToggle').onclick=()=>{const c=$('#info').classList.toggle('collapsed');$('#infoToggle').textContent=c?(window.innerWidth<720?'설명·결과 보기':'펼치기'):'접기';$('#infoToggle').setAttribute('aria-expanded',!c);fit(true)};
+if(window.innerWidth<720){$('#info').classList.add('collapsed');$('#infoToggle').textContent='설명·결과 보기'}
+
+/* ---------- 카메라 ---------- */
+let portrait=null;
+function fit(force){
+  const w=stage.clientWidth,h=stage.clientHeight; if(!w||!h)return;
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+  const p=window.innerHeight>window.innerWidth*1.05;
+  if(p!==portrait){portrait=p;D.portrait=p;layoutD();force=true}
+  if(!force){if(camera.view&&camera.view.enabled){camera.setViewOffset(w,h,camera.view.offsetX,0,w,h)}return}
+  const s=SC[cur]; let hw=s.hw,hh=s.hh,dir=s.dir.clone();
+  if(cur==='D'&&portrait){hw=2.3;hh=3.9;dir.set(0,1.5,1)}
+  const off=(!portrait&&w>760&&!$('#info').classList.contains('collapsed'))?Math.min(390,w*.34):0;
+  if(off)camera.setViewOffset(w,h,off/2,0,w,h);else camera.clearViewOffset();
+  const asp=(w-off)/h;
+  const tf=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+  const d=Math.max(hw/(tf*asp),hh/tf)*(portrait?1.12:1.02)+1.2;
+  camera.position.copy(s.target).addScaledVector(dir.normalize(),d); controls.target.copy(s.target); controls.update();
+}
+new ResizeObserver(()=>fit(false)).observe(stage);
+
+/* ---------- 누르기 ---------- */
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(); let down=null; const lastTap={x:0,y:0};
+canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};$('#hint').style.opacity=0});
+canvas.addEventListener('pointerup',e=>{
+  if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>8)return;
+  lastTap.x=e.clientX;lastTap.y=e.clientY;
+  const r=canvas.getBoundingClientRect(); ndc.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc,camera);
+  const hits=ray.intersectObjects(SC[cur].g.children,true);
+  for(const h of hits){let o=h.object;while(o&&!o.userData.tap)o=o.parent===SC[cur].g?null:o.parent;if(o&&o.visible){o.userData.tap();return}}
+  closePredict();
+});
+
+/* ---------- 루프 ---------- */
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000); last=now;
+  runTweens(dt);
+  if(cur==='A')A.spin.forEach(m=>m.rotation.y+=dt*.35);
+  if(cur==='B')B.apply();
+  updateD(dt);
+  controls.update(); renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+C.hm.forEach((g,j)=>g.userData.label.userData.text=GAM[j]);
+A.set(0); ctrlB(); B.apply();
+setScene('A');
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
