@@ -1,0 +1,22 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": "auth != null && auth.token.email === 'ADMIN_EMAIL' && auth.token.email_verified === true",
+
+    "votes": {
+      "$cid": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && root.child('state/phase').val() === 'open' && root.child('state/currentId').val() === $cid",
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+
+    "presence": {
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.isNumber()"
+      }
+    }
+  }
+}
