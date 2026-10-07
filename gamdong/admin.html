@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>진행자 화면</title>
+<link rel="stylesheet" href="css/common.css">
+<style>
+  body { background: var(--bg); }
+  .page { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 22px 16px 60px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  h1 { font-family: var(--serif); font-size: 22px; margin: 0; }
+  h1 span { color: var(--gold); }
+  .links { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .who { font-size: 12px; color: var(--muted); }
+
+  .grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+  .card + .card { margin-top: 16px; }
+  .card h2 { font-size: 15px; margin: 0 0 14px; color: var(--ink-2); font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+
+  .btn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 10px; padding: 9px 14px; cursor: pointer; font-size: 14px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  a.btn { color: var(--ink); }
+  .btn:hover { border-color: rgba(255,255,255,.25); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn.gold { background: var(--gold); color: #2b1a05; border-color: var(--gold); }
+  .btn.gold:hover { background: var(--gold-hi); }
+  .btn.ghost { background: transparent; }
+  .btn.danger { color: var(--danger); border-color: rgba(255,107,107,.35); background: transparent; }
+  .btn.sm { padding: 5px 9px; font-size: 12px; border-radius: 8px; }
+  .btn.xl { width: 100%; justify-content: center; padding: 18px; font-size: 19px; font-weight: 800; border-radius: 14px; }
+
+  input[type=text], input[type=number], select {
+    width: 100%; background: var(--bg-2); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 14px;
+  }
+  input:focus, select:focus { outline: 2px solid rgba(243,197,111,.5); outline-offset: 0; }
+  label.f { display: block; font-size: 12px; color: var(--muted); margin: 12px 0 6px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* 진행 컨트롤 */
+  .now-name { font-family: var(--serif); font-size: 28px; font-weight: 900; margin: 4px 0 2px; }
+  .now-song { color: var(--ink-2); font-size: 14px; min-height: 1.2em; }
+  .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 18px 0; }
+  .step { text-align: center; font-size: 12px; padding: 8px 2px; border-radius: 8px; background: var(--bg-2); color: var(--muted); border: 1px solid transparent; }
+  .step.done { color: var(--ink-2); }
+  .step.cur { background: rgba(243,197,111,.15); color: var(--gold-hi); border-color: rgba(243,197,111,.5); font-weight: 700; }
+  .live { display: flex; align-items: baseline; gap: 10px; padding: 14px 16px; background: var(--bg-2); border-radius: 12px; margin-bottom: 14px; }
+  .live .n { font-family: var(--serif); font-size: 44px; font-weight: 900; color: var(--gold-hi); font-variant-numeric: tabular-nums; line-height: 1; }
+  .live .t { color: var(--muted); font-size: 14px; }
+  .live .t b { color: var(--ink); }
+  .ctrl-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .note { font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 10px; }
+
+  /* 참가자 목록 */
+  .clist { display: flex; flex-direction: column; gap: 8px; }
+  .citem { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+  .citem.cur { border-color: rgba(243,197,111,.6); }
+  .citem .num { font-family: var(--serif); color: var(--gold); text-align: center; font-weight: 700; }
+  .citem .ins { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .citem .ins input { padding: 7px 9px; font-size: 13px; background: transparent; }
+  .citem .acts { display: flex; gap: 4px; align-items: center; }
+  .res { font-size: 12px; color: var(--gold-hi); font-weight: 700; min-width: 64px; text-align: right; }
+  .res.none { color: var(--muted); font-weight: 400; }
+  .add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-top: 12px; }
+  @media (max-width: 520px) { .add, .citem .ins { grid-template-columns: 1fr; } }
+
+  .chk { display: flex; gap: 8px; align-items: center; margin-top: 12px; font-size: 14px; }
+  .muted { color: var(--muted); font-size: 12px; }
+
+  /* 로그인 */
+  .gate { max-width: 420px; margin: 14vh auto; text-align: center; }
+  .gate p { color: var(--ink-2); line-height: 1.7; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--panel-2); border: 1px solid var(--line); padding: 10px 16px; border-radius: 10px; font-size: 14px; z-index: 60; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="spotlight"></div>
+<div class="page">
+  <header>
+    <h1>진행자 화면 · <span id="hTitle">감동 투표</span></h1>
+    <div class="links">
+      <a class="btn" href="stage.html" target="_blank">무대 화면 열기 ↗</a>
+      <a class="btn" href="index.html" target="_blank">관객 투표 화면 ↗</a>
+      <span class="who" id="who"></span>
+    </div>
+  </header>
+
+  <div id="gate" class="gate card hidden">
+    <h2 style="justify-content:center">진행자 로그인</h2>
+    <p id="gateMsg">투표를 진행하려면 진행자 구글 계정으로 로그인하세요.</p>
+    <button class="btn gold xl" id="loginBtn">구글 계정으로 로그인</button>
+  </div>
+
+  <div id="app" class="grid hidden">
+    <div>
+      <section class="card">
+        <h2>진행 <span class="muted" id="phaseText"></span></h2>
+        <select id="curSel"></select>
+        <div class="now-name" id="nowName">참가자를 추가하세요</div>
+        <div class="now-song" id="nowSong"></div>
+        <div class="steps" id="steps"></div>
+        <div class="live">
+          <div class="n" id="liveN">0</div>
+          <div class="t">명 감동 · 기준 관객 <b id="baseN">0</b>명<br><span class="muted" id="liveSub">진행자 화면에만 실시간으로 보입니다</span></div>
+        </div>
+        <button class="btn gold xl" id="mainBtn">무대 준비</button>
+        <div class="ctrl-row">
+          <button class="btn" id="backBtn">↶ 이전 단계</button>
+          <button class="btn" id="rankBtn">순위표 띄우기</button>
+          <button class="btn danger" id="revoteBtn">이 참가자 재투표</button>
+        </div>
+        <p class="note">순서: <b>무대 준비</b>(무대 화면에 이름 표시) → <b>투표 시작</b>(노래 시작 시) → <b>투표 마감</b> → <b>결과 공개</b>(숫자 카운트업) → <b>다음 참가자</b>. 결과를 공개하는 순간의 표 수가 기록됩니다.</p>
+      </section>
+
+      <section class="card" id="demoCard">
+        <h2>데모 도구 <span class="muted">Firebase 연결 전 리허설용</span></h2>
+        <p class="note" style="margin-top:0">지금은 이 컴퓨터의 브라우저 탭끼리만 연동됩니다. '관객 투표 화면'을 탭 여러 개로 열면 각 탭이 관객 1명입니다.</p>
+        <div class="ctrl-row">
+          <button class="btn" data-fake="1">가상 관객 표 +1</button>
+          <button class="btn" data-fake="10">가상 관객 표 +10</button>
+          <button class="btn" data-join="30">가상 관객 30명 접속</button>
+          <button class="btn danger" id="demoReset">데모 데이터 전부 지우기</button>
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <section class="card">
+        <h2>참가자 <span class="muted" id="cCount"></span></h2>
+        <div class="clist" id="clist"></div>
+        <form class="add" id="addForm">
+          <input type="text" id="addName" placeholder="이름 (예: 3학년 10반 김OO)" required>
+          <input type="text" id="addSong" placeholder="노래 제목 (선택)">
+          <button class="btn gold">추가</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>설정</h2>
+        <label class="f" for="setTitle">행사 제목</label>
+        <input type="text" id="setTitle" placeholder="예: 2026 한광창의융합제 노래 경연">
+        <div class="row2">
+          <div>
+            <label class="f" for="setTotal">기준 관객 수 (0 = 자동)</label>
+            <input type="number" id="setTotal" min="0" step="1" placeholder="0">
+          </div>
+          <div>
+            <label class="f" for="setRank">순위 기준</label>
+            <select id="setRank">
+              <option value="count">감동한 인원 수</option>
+              <option value="ratio">감동 비율(%)</option>
+            </select>
+          </div>
+        </div>
+        <p class="muted" style="margin-top:8px">자동이면 결과를 공개하는 순간 투표 화면을 켜 두고 있는 기기 수(지금 <b id="presN">0</b>대)를 기준으로 합니다. 무대마다 관객 수가 달라지면 '감동 비율'이 더 공정해요.</p>
+        <label class="chk"><input type="checkbox" id="setQR" checked> 무대 화면에 QR코드 표시</label>
+      </section>
+
+      <section class="card">
+        <h2>초기화</h2>
+        <div class="ctrl-row" style="margin-top:0">
+          <button class="btn danger" id="resetPresence">접속 기기 수 초기화</button>
+          <button class="btn danger" id="resetAll">모든 투표·결과 초기화</button>
+        </div>
+        <p class="note">리허설이 끝나면 '모든 투표·결과 초기화'를 눌러 본 행사를 시작하세요. 참가자 목록과 설정은 유지됩니다.</p>
+      </section>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-database-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/store.js"></script>
+<script src="js/ranking.js"></script>
+<script>
+(async function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const toast = (m) => { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2200); };
+
+  const PHASES = [
+    { k: "ready", label: "무대 준비" },
+    { k: "open", label: "투표 중" },
+    { k: "closed", label: "마감" },
+    { k: "revealed", label: "결과 공개" },
+    { k: "ranking", label: "순위표" }
+  ];
+
+  if (!GD.isDemo) $("demoCard").classList.add("hidden");
+  else document.body.insertAdjacentHTML("beforeend", '<div class="demo-badge">데모 모드 · js/config.js에 Firebase 정보를 넣으면 실제 투표가 됩니다</div>');
+
+  await GD.init();
+
+  let started = false;
+  GD.onAuth((u) => {
+    $("who").innerHTML = u ? `${esc(u.email)} ${GD.isDemo ? "" : '<button class="btn sm ghost" id="logout">로그아웃</button>'}` : "";
+    const lo = $("logout"); if (lo) lo.onclick = () => GD.adminSignOut();
+    if (u && u.isAdmin) {
+      $("gate").classList.add("hidden"); $("app").classList.remove("hidden");
+      if (!started) { started = true; start(); }
+    } else {
+      $("app").classList.add("hidden"); $("gate").classList.remove("hidden");
+      $("gateMsg").textContent = u ? `${u.email} 계정은 진행자로 등록되어 있지 않아요. js/config.js 와 보안 규칙의 진행자 이메일을 확인하세요.` : "투표를 진행하려면 진행자 구글 계정으로 로그인하세요.";
+    }
+  });
+  $("loginBtn").onclick = () => GD.adminSignIn().catch((e) => toast("로그인 실패: " + e.message));
+
+  function start() {
+    let state = {}, contestants = {}, config = {}, presence = 0, live = 0, unsubLive = null, liveFor = null;
+
+    GD.on("config", (c) => { config = c || {}; fillSettings(); renderControl(); });
+    GD.on("presence", (p) => { presence = p ? Object.keys(p).length : 0; $("presN").textContent = presence; renderControl(); });
+    GD.on("contestants", (c) => { contestants = c || {}; renderList(); renderControl(); });
+    GD.on("state", (s) => {
+      state = s || {};
+      if (state.currentId !== liveFor) {
+        if (unsubLive) unsubLive();
+        liveFor = state.currentId; live = 0;
+        if (liveFor) unsubLive = GD.on(`votes/${liveFor}`, (v) => { live = v ? Object.keys(v).length : 0; $("liveN").textContent = live; renderControl(); });
+      }
+      renderList(); renderControl();
+    });
+
+    // 기준 관객 수: 직접 입력값, 없으면 지금 투표 화면을 켜 둔 기기 수 (최소한 투표 수 이상)
+    const baseNow = () => (Number(config.totalAudience) > 0 ? Number(config.totalAudience) : Math.max(presence, live));
+    const list = () => GDRank.ordered(contestants);
+
+    // ---------- 진행 컨트롤
+    function renderControl() {
+      const L = list();
+      const sel = $("curSel");
+      sel.innerHTML = `<option value="">— 참가자 선택 —</option>` + L.map((c, i) => `<option value="${c.id}">${i + 1}. ${esc(c.name)}${typeof c.result === "number" ? " ✓" : ""}</option>`).join("");
+      sel.value = state.currentId && contestants[state.currentId] ? state.currentId : "";
+
+      const c = contestants[state.currentId];
+      $("nowName").textContent = c ? c.name : L.length ? "참가자를 선택하세요" : "참가자를 추가하세요";
+      $("nowSong").textContent = c ? c.song || "" : "";
+      const pi = PHASES.findIndex((p) => p.k === state.phase);
+      $("steps").innerHTML = PHASES.map((p, i) => `<div class="step ${i === pi ? "cur" : i < pi ? "done" : ""}">${p.label}</div>`).join("");
+      $("phaseText").textContent = c && pi >= 0 ? `현재: ${PHASES[pi].label}` : "";
+      const showBase = c && typeof c.result === "number" ? c.base : baseNow();
+      $("baseN").textContent = showBase;
+      $("liveSub").textContent = `지금 접속 중 ${presence}대 · 표 수는 진행자 화면에만 보입니다`;
+      if (c && typeof c.result === "number" && state.phase !== "open") $("liveN").textContent = live;
+
+      const mb = $("mainBtn");
+      mb.disabled = false;
+      const next = nextContestant();
+      if (!c) { mb.textContent = L.length ? "첫 참가자 무대 준비" : "참가자를 먼저 추가하세요"; mb.disabled = !L.length; mb.dataset.act = "first"; }
+      else if (state.phase === "ready") { mb.textContent = "▶ 투표 시작"; mb.dataset.act = "open"; }
+      else if (state.phase === "open") { mb.textContent = "■ 투표 마감"; mb.dataset.act = "close"; }
+      else if (state.phase === "closed") { mb.textContent = "★ 결과 공개"; mb.dataset.act = "reveal"; }
+      else if (next) { mb.textContent = `다음 참가자: ${next.name}`; mb.dataset.act = "next"; }
+      else { mb.textContent = state.phase === "ranking" ? "모든 무대 종료" : "최종 순위표 띄우기"; mb.dataset.act = state.phase === "ranking" ? "" : "rank"; mb.disabled = state.phase === "ranking"; }
+
+      $("backBtn").disabled = !c || !["open", "closed", "ranking"].includes(state.phase);
+      $("revoteBtn").disabled = !c;
+      $("rankBtn").disabled = state.phase === "ranking";
+    }
+
+    function nextContestant() {
+      const L = list();
+      const i = L.findIndex((x) => x.id === state.currentId);
+      return L.slice(i + 1).find((x) => typeof x.result !== "number") || L.find((x) => typeof x.result !== "number" && x.id !== state.currentId) || null;
+    }
+
+    const setState = (s) => GD.set("state", { ...s, updatedAt: Date.now() });
+
+    async function reveal() {
+      const cid = state.currentId;
+      const base = Math.max(baseNow(), live);
+      await GD.update(`contestants/${cid}`, { result: live, base, revealedAt: Date.now() });
+      await setState({ currentId: cid, phase: "revealed" });
+    }
+
+    $("mainBtn").onclick = async () => {
+      const a = $("mainBtn").dataset.act, cid = state.currentId;
+      if (a === "first") { const f = list().find((x) => typeof x.result !== "number") || list()[0]; await setState({ currentId: f.id, phase: "ready" }); }
+      else if (a === "open") await setState({ currentId: cid, phase: "open" });
+      else if (a === "close") await setState({ currentId: cid, phase: "closed" });
+      else if (a === "reveal") await reveal();
+      else if (a === "next") await setState({ currentId: nextContestant().id, phase: "ready" });
+      else if (a === "rank") await setState({ currentId: cid || null, phase: "ranking" });
+    };
+    $("backBtn").onclick = async () => {
+      const back = { open: "ready", closed: "open", ranking: contestants[state.currentId] && typeof contestants[state.currentId].result === "number" ? "revealed" : "ready" }[state.phase];
+      if (back) await setState({ currentId: state.currentId, phase: back });
+    };
+    $("rankBtn").onclick = () => setState({ currentId: state.currentId || null, phase: "ranking" });
+    $("curSel").onchange = async (e) => {
+      const id = e.target.value; if (!id) return;
+      if (state.phase === "open" && !confirm("투표가 진행 중입니다. 다른 참가자로 바꿀까요?")) { renderControl(); return; }
+      const c = contestants[id];
+      await setState({ currentId: id, phase: typeof c.result === "number" ? "revealed" : "ready" });
+    };
+    $("revoteBtn").onclick = async () => {
+      const c = contestants[state.currentId];
+      if (!c || !confirm(`${c.name} 님의 표와 결과를 모두 지우고 다시 투표할까요?`)) return;
+      await GD.remove(`votes/${state.currentId}`);
+      await GD.update(`contestants/${state.currentId}`, { result: null, base: null, revealedAt: null });
+      await setState({ currentId: state.currentId, phase: "ready" });
+      toast("재투표 준비 완료");
+    };
+
+    // ---------- 참가자 목록
+    function renderList() {
+      const L = list();
+      $("cCount").textContent = L.length ? `${L.length}명` : "";
+      if (document.activeElement && document.activeElement.closest && document.activeElement.closest("#clist")) return; // 입력 중엔 다시 그리지 않음
+      $("clist").innerHTML = L.length ? L.map((c, i) => `
+        <div class="citem ${c.id === state.currentId ? "cur" : ""}" data-id="${c.id}">
+          <div class="num">${i + 1}</div>
+          <div class="ins"><input type="text" data-f="name" value="${esc(c.name)}" aria-label="이름"><input type="text" data-f="song" value="${esc(c.song || "")}" placeholder="노래 제목" aria-label="노래 제목"></div>
+          <div class="acts">
+            <span class="res ${typeof c.result === "number" ? "" : "none"}">${typeof c.result === "number" ? `${c.result}/${c.base}명` : "미진행"}</span>
+            <button class="btn sm ghost" data-mv="-1" ${i === 0 ? "disabled" : ""} aria-label="위로">▲</button>
+            <button class="btn sm ghost" data-mv="1" ${i === L.length - 1 ? "disabled" : ""} aria-label="아래로">▼</button>
+            <button class="btn sm danger" data-del aria-label="삭제">✕</button>
+          </div>
+        </div>`).join("") : `<p class="muted" style="margin:0">아직 참가자가 없어요. 아래에서 추가하세요.</p>`;
+    }
+    $("clist").addEventListener("change", (e) => {
+      const f = e.target.dataset.f; if (!f) return;
+      const id = e.target.closest(".citem").dataset.id;
+      const v = e.target.value.trim();
+      if (f === "name" && !v) { e.target.value = contestants[id].name; return; }
+      GD.update(`contestants/${id}`, { [f]: v });
+    });
+    $("clist").addEventListener("focusout", () => setTimeout(() => { if (!document.activeElement.closest("#clist")) renderList(); }, 0));
+    $("clist").addEventListener("click", async (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      const id = b.closest(".citem").dataset.id;
+      if (b.dataset.mv) {
+        const L = list(); const i = L.findIndex((x) => x.id === id); const j = i + Number(b.dataset.mv);
+        const upd = {}; L.forEach((x, k) => (upd[`${x.id}/order`] = k));
+        upd[`${L[i].id}/order`] = j; upd[`${L[j].id}/order`] = i;
+        await GD.update("contestants", upd);
+      }
+      if (b.hasAttribute("data-del")) {
+        if (!confirm(`${contestants[id].name} 님을 삭제할까요? 표도 함께 지워집니다.`)) return;
+        if (state.currentId === id) await GD.set("state", null);
+        await GD.remove(`votes/${id}`); await GD.remove(`contestants/${id}`);
+      }
+    });
+    $("addForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const name = $("addName").value.trim(), song = $("addSong").value.trim();
+      if (!name) return;
+      const L = list();
+      await GD.set(`contestants/${GD.newId()}`, { name, song, order: L.length ? Math.max(...L.map((x) => x.order ?? 0)) + 1 : 0, createdAt: Date.now() });
+      $("addName").value = ""; $("addSong").value = ""; $("addName").focus();
+    };
+
+    // ---------- 설정
+    function fillSettings() {
+      $("hTitle").textContent = config.title || "감동 투표";
+      if (document.activeElement !== $("setTitle")) $("setTitle").value = config.title || "";
+      if (document.activeElement !== $("setTotal")) $("setTotal").value = config.totalAudience || 0;
+      $("setRank").value = config.rankBy || "count";
+      $("setQR").checked = config.showQR !== false;
+    }
+    $("setTitle").onchange = (e) => GD.update("config", { title: e.target.value.trim() });
+    $("setTotal").onchange = (e) => GD.update("config", { totalAudience: Math.max(0, parseInt(e.target.value, 10) || 0) });
+    $("setRank").onchange = (e) => GD.update("config", { rankBy: e.target.value });
+    $("setQR").onchange = (e) => GD.update("config", { showQR: e.target.checked });
+
+    // ---------- 초기화
+    $("resetPresence").onclick = async () => { if (confirm("접속 기기 수를 0으로 초기화할까요? 지금 켜 둔 기기는 몇 초 안에 다시 집계됩니다.")) { await GD.remove("presence"); toast("초기화했습니다"); } };
+    $("resetAll").onclick = async () => {
+      if (!confirm("모든 표와 결과, 진행 상태를 지웁니다. 참가자 목록과 설정은 남습니다. 계속할까요?")) return;
+      await GD.remove("votes"); await GD.remove("state");
+      const upd = {}; Object.keys(contestants).forEach((id) => { upd[`${id}/result`] = null; upd[`${id}/base`] = null; upd[`${id}/revealedAt`] = null; });
+      if (Object.keys(upd).length) await GD.update("contestants", upd);
+      toast("모든 투표를 초기화했습니다");
+    };
+
+    // ---------- 데모 도구
+    if (GD.isDemo) {
+      document.querySelectorAll("[data-fake]").forEach((b) => (b.onclick = async () => {
+        if (state.phase !== "open") return toast("투표 중일 때만 표를 넣을 수 있어요");
+        const upd = {}; for (let i = 0; i < Number(b.dataset.fake); i++) upd[`fake-${GD.newId()}${i}`] = Date.now();
+        await GD.update(`votes/${state.currentId}`, upd);
+      }));
+      document.querySelectorAll("[data-join]").forEach((b) => (b.onclick = async () => {
+        const upd = {}; for (let i = 0; i < Number(b.dataset.join); i++) upd[`fake-${GD.newId()}${i}`] = Date.now();
+        await GD.update("presence", upd);
+      }));
+      $("demoReset").onclick = () => { if (confirm("데모 데이터를 모두 지울까요?")) GD.resetDemo(); };
+    }
+  }
+})();
+</script>
+</body>
+</html>
