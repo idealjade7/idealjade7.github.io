@@ -53,13 +53,42 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-weight:700;font-size:14px}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.ctabs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:22px}
+.clabel{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);margin-right:4px}
+.ctab{display:inline-flex;align-items:baseline;gap:7px;border:1.5px solid var(--ink);background:var(--surface);border-radius:8px;padding:5px 12px;font-weight:700;font-size:14px}
+.ctab .n{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted)}
+.ctab[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ctab[aria-pressed="true"] .n{color:var(--accent-ink)}
+.gtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:10px;border:1.5px solid var(--ink);border-radius:12px;overflow:hidden}
+.gtab{border:0;border-left:1.5px solid var(--ink);background:var(--surface);padding:10px 6px;font-weight:700;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.3}
+.gtab:first-child{border-left:0}
+.gtab small{font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--muted)}
+.gtab[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.gtab[aria-pressed="true"] small{color:var(--bg);opacity:.8}
+.units{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.units:empty{display:none}
+.uchip{display:inline-flex;align-items:baseline;gap:6px;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13.5px;font-weight:700;text-align:left}
+.uchip .no{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.uchip .n{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent)}
+.uchip.soon{color:var(--muted);font-weight:500;border-style:dashed}
+.uchip.soon .n{color:var(--muted)}
+.uchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.uchip[aria-pressed="true"] .no,.uchip[aria-pressed="true"] .n{color:var(--accent-ink)}
+.ghead{display:flex;align-items:baseline;gap:12px;margin-top:40px;padding-bottom:6px;border-bottom:2px solid var(--ink)}
+.ghead h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,4vw,38px);line-height:1.1;margin:0}
+.ghead span{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.ghead+.unit{margin-top:18px}
+.soonbox{margin-top:22px;padding:14px 16px;border:1.5px dashed var(--line);border-radius:12px;color:var(--muted);font-size:14px}
+.soonbox b{color:var(--ink)}
+.soonbox ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:4px 16px}
+.soonbox .no{font-family:var(--mono);font-size:12px;margin-right:4px}
 .count{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:4px 0 0}
 
 /* 단원 */
 .unit{margin-top:34px}
 .unit-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:16px}
 .grade{font-family:var(--mono);font-size:12.5px;font-weight:500;letter-spacing:.06em;border:1.5px solid var(--ink);border-radius:6px;padding:1px 7px}
-.unit-head h2{font-family:var(--display);font-weight:400;font-size:clamp(24px,3.4vw,30px);line-height:1.2;margin:0}
+.unit-head h3{font-family:var(--display);font-weight:400;font-size:clamp(24px,3.4vw,30px);line-height:1.2;margin:0}
 .unit-head p{margin:0;color:var(--muted);font-size:14px;flex-basis:100%}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
 
@@ -70,7 +99,7 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
 .thumb .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:34px;color:#e2eee8;background:radial-gradient(ellipse at 50% 40%,#1d3a2e,#0b1712 70%)}
 .code{position:absolute;z-index:2;left:10px;top:10px;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;background:rgba(255,255,255,.92);color:#10201b;border-radius:4px;padding:2px 7px}
 .body{display:flex;flex-direction:column;gap:8px;padding:14px 16px 16px;flex:1}
-.body h3{margin:0;font-size:18px;line-height:1.35;text-wrap:balance}
+.body h4{margin:0;font-size:18px;line-height:1.35;text-wrap:balance}
 .body p{margin:0;color:var(--muted);font-size:14px}
 .tags{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 0;padding:0;list-style:none}
 .tags li{background:var(--tag);color:var(--tag-ink);border-radius:6px;padding:1px 8px;font-size:12.5px;font-weight:500}
@@ -99,6 +128,9 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
 #qrMake{position:absolute;left:-9999px;top:0}
 
 @media (max-width:520px){
+  .gtab{font-size:14px;padding:8px 2px}
+  .units{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;margin-inline:-16px;padding-inline:16px;scrollbar-width:thin}
+  .uchip{flex:none}
   .wrap{padding-block:18px 40px}
   .grid{grid-template-columns:1fr}
 }
@@ -111,17 +143,20 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
     <div class="id">
       <p class="eyebrow">MIDDLE SCHOOL SCIENCE · 3D</p>
       <h1>3D 과학 실험실</h1>
-      <p class="lead">단원별 3D 수업 콘텐츠를 모아 둔 곳이에요. 콘텐츠를 눌러 바로 열거나, ‘QR’ 버튼으로 휴대폰·태블릿 접속 코드를 크게 띄울 수 있어요.</p>
+      <p class="lead">학년별·단원별 3D 수업 콘텐츠를 모아 둔 곳이에요. 콘텐츠를 눌러 바로 열거나, ‘QR’ 버튼으로 휴대폰·태블릿 접속 코드를 크게 띄울 수 있어요.</p>
     </div>
     <button class="btn" id="hubQR" type="button">이 페이지 QR</button>
   </header>
 
+  <div class="ctabs" id="ctabs" role="group" aria-label="교육과정"></div>
+  <nav class="gtabs" id="gtabs" aria-label="학년"></nav>
+  <div class="units" id="units" role="group" aria-label="단원"></div>
   <div class="tools">
     <label class="search" for="q">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
       <input id="q" type="search" placeholder="제목이나 개념으로 찾기 (예: 분리의 법칙)" autocomplete="off">
     </label>
-    <div class="chips" id="grades" role="group" aria-label="학년"></div>
+    <button class="btn" id="viewQR" type="button">지금 보는 목록 QR</button>
   </div>
   <p class="count" id="count"></p>
 
@@ -132,21 +167,21 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
     <ol>
       <li>새로 만든 웹앱 파일(예: <code>circuit.html</code>)을 GitHub 저장소에 올려요. 화면 사진을 쓰려면 <code>thumbs</code> 폴더에 같은 이름의 <code>.jpg</code>도 올려요. 사진이 없으면 제목 글자로 대신 보여 줘요.</li>
       <li>저장소에서 <code>index.html</code>을 열고 연필 아이콘(편집)을 눌러요.</li>
-      <li>아래쪽 <code>const APPS = [</code> 목록에 다음 한 덩어리를 복사해 붙이고 내용을 바꿔요. 새 단원이면 <code>const UNITS = [</code>에도 한 줄 추가해요.</li>
+      <li>아래쪽 <code>const APPS = [</code> 목록에 다음 한 덩어리를 복사해 붙이고 내용을 바꿔요. <code>unit</code>에는 단원 id(<code>'교육과정-학년-단원번호'</code>, 예: <code>'2022-2-7'</code> = 2022 개정 2학년 Ⅶ단원)를 적어요. 두 교육과정에 모두 보이게 하려면 <code>unit: ['2015-3-5', '2022-3-4']</code>처럼 함께 적어요. 새 단원이면 <code>const UNITS = [</code>에도 한 줄 추가해요.</li>
       <li><b>Commit changes</b>를 누르고 1~2분 기다리면 이 페이지에 새 카드가 나타나요.</li>
     </ol>
     <p><b>잠깐 숨기기</b> · 지우지 않고 첫 화면에서만 내리려면, <code>APPS</code> 목록에서 그 콘텐츠 덩어리 안에 <code>hidden: true,</code> 한 줄을 넣고 Commit changes를 눌러요. 파일과 주소는 그대로라서 이미 나눠 준 QR은 계속 열려요. 다시 보이게 하려면 그 줄을 지워요.</p>
     <div class="snip"><pre id="snipHide">  hidden: true,</pre><button class="btn" type="button" data-copy="snipHide">복사</button></div>
     <div class="snip"><pre id="snipApp">{
   file: 'circuit.html',            // 올린 파일 이름
-  unit: 'electricity',             // 아래 UNITS의 id
+  unit: '2022-2-7',                // 단원 id (교육과정-학년-단원번호)
   title: '전기 회로 3D',
   desc: '한두 문장으로 무엇을 할 수 있는지 적어요.',
   tags: ['옴의 법칙', '직렬·병렬'],
   thumb: 'thumbs/circuit.jpg',     // 없으면 이 줄을 지워요
   // hidden: true,                 // 숨기려면 맨 앞 // 를 지워요
 },</pre><button class="btn" type="button" data-copy="snipApp">복사</button></div>
-    <div class="snip"><pre id="snipUnit">{ id: 'electricity', grade: 2, name: '전기와 자기', note: '' },</pre><button class="btn" type="button" data-copy="snipUnit">복사</button></div>
+    <div class="snip"><pre id="snipUnit">{ id: '2022-3-1', cur: '2022', grade: 3, no: 'Ⅰ', name: '단원 이름' },</pre><button class="btn" type="button" data-copy="snipUnit">복사</button></div>
   </details>
 
   <p class="foot" id="foot"></p>
@@ -169,15 +204,59 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
 const SITE = 'https://idealjade7.github.io/';
 
 /* ============================================================
-   여기만 고치면 돼요 ② 단원 목록 (위에서부터 이 순서로 보여요)
-   grade: 학년(1, 2, 3)
+   여기만 고치면 돼요 ② 교육과정
+   DEFAULT_CUR: 처음 열었을 때 보여 줄 교육과정이에요.
+   (3학년까지 2022 개정이 되면 '2022'로 바꿔요)
    ============================================================ */
-const UNITS = [
-  { id: 'reproduction', grade: 3, name: '생식과 유전', note: '세포 분열 · 멘델의 유전 원리' },
+const CURRICULA = [
+  { id: '2022', name: '2022 개정' },
+  { id: '2015', name: '2015 개정' },
 ];
+const DEFAULT_CUR = '2015';
 
 /* ============================================================
-   여기만 고치면 돼요 ③ 콘텐츠 목록 (단원 안에서 이 순서로 보여요)
+   여기만 고치면 돼요 ③ 단원 목록
+   id 규칙: '교육과정-학년-단원번호'  예) '2022-2-3' = 2022 개정 2학년 Ⅲ단원
+   콘텐츠가 없는 단원은 학년을 고르면 ‘준비 중’으로 보여요.
+   ============================================================ */
+const UNITS = [
+  // ── 2022 개정 · 1학년
+  { id: '2022-1-1', cur: '2022', grade: 1, no: 'Ⅰ', name: '과학과 인류의 지속가능한 삶' },
+  { id: '2022-1-2', cur: '2022', grade: 1, no: 'Ⅱ', name: '생물의 구성과 다양성' },
+  { id: '2022-1-3', cur: '2022', grade: 1, no: 'Ⅲ', name: '열' },
+  { id: '2022-1-4', cur: '2022', grade: 1, no: 'Ⅳ', name: '물질의 상태 변화' },
+  { id: '2022-1-5', cur: '2022', grade: 1, no: 'Ⅴ', name: '힘의 작용' },
+  { id: '2022-1-6', cur: '2022', grade: 1, no: 'Ⅵ', name: '기체의 성질' },
+  { id: '2022-1-7', cur: '2022', grade: 1, no: 'Ⅶ', name: '태양계' },
+  // ── 2022 개정 · 2학년
+  { id: '2022-2-1', cur: '2022', grade: 2, no: 'Ⅰ', name: '물질의 특성' },
+  { id: '2022-2-2', cur: '2022', grade: 2, no: 'Ⅱ', name: '지권의 변화' },
+  { id: '2022-2-3', cur: '2022', grade: 2, no: 'Ⅲ', name: '빛과 파동' },
+  { id: '2022-2-4', cur: '2022', grade: 2, no: 'Ⅳ', name: '물질의 구성' },
+  { id: '2022-2-5', cur: '2022', grade: 2, no: 'Ⅴ', name: '식물과 에너지' },
+  { id: '2022-2-6', cur: '2022', grade: 2, no: 'Ⅵ', name: '동물과 에너지' },
+  { id: '2022-2-7', cur: '2022', grade: 2, no: 'Ⅶ', name: '전기와 자기' },
+  { id: '2022-2-8', cur: '2022', grade: 2, no: 'Ⅷ', name: '별과 우주' },
+  // ── 2022 개정 · 3학년 (교과서 차례가 정해지면 위와 같은 모양으로 넣어요)
+
+  // ── 2015 개정 · 3학년 (과학 3)
+  { id: '2015-3-1', cur: '2015', grade: 3, no: 'Ⅰ', name: '화학 반응의 규칙과 에너지 변화' },
+  { id: '2015-3-2', cur: '2015', grade: 3, no: 'Ⅱ', name: '기권과 날씨' },
+  { id: '2015-3-3', cur: '2015', grade: 3, no: 'Ⅲ', name: '운동과 에너지' },
+  { id: '2015-3-4', cur: '2015', grade: 3, no: 'Ⅳ', name: '자극과 반응' },
+  { id: '2015-3-5', cur: '2015', grade: 3, no: 'Ⅴ', name: '생식과 유전', note: '세포 분열 · 멘델의 유전 원리' },
+  { id: '2015-3-6', cur: '2015', grade: 3, no: 'Ⅵ', name: '에너지 전환과 보존' },
+  { id: '2015-3-7', cur: '2015', grade: 3, no: 'Ⅶ', name: '별과 우주' },
+  { id: '2015-3-8', cur: '2015', grade: 3, no: 'Ⅷ', name: '과학기술과 인류 문명' },
+];
+
+/* 첫 화면 위쪽 학년 칸 */
+const GRADES = [1, 2, 3];
+
+/* ============================================================
+   여기만 고치면 돼요 ④ 콘텐츠 목록 (단원 안에서 이 순서로 보여요)
+   unit: 위 단원 id. 두 교육과정에 모두 보이게 하려면
+         unit: ['2015-3-5', '2022-3-?'] 처럼 [ ] 안에 함께 적어요.
    잠깐 내리고 싶으면 해당 덩어리에 hidden: true, 한 줄을 넣어요.
    파일과 주소(QR)는 그대로 살아 있고, 첫 화면에서만 사라져요.
    다시 보이게 하려면 그 줄을 지우거나 false로 바꿔요.
@@ -185,7 +264,7 @@ const UNITS = [
 const APPS = [
   {
     file: 'mitosis.html',
-    unit: 'reproduction',
+    unit: '2015-3-5',
     title: '체세포 분열 3D 관찰실',
     desc: '염색체 4개(2n=4)인 세포가 분열하는 과정을 영상처럼 보거나 시기마다 직접 눌러 진행해요. 식물 세포와 동물 세포를 비교할 수 있어요.',
     tags: ['체세포 분열', '염색체', '방추사', '식물·동물 세포'],
@@ -193,7 +272,7 @@ const APPS = [
   },
   {
     file: 'mendel-shape.html',
-    unit: 'reproduction',
+    unit: '2015-3-5',
     title: '완두 모양 3D 실험실',
     desc: '완두 모양(R, r) 한 가지 형질로 순종 교배, 감수 분열, F2, 바둑알 모의 활동을 직접 해 봐요. 염색체를 끌어 대립유전자를 나눠 봐요.',
     tags: ['우열의 원리', '분리의 법칙', '감수 분열', '바둑알 모의 활동'],
@@ -201,8 +280,7 @@ const APPS = [
   },
   {
     file: 'mendel.html',
-      hidden: true,
-    unit: 'reproduction',
+    unit: '2015-3-5',
     title: '완두 유전 3D 실험실',
     desc: '완두의 모양(R, r)과 색(Y, y) 두 가지 형질로 F2 바둑판을 채우고, 많이 심을수록 9 : 3 : 3 : 1에 가까워지는지 확인해요.',
     tags: ['독립의 법칙', '두 가지 형질', '9 : 3 : 3 : 1'],
@@ -218,41 +296,85 @@ const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const base=SITE.endsWith('/')?SITE:SITE+'/';
 const urlOf=a=>/^https?:/.test(a.file)?a.file:base+a.file;
 const SHOWN=APPS.filter(a=>a&&a.hidden!==true);
-const unitOf=id=>UNITS.find(u=>u.id===id)||{id,grade:0,name:'기타',note:''};
-const grades=[...new Set(UNITS.filter(u=>SHOWN.some(a=>a.unit===u.id)).map(u=>u.grade))].sort();
-let grade=0;try{grade=+(localStorage.getItem('hub-grade')||0)}catch(e){}
-if(grade&&!grades.includes(grade))grade=0;
-
-function chips(){
-  const opts=[0,...grades];
-  $('#grades').innerHTML=opts.map(g=>'<button class="chip" type="button" data-g="'+g+'" aria-pressed="'+(g===grade)+'">'+(g?'중'+g:'전체')+'</button>').join('');
-  $('#grades').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{grade=+b.dataset.g;try{localStorage.setItem('hub-grade',grade)}catch(e){}chips();render()});
+const curName=c=>(CURRICULA.find(x=>x.id===c)||{name:c+' 개정'}).name;
+const unitOf=id=>UNITS.find(u=>u.id===id)||{id,cur:DEFAULT_CUR,grade:0,name:'기타',note:''};
+const unitsOfApp=a=>[].concat(a.unit||[]).filter(Boolean);
+const ROMAN={'Ⅰ':1,'Ⅱ':2,'Ⅲ':3,'Ⅳ':4,'Ⅴ':5,'Ⅵ':6,'Ⅶ':7,'Ⅷ':8,'Ⅸ':9,'Ⅹ':10};
+const noVal=u=>{const v=String(u.no||'').trim();return ROMAN[v]||parseFloat(v)||99};
+const orphan=[...new Set(SHOWN.flatMap(unitsOfApp))].filter(id=>!UNITS.some(u=>u.id===id)).map(unitOf);
+const ALLU=[...UNITS,...orphan].map((u,k)=>Object.assign({k,cur:u.cur||DEFAULT_CUR},u))
+  .sort((a,b)=>(a.grade||9)-(b.grade||9)||noVal(a)-noVal(b)||a.k-b.k);
+const appsIn=id=>SHOWN.filter(a=>unitsOfApp(a).includes(id));
+const appsWhere=f=>SHOWN.filter(a=>unitsOfApp(a).some(id=>f(unitOf(id)))).length;
+const gName=g=>g?g+'학년':'기타';
+const uLabel=u=>(u.no?u.no+'. ':'')+u.name;
+let cur=DEFAULT_CUR,grade=0,unit='';
+try{cur=localStorage.getItem('hub-cur')||cur;grade=+(localStorage.getItem('hub-grade')||0);unit=localStorage.getItem('hub-unit')||''}catch(e){}
+function fromHash(){const h=decodeURIComponent(location.hash.slice(1));let m;
+  if((m=h.match(/^c(\d{4})(?:-g(\d))?$/))){cur=m[1];grade=+(m[2]||0);unit=''}
+  else if(h.startsWith('u-')){const u=ALLU.find(x=>x.id===h.slice(2));if(u){unit=u.id;grade=u.grade||0;cur=u.cur}}}
+fromHash();
+if(!CURRICULA.some(c=>c.id===cur))cur=DEFAULT_CUR;
+if(unit&&!ALLU.some(u=>u.id===unit&&u.cur===cur))unit='';
+const viewHash=()=>unit?'#u-'+unit:'#c'+cur+(grade?'-g'+grade:'');
+function save(){try{localStorage.setItem('hub-cur',cur);localStorage.setItem('hub-grade',grade);localStorage.setItem('hub-unit',unit)}catch(e){}
+  try{history.replaceState(null,'',location.pathname+location.search+viewHash())}catch(e){}}
+function nav(){
+  $('#ctabs').innerHTML='<span class="clabel">교육과정</span>'+CURRICULA.map(c=>{const n=appsWhere(u=>u.cur===c.id);
+    return '<button class="ctab" type="button" data-c="'+esc(c.id)+'" aria-pressed="'+(c.id===cur)+'">'+esc(c.name)+'<span class="n">'+n+'</span></button>'}).join('');
+  const tabs=[0,...GRADES];
+  $('#gtabs').innerHTML=tabs.map(g=>{const n=appsWhere(u=>u.cur===cur&&(!g||u.grade===g));const has=ALLU.some(u=>u.cur===cur&&(!g||u.grade===g));
+    return '<button class="gtab" type="button" data-g="'+g+'" aria-pressed="'+(g===grade)+'">'+(g?g+'학년':'전체')+'<small>'+(n?n+'개':has?'준비 중':'단원 없음')+'</small></button>'}).join('');
+  const us=ALLU.filter(u=>u.cur===cur&&(grade?u.grade===grade:appsIn(u.id).length));
+  $('#units').innerHTML=us.length?'<button class="uchip" type="button" data-u="" aria-pressed="'+(!unit)+'">'+(grade?grade+'학년 ':'')+'모든 단원</button>'+us.map(u=>{const n=appsIn(u.id).length;
+    return '<button class="uchip'+(n?'':' soon')+'" type="button" data-u="'+esc(u.id)+'" aria-pressed="'+(unit===u.id)+'">'+(u.no?'<span class="no">'+esc(u.no)+'</span>':'')+
+      (!grade&&u.grade?'<span class="no">'+u.grade+'학년</span>':'')+esc(u.name)+'<span class="n">'+(n||'준비 중')+'</span></button>'}).join(''):'';
+  $('#ctabs').querySelectorAll('.ctab').forEach(b=>b.onclick=()=>{cur=b.dataset.c;unit='';if(grade&&!ALLU.some(u=>u.cur===cur&&u.grade===grade))grade=0;save();nav();render()});
+  $('#gtabs').querySelectorAll('.gtab').forEach(b=>b.onclick=()=>{grade=+b.dataset.g;unit='';save();nav();render()});
+  $('#units').querySelectorAll('.uchip').forEach(b=>b.onclick=()=>{unit=unit===b.dataset.u?'':b.dataset.u;save();nav();render()});
 }
-function match(a,q){if(!q)return true;const u=unitOf(a.unit);return [a.title,a.desc,u.name,(a.tags||[]).join(' ')].join(' ').toLowerCase().includes(q)}
+function match(a,q){if(!q)return true;return [a.title,a.desc,unitsOfApp(a).map(id=>unitOf(id).name).join(' '),(a.tags||[]).join(' ')].join(' ').toLowerCase().includes(q)}
 function card(a,u,n){
-  const code=(u.grade?'중'+u.grade+' · ':'')+u.name+' · '+String(n).padStart(2,'0');
+  const code=(u.grade?'중'+u.grade+' · ':'')+(u.no?u.no+' · ':u.name+' · ')+String(n).padStart(2,'0');
   const ph='<div class="ph" aria-hidden="true">'+esc(a.title.slice(0,2))+'</div>';
   return '<article class="card"><a class="thumb" href="'+esc(urlOf(a))+'" target="_blank" rel="noopener" aria-label="'+esc(a.title)+' 열기">'+ph+
     (a.thumb?'<img src="'+esc(a.thumb)+'" alt="" loading="lazy" onerror="this.remove()">':'')+
-    '<span class="code">'+esc(code)+'</span></a><div class="body"><h3>'+esc(a.title)+'</h3><p>'+esc(a.desc||'')+'</p>'+
+    '<span class="code">'+esc(code)+'</span></a><div class="body"><h4>'+esc(a.title)+'</h4><p>'+esc(a.desc||'')+'</p>'+
     (a.tags&&a.tags.length?'<ul class="tags">'+a.tags.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>':'')+
     '<div class="acts"><a class="btn primary" href="'+esc(urlOf(a))+'" target="_blank" rel="noopener">열기 ↗</a><button class="btn" type="button" data-qr="'+esc(a.file)+'">QR 띄우기</button></div></div></article>';
 }
+function unitHTML(u,list,all){
+  return '<section class="unit" aria-labelledby="u-'+esc(u.id)+'"><div class="unit-head">'+(u.grade?'<span class="grade">중'+u.grade+(u.no?' · '+esc(u.no):'')+'</span>':'')+
+    '<h3 id="u-'+esc(u.id)+'">'+esc(u.name)+'</h3>'+(u.note?'<p>'+esc(u.note)+'</p>':'')+'</div><div class="grid">'+
+    list.map(a=>card(a,u,all.indexOf(a)+1)).join('')+'</div></section>';
+}
 function render(){
   const q=$('#q').value.trim().toLowerCase();
-  const units=[...UNITS,...SHOWN.filter(a=>!UNITS.some(u=>u.id===a.unit)).map(a=>unitOf(a.unit)).filter((u,i,arr)=>arr.findIndex(x=>x.id===u.id)===i)];
-  let h='',total=0;
-  units.forEach(u=>{
-    if(grade&&u.grade!==grade)return;
-    const all=SHOWN.filter(a=>a.unit===u.id);
-    const list=all.filter(a=>match(a,q));
-    if(!list.length)return;total+=list.length;
-    h+='<section class="unit" aria-labelledby="u-'+esc(u.id)+'"><div class="unit-head">'+(u.grade?'<span class="grade">중'+u.grade+'</span>':'')+
-      '<h2 id="u-'+esc(u.id)+'">'+esc(u.name)+'</h2>'+(u.note?'<p>'+esc(u.note)+'</p>':'')+'</div><div class="grid">'+
-      list.map(a=>card(a,u,all.indexOf(a)+1)).join('')+'</div></section>';
+  let h='';const seen=new Set();
+  const CU=ALLU.filter(u=>u.cur===cur);
+  const gs=[...new Set(CU.map(u=>u.grade||0))].filter(g=>!grade||g===grade);
+  gs.forEach(g=>{
+    let gh='',soon=[];
+    CU.filter(u=>(u.grade||0)===g&&(!unit||u.id===unit)).forEach(u=>{
+      const all=appsIn(u.id),list=all.filter(a=>match(a,q));
+      if(!all.length){soon.push(u);return}
+      if(!list.length)return;list.forEach(a=>seen.add(a));gh+=unitHTML(u,list,all);
+    });
+    if(unit&&!gh&&soon.length&&!q){gh='<div class="soonbox"><b>'+esc(uLabel(soon[0]))+'</b> 단원은 콘텐츠를 준비 중이에요.</div>';soon=[]}
+    const showSoon=grade&&!unit&&!q&&soon.length;
+    if(!gh&&!showSoon)return;
+    if(!unit)h+='<div class="ghead"><h2>'+gName(g)+'</h2><span>'+esc(curName(cur))+' · 콘텐츠 '+appsWhere(u=>u.cur===cur&&(u.grade||0)===g)+'개</span></div>';
+    h+=gh;
+    if(showSoon)h+='<div class="soonbox"><b>준비 중인 단원</b><ul>'+soon.map(u=>'<li>'+(u.no?'<span class="no">'+esc(u.no)+'</span>':'')+esc(u.name)+'</li>').join('')+'</ul></div>';
   });
-  $('#list').innerHTML=h||'<div class="empty">‘'+esc($('#q').value)+'’에 맞는 콘텐츠가 없어요. 다른 낱말로 찾아보거나 학년을 ‘전체’로 바꿔 보세요.</div>';
-  $('#count').textContent=(q||grade?'찾은 콘텐츠 ':'콘텐츠 ')+total+'개'+(q||grade?' / 전체 '+SHOWN.length+'개':'');
+  if(!h){
+    if(q)h='<div class="empty">'+esc(curName(cur))+'에서 ‘'+esc($('#q').value)+'’에 맞는 콘텐츠가 없어요. 다른 낱말로 찾아보거나 다른 교육과정을 골라 보세요.</div>';
+    else if(grade&&!CU.some(u=>u.grade===grade))h='<div class="empty">'+esc(curName(cur))+' '+grade+'학년 단원은 아직 등록하지 않았어요.</div>';
+    else h='<div class="empty">'+esc(curName(cur))+(grade?' '+grade+'학년':'')+'에는 아직 등록한 콘텐츠가 없어요. 학년을 골라 단원 목록을 확인해 보세요.</div>';
+  }
+  $('#list').innerHTML=h;
+  const scope=curName(cur)+(unit?' · '+uLabel(unitOf(unit)):grade?' · '+grade+'학년':'');
+  $('#count').textContent=scope+' · '+(q?'찾은 콘텐츠 ':'콘텐츠 ')+seen.size+'개';
   $('#list').querySelectorAll('[data-qr]').forEach(b=>b.onclick=()=>{const a=SHOWN.find(x=>x.file===b.dataset.qr);showQR(a.title,urlOf(a),b)});
 }
 let lastFocus=null;
@@ -268,6 +390,8 @@ function closeQR(){$('#qr').hidden=true;if(lastFocus)lastFocus.focus()}
 $('#qrClose').onclick=closeQR;
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#qr').hidden)closeQR()});
 $('#hubQR').onclick=e=>showQR('3D 과학 실험실',base,e.currentTarget);
+$('#viewQR').onclick=e=>{const t=curName(cur)+(unit?' · '+uLabel(unitOf(unit)):grade?' · '+grade+'학년':'');showQR('3D 과학 실험실 · '+t,base+viewHash(),e.currentTarget)};
+window.addEventListener('hashchange',()=>{fromHash();nav();render()});
 $('#q').addEventListener('input',render);
 document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{
   const el=document.getElementById(b.dataset.copy),t=el.textContent;
@@ -276,7 +400,7 @@ document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{
   try{navigator.clipboard.writeText(t).then(done,sel)}catch(e){sel()}
 });
 $('#foot').textContent='사이트 주소 · '+base;
-chips();render();
+nav();render();
 })();
 </script>
 </body>
