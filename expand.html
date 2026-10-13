@@ -219,7 +219,7 @@ table.t th{color:#c3c9e8}
 <footer class="dock">
   <nav class="tabs" id="tabs" aria-label="활동 단계">
     <button data-sc="A">① 풍선 실험<small>스티커 사이 거리</small></button>
-    <button data-sc="B">② 체조 대형<small>누가 중심일까?</small></button>
+    <button data-sc="B">② 늘어나는 바닥<small>공간이 늘어나요</small></button>
     <button data-sc="C">③ 건포도 빵과 우주<small>개미의 눈으로 보기</small></button>
     <button data-sc="D">④ 대폭발 우주론<small>우주의 과거와 미래</small></button>
   </nav>
@@ -231,10 +231,9 @@ table.t th{color:#c3c9e8}
     <button class="tbtn" id="aReset">다시</button>
   </div>
   <div class="ctrl" data-for="B">
-    <button class="tbtn go" id="bSpread">🙆 체조 대형으로 벌려!</button>
-    <button class="tbtn" id="bGather">모여!</button>
+    <button class="tbtn go" id="bSpread">↔ 바닥 늘리기</button>
+    <button class="tbtn" id="bGather">원래대로</button>
     <label><input type="checkbox" id="bFP">👁 ‘나’의 눈으로 보기</label>
-    <label><input type="checkbox" id="bArrow" checked>움직인 화살표</label>
     <button class="tbtn" id="bAsk">결론 내리기</button>
     <button class="tbtn" id="bReset">다시</button>
   </div>
@@ -242,7 +241,9 @@ table.t th{color:#c3c9e8}
     <span class="seg" id="cMode"><button data-m="bread" aria-pressed="true">🍞 건포도 빵</button><button data-m="gal">🌌 은하와 우주</button></span>
     <button class="tbtn go" id="cPlay">🔥 오븐에 굽기</button>
     <button class="tbtn" id="cBack">처음으로</button>
+    <span class="seg" id="cCmp"><button data-c="13" aria-pressed="true">1칸 vs 3칸</button><button data-c="nf">가장 가까운 vs 먼</button></span>
     <label><input type="checkbox" id="cFP">👁 기준에서 보기</label>
+    <label><input type="checkbox" id="cTrail">이동 자국</label>
     <label class="rng">크기 <input type="range" id="cA" min="100" max="220" step="1" value="100"><b id="cAv">1.0배</b></label>
   </div>
   <div class="ctrl" data-for="D">
@@ -666,24 +667,31 @@ A.tick=function(t){};
 
 
 /* =====================================================
-   ② 체조 대형으로 벌려! : 누가 중심일까?
-   (운동장 = 우주 공간, 학생 = 은하)
+   ② 늘어나는 고무 바닥: 학생은 가만히, 바닥(공간)이 늘어나요
+   (고무 바닥 = 우주 공간, 학생 = 은하)
    ===================================================== */
-const B={g:new THREE.Group(),me:-1,k:1,done:new Set(),asked:false,fin:false,meas:null,fp:false};
+const B={g:new THREE.Group(),me:-1,k:1,done:new Set(),asked:false,fin:false,fp:false,pair:[]};
 scene.add(B.g);
-const BN={nx:6,ny:4,s:1.0,K:1.6};          // 처음 간격 1 m → 벌린 뒤 1.6 m
+const BN={nx:6,ny:4,s:1.0,K:1.8,mx:9,my:7};       // 한 칸 1 m → 1.8 m, 고무 바닥 9 × 7칸
 const bp0=(i,j)=>new V((i-(BN.nx-1)/2)*BN.s,0,(j-(BN.ny-1)/2)*BN.s);
 (function buildB(){
   const lam=c=>new THREE.MeshLambertMaterial({color:c});
-  // 운동장
-  const gt=cnv(512,512,(g,W)=>{g.fillStyle='#a8865a';g.fillRect(0,0,W,W);for(let i=0;i<5000;i++){g.fillStyle=Math.random()<.5?'rgba(150,110,60,.25)':'rgba(240,215,170,.25)';g.fillRect(Math.random()*W,Math.random()*W,2,2)}});
-  gt.wrapS=gt.wrapT=THREE.RepeatWrapping;gt.repeat.set(4,4);
-  const gr=new THREE.Mesh(new THREE.PlaneGeometry(24,18),new THREE.MeshLambertMaterial({map:gt}));gr.rotation.x=-Math.PI/2;gr.position.y=-.01;B.g.add(gr);
-  const ln=new THREE.Mesh(new THREE.RingGeometry(7.2,7.35,96),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.75}));ln.rotation.x=-Math.PI/2;ln.position.y=.002;B.g.add(ln);
-  // 구령대
-  const st=new THREE.Mesh(new THREE.BoxGeometry(2.4,.5,1),lam(0x8a5a3c));st.position.set(0,.25,-4.6);B.g.add(st);
-  const sl=label('구령대',Object.assign({size:.32},LTW));sl.position.set(0,.85,-4.6);B.g.add(sl);
-  // 학생들
+  // 멀리 있는 운동장(늘어나지 않는 배경)
+  const gt=cnv(256,256,(g,W)=>{g.fillStyle='#8d7350';g.fillRect(0,0,W,W);for(let i=0;i<2500;i++){g.fillStyle=Math.random()<.5?'rgba(120,90,55,.3)':'rgba(200,175,130,.25)';g.fillRect(Math.random()*W,Math.random()*W,2,2)}});
+  gt.wrapS=gt.wrapT=THREE.RepeatWrapping;gt.repeat.set(8,8);
+  const gr=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshLambertMaterial({map:gt}));gr.rotation.x=-Math.PI/2;gr.position.y=-.02;B.g.add(gr);
+  // 고무 바닥: 격자 무늬가 그려진 늘어나는 매트
+  const C=96,mt=cnv(BN.mx*C,BN.my*C,(g,W,H)=>{g.fillStyle='#2f8f83';g.fillRect(0,0,W,H);
+    for(let x=0;x<BN.mx;x++)for(let y=0;y<BN.my;y++){g.fillStyle=(x+y)%2?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)';g.fillRect(x*C,y*C,C,C)}
+    g.strokeStyle='#e9fff9';g.lineWidth=4;for(let x=0;x<=BN.mx;x++){g.beginPath();g.moveTo(x*C,0);g.lineTo(x*C,H);g.stroke()}for(let y=0;y<=BN.my;y++){g.beginPath();g.moveTo(0,y*C);g.lineTo(W,y*C);g.stroke()}
+    g.fillStyle='#e9fff9';for(let x=0;x<=BN.mx;x++)for(let y=0;y<=BN.my;y++){g.beginPath();g.arc(x*C,y*C,7,0,7);g.fill()}});
+  B.mat=new THREE.Mesh(new THREE.PlaneGeometry(BN.mx,BN.my),new THREE.MeshLambertMaterial({map:mt}));B.mat.rotation.x=-Math.PI/2;B.mat.position.y=.005;B.g.add(B.mat);
+  B.mat.userData.c0=new V(0,0,0);
+  const edge=new THREE.Mesh(new THREE.BoxGeometry(BN.mx+.12,.06,BN.my+.12),lam(0x1d5f57));edge.rotation.x=Math.PI/2;edge.position.z=-.035;B.mat.add(edge);
+  // 구령대(늘어나지 않아요)
+  const st=new THREE.Mesh(new THREE.BoxGeometry(2.4,.5,1),lam(0x8a5a3c));st.position.set(0,.25,-7.2);B.g.add(st);
+  const sl=label('구령대',Object.assign({size:.32},LTW));sl.position.set(0,.85,-7.2);B.g.add(sl);
+  // 학생들(차렷 자세로 가만히 서 있어요)
   const HAIR=[0x2b2230,0x3a2a1e,0x1c1c24,0x4a3020,0x2f2f38],SK=[0xffe0cc,0xf7d2b8,0xffe7d6];
   const uni=lam(0x2c4a8a),uni2=lam(0xf2f2f2);
   B.st=[];
@@ -693,83 +701,81 @@ const bp0=(i,j)=>new V((i-(BN.nx-1)/2)*BN.s,0,(j-(BN.ny-1)/2)*BN.s);
     const stripe=new THREE.Mesh(new THREE.CylinderGeometry(.155,.155,.06,14),uni);stripe.position.y=.74;
     const head=new THREE.Mesh(new THREE.SphereGeometry(.17,20,14),lam(SK[Math.floor(r()*3)]));head.position.y=1.0;
     const hair=new THREE.Mesh(new THREE.SphereGeometry(.18,20,14,0,Math.PI*2,0,Math.PI*.55),lam(HAIR[Math.floor(r()*5)]));hair.position.y=1.02;hair.rotation.x=.25;
-    const arms=[-1,1].map(s=>{const pv=new THREE.Group();pv.position.set(s*.17,.8,0);const a=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.38,8),uni2);a.position.y=-.19;pv.add(a);g.add(pv);pv.userData.s=s;return pv});
-    g.add(legs,body,stripe,head,hair);
+    [-1,1].forEach(s=>{const a=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.38,8),uni2);a.position.set(s*.2,.62,0);g.add(a)});
+    const shoe=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.03,16),lam(0xffffff));shoe.position.y=.015;
+    g.add(legs,body,stripe,head,hair,shoe);
     const h=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,1.2,10),hitMat);h.position.y=.6;g.add(h);
-    const idx=B.st.length;h.userData={tap:()=>B.pick(idx)};g.userData={i,j,arms,p0:bp0(i,j)};g.position.copy(g.userData.p0);B.g.add(g);B.st.push(g)}
-  // 처음 자리 표시(발자국 고리)
-  const fr=new THREE.RingGeometry(.2,.26,28),fm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.85,side:THREE.DoubleSide});
-  B.foot=B.st.map(s=>{const m=new THREE.Mesh(fr,fm);m.rotation.x=-Math.PI/2;m.position.copy(s.userData.p0).setY(.01);m.visible=false;B.g.add(m);return m});
-  B.arr=new THREE.Group();B.g.add(B.arr);
+    const idx=B.st.length;h.userData={tap:()=>B.pick(idx)};g.userData={i,j,p0:bp0(i,j)};g.position.copy(g.userData.p0);B.g.add(g);B.st.push(g)}
   // '나' 표시
   B.meR=new THREE.Mesh(new THREE.RingGeometry(.32,.42,32),new THREE.MeshBasicMaterial({color:0xffd43b,side:THREE.DoubleSide}));B.meR.rotation.x=-Math.PI/2;B.meR.visible=false;B.g.add(B.meR);
   B.meL=label('나',{bg:'rgba(255,212,59,.98)',fg:'#3a2a00',size:.34});B.meL.visible=false;B.g.add(B.meL);
-  B.mL=[0,1].map(()=>{const l=label('',{bg:'rgba(20,24,52,.92)',fg:'#9be36a',size:.26});l.visible=false;B.g.add(l);return l});
+  // 줄자(나 ~ 친구) 두 개
+  B.tape=[0xffd43b,0xff7a45].map(c=>{const m=new THREE.Mesh(new THREE.BoxGeometry(1,.02,.1),new THREE.MeshBasicMaterial({color:c}));m.visible=false;m.renderOrder=4;B.g.add(m);return m});
+  B.tL=[0,1].map(q=>{const l=label('',{bg:'rgba(20,24,52,.92)',fg:q?'#ffb08a':'#ffe38a',size:.27});l.visible=false;B.g.add(l);return l});
+  B.cellL=label('',{bg:'rgba(233,255,249,.95)',fg:'#123',size:.3});B.g.add(B.cellL);
 })();
-function flatArrow(a,b,col){ // 바닥에 눕힌 굵은 화살표
-  const d=b.clone().sub(a),L=d.length(),hw=.06,hl=Math.min(.24,L*.45),sh=new THREE.Shape();
-  sh.moveTo(0,-hw);sh.lineTo(L-hl,-hw);sh.lineTo(L-hl,-hw*2.4);sh.lineTo(L,0);sh.lineTo(L-hl,hw*2.4);sh.lineTo(L-hl,hw);sh.lineTo(0,hw);sh.closePath();
-  const m=new THREE.Mesh(new THREE.ShapeGeometry(sh),new THREE.MeshBasicMaterial({color:col,side:THREE.DoubleSide,depthWrite:false}));
-  m.rotation.x=-Math.PI/2;m.rotation.z=Math.atan2(-d.z,d.x);m.position.copy(a);m.renderOrder=3;return m}
-B.pos=k=>{const me=B.me>=0?B.st[B.me].userData.p0:new V();return B.st.map(s=>me.clone().add(s.userData.p0.clone().sub(me).multiplyScalar(k)))};
+B.mePos=()=>B.me>=0?B.st[B.me].userData.p0:new V();
 B.apply=function(){
-  const P=B.pos(B.k),f=(B.k-1)/(BN.K-1),P0=B.pos(1);
-  B.st.forEach((s,n)=>{s.position.copy(P[n]);s.userData.arms.forEach(a=>a.rotation.z=a.userData.s*f*1.45);B.foot[n].position.copy(P0[n]).setY(.01)});
-  if(B.me>=0){const me=B.st[B.me].position;B.meR.position.copy(me).setY(.015);B.meL.position.copy(me).add(new V(0,1.55,0))}
+  const me=B.mePos(),k=B.k;
+  // 고무 바닥은 '나'가 서 있는 점을 고정한 채 늘어나요. 학생들은 바닥의 같은 칸 위에 그대로 서 있어요.
+  B.mat.scale.set(k,k,1);B.mat.position.copy(me.clone().add(B.mat.userData.c0.clone().sub(me).multiplyScalar(k))).setY(.005);
+  B.st.forEach(s=>s.position.copy(me.clone().add(s.userData.p0.clone().sub(me).multiplyScalar(k))));
+  if(B.me>=0){const p=B.st[B.me].position;B.meR.position.copy(p).setY(.02);B.meL.position.copy(p).add(new V(0,1.55,0))}
+  B.pair.forEach((n,q)=>{const a=B.st[B.me].position,b=B.st[n].position,t=B.tape[q],L=a.distanceTo(b);
+    t.scale.set(L,1,1);t.position.copy(a).add(b).multiplyScalar(.5).setY(.04+q*.01);t.rotation.y=Math.atan2(-(b.z-a.z),b.x-a.x);
+    const cells=Math.round(B.st[n].userData.p0.distanceTo(B.st[B.me].userData.p0));
+    B.tL[q].userData.set(cells+'칸 · '+L.toFixed(1)+' m');B.tL[q].position.copy(b).add(new V(0,1.55,0))});
+  const on=B.pair.length&&!B.fp;B.tape.forEach(t=>t.visible=on);B.tL.forEach(l=>l.visible=on);
+  B.cellL.visible=B.me>=0&&!B.fp;B.cellL.userData.set('바닥 한 칸 = '+k.toFixed(1)+' m');
+  B.cellL.position.copy(B.mat.position).add(new V(0,.35,BN.my/2*k+.45));
   if(B.fp)B.fpCam();
 };
 B.pick=function(n){
   if(B.busy)return;
   if(B.k>1.01){B.gather(()=>B.pick(n));return}
-  B.me=n;B.meR.visible=B.meL.visible=true;B.arr.clear();B.mL.forEach(l=>l.visible=false);B.apply();
-  const s=B.st[n].userData;say('<b>'+(s.j+1)+'줄 '+(s.i+1)+'번째 학생이 ‘나’예요</b>이제 ‘체조 대형으로 벌려!’를 눌러 보세요. 나는 제자리에 서 있어요.',5000);renderData();
+  B.me=n;B.meR.visible=B.meL.visible=true;
+  const me=B.st[n].userData,find=di=>B.st.findIndex(s=>s.userData.j===me.j&&s.userData.i===me.i+di);
+  let n1=find(1);if(n1<0)n1=find(-1);let n3=find(3);if(n3<0)n3=find(-3);if(n3<0)n3=find(2)>=0?find(2):find(-2);
+  B.pair=[n1,n3].filter(x=>x>=0);B.apply();
+  say('<b>'+(me.j+1)+'줄 '+(me.i+1)+'번째 학생이 ‘나’예요</b>모두 <b>제자리에 가만히</b> 서 있어요. 이제 ‘바닥 늘리기’를 눌러 보세요.',5000);renderData();
 };
 B.spread=function(){
   if(B.busy)return;
   if(B.me<0){say('<b>먼저 ‘나’를 정해요</b>학생 한 명을 눌러 ‘나’로 정해 보세요.',3500);return}
   if(B.k>1.01)return;
-  B.busy=true;B.arr.clear();B.mL.forEach(l=>l.visible=false);B.foot.forEach((m,i)=>m.visible=i!==B.me);
-  say('<b>“체조 대형으로 벌려!”</b>모두 양팔 간격으로 벌려요. ‘나’를 기준으로 친구들이 어떻게 움직이는지 보세요.',4000);
-  tweenOwn('Bk',1,BN.K,1.8,v=>{B.k=v;B.apply()},()=>{B.busy=false;B.result()});
+  B.busy=true;
+  say('<b>고무 바닥이 늘어나요</b>아무도 걷지 않아요. 모두 <b>같은 칸 위에 서 있는데</b> 바닥의 칸이 커져요. 줄자의 길이를 보세요.',5000);
+  tweenOwn('Bk',1,BN.K,2.6,v=>{B.k=v;B.apply();if(cur==='B')renderData()},()=>{B.busy=false;B.result()});
 };
 B.gather=function(done){
-  if(B.busy)return;B.busy=true;B.arr.clear();B.mL.forEach(l=>l.visible=false);
-  tweenOwn('Bk',B.k,1,1.0,v=>{B.k=v;B.apply()},()=>{B.busy=false;B.foot.forEach(m=>m.visible=false);if(done)done();else renderData()});
+  if(B.busy)return;B.busy=true;
+  tweenOwn('Bk',B.k,1,1.2,v=>{B.k=v;B.apply()},()=>{B.busy=false;if(done)done();else renderData()});
 };
-B.showArrows=function(){const on=$('#bArrow').checked;B.arr.children.forEach(a=>a.visible=on);if(B.meas)B.mL.forEach(l=>l.visible=on&&!!l.userData.ok)};
 B.result=function(){
-  const me=B.st[B.me].userData,P0=B.pos(1),P1=B.pos(BN.K),on=$('#bArrow').checked;
-  B.st.forEach((s,n)=>{if(n===B.me)return;const a=P0[n].clone().setY(.08),b=P1[n].clone().setY(.08),d=b.clone().sub(a),L=d.length();if(L<.05)return;
-    const ar=flatArrow(a,b,0xff5a36);ar.visible=on;B.arr.add(ar)});
-  const find=di=>B.st.findIndex(s=>s.userData.j===me.j&&s.userData.i===me.i+di);
-  let n1=find(1);if(n1<0)n1=find(-1);let n3=find(3);if(n3<0)n3=find(-3);
-  B.meas={near:((BN.K-1)*BN.s).toFixed(1),far:(3*(BN.K-1)*BN.s).toFixed(1)};
-  [[n1,'바로 옆 친구 +'+B.meas.near+' m'],[n3,'3칸 옆 친구 +'+B.meas.far+' m']].forEach(([n,t],q)=>{const l=B.mL[q];l.userData.ok=n>=0;if(n<0)return;l.userData.set(t);l.position.copy(B.st[n].position).add(new V(0,1.55,0));l.visible=on&&!B.fp});
   const isNew=!B.done.has(B.me);B.done.add(B.me);
-  say('<b>‘나’를 기준으로 보면'+(isNew?' ('+B.done.size+'/3)':'')+'</b>모든 친구가 <b>나에게서 멀어지는 방향</b>으로 움직였어요. 바로 옆 친구는 0.6 m, 3칸 옆 친구는 <b>1.8 m</b> 멀어졌어요. 멀리 있던 친구일수록 더 많이 멀어져요.'+(B.done.size<3?'<br>다른 친구를 눌러 ‘나’를 바꿔 다시 해 보세요.':''),8000);
+  say('<b>바닥(공간)이 늘어났어요'+(isNew?' ('+B.done.size+'/3)':'')+'</b>친구들은 한 걸음도 걷지 않았어요. 그런데 <b>칸이 커져서</b> 1칸 옆 친구는 1 m → 1.8 m, 3칸 옆 친구는 3 m → <b>5.4 m</b>가 되었어요. 칸이 많을수록(멀수록) 더 많이 멀어져요.'+(B.done.size<3?'<br>다른 친구를 ‘나’로 바꿔 다시 해 보세요.':''),9000);
   renderData();
-  if(B.done.size>=3&&!B.asked){B.asked=true;setTimeout(()=>{if(cur==='B')B.ask()},1800)}
+  if(B.done.size>=3&&!B.asked){B.asked=true;setTimeout(()=>{if(cur==='B')B.ask()},2000)}
 };
 B.ask=function(){
-  if(B.done.size<3){say('<b>먼저 세 친구가 되어 봐요</b>서로 다른 학생 3명을 ‘나’로 정하고 벌려 보세요.',4000);return}
-  openPredict('누가 ‘나’가 되어도 결과가 같았어요. 체조 대형이 벌어질 때 <b>중심</b>은 누구일까?',[{html:'처음 ‘나’였던 학생',val:1},{html:'맨 가운데에 서 있는 학생',val:2},{html:'누가 ‘나’가 되어도 똑같이 보이므로 <b>특별한 중심은 없다</b>',val:3}],v=>{
-    if(v===null)return;if(v!==3){say('<b>다시 생각해 보세요</b>‘나’를 바꿀 때마다 모든 친구가 그 ‘나’에게서 멀어지는 것처럼 보였어요.',5500);return}
-    B.fin=true;say('<b>정답! 특별한 중심은 없어요</b>우주도 마찬가지예요. <b>어느 은하에서 보아도</b> 다른 은하들이 멀어지고, 멀리 있는 은하일수록 더 많이 멀어져요. 그래서 우주 팽창에는 특별한 중심이 없어요.',9000);
-    celebrate('성공!','누가 ‘나’여도 똑같이 멀어져요');renderData()});
+  if(B.done.size<3){say('<b>먼저 세 친구가 되어 봐요</b>서로 다른 학생 3명을 ‘나’로 정하고 바닥을 늘려 보세요.',4000);return}
+  openPredict('친구들이 서로 멀어진 까닭과 중심에 대해 옳은 것은?',[{html:'친구들이 ‘나’에게서 걸어 나갔고, ‘나’가 중심이다',val:1},{html:'<b>바닥(공간)이 늘어나서</b> 멀어졌고, 누가 ‘나’여도 똑같으니 <b>특별한 중심은 없다</b>',val:2},{html:'맨 가운데 학생이 중심이다',val:3}],v=>{
+    if(v===null)return;if(v!==2){say('<b>다시 생각해 보세요</b>친구들은 같은 칸 위에 가만히 서 있었어요. 무엇이 커졌나요?',5500);return}
+    B.fin=true;say('<b>정답!</b>우주도 마찬가지예요. 은하가 우주 공간을 달려가는 것이 아니라 <b>은하 사이의 우주 공간 자체가 늘어나요</b>. 그래서 어느 은하에서 보아도 다른 은하들이 멀어지고, 멀리 있는 은하일수록 더 많이 멀어져요.',10000);
+    celebrate('성공!','공간이 늘어나 멀어져요 · 중심은 없어요');renderData()});
 };
 /* 내 눈으로 보기 */
 B.fpCam=function(){const me=B.st[B.me].position,off=camera.position.clone().sub(controls.target);if(off.length()>.05||off.length()<1e-5)off.set(0,0,.001);controls.target.copy(me).add(new V(0,1.05,0));camera.position.copy(controls.target).add(off)};
 B.setFP=function(on){
   if(on&&B.me<0){say('<b>먼저 ‘나’를 정해요</b>학생 한 명을 누른 뒤 내 눈으로 볼 수 있어요.',3500);$('#bFP').checked=false;return}
-  B.fp=on;if(B.me>=0)B.st[B.me].visible=!on;B.meL.visible=!on&&B.me>=0;B.meR.visible=B.me>=0;
-  B.mL.forEach(l=>l.visible=!on&&!!B.meas&&!!l.userData.ok&&$('#bArrow').checked);
+  B.fp=on;if(B.me>=0)B.st[B.me].visible=!on;B.meL.visible=!on&&B.me>=0;
   if(on){killTw('cam');camera.clearViewOffset();camera.fov=72;camera.updateProjectionMatrix();controls.enableZoom=controls.enablePan=false;controls.rotateSpeed=-.35;controls.minDistance=.0005;controls.maxDistance=.01;
-    controls.target.set(0,0,0);camera.position.set(0,0,.001);B.fpCam();controls.update();
-    say('<b>‘나’의 눈으로 보기</b>드래그해서 주변을 둘러보세요. ‘벌려!’를 누르면 앞, 뒤, 옆의 친구들이 모두 나에게서 멀어져요.',6500)}
+    controls.target.set(0,0,0);camera.position.set(0,.0006,.001);B.fpCam();controls.update();
+    say('<b>‘나’의 눈으로 보기</b>드래그해서 둘러보세요. 바닥을 늘리면 발밑의 칸이 커지면서 친구들이 저절로 멀어져요.',6500)}
   else{camera.fov=40;camera.updateProjectionMatrix();controls.enableZoom=controls.enablePan=true;controls.rotateSpeed=.8;controls.minDistance=2;controls.maxDistance=140;fit(true,true)}
-  updPt();
+  B.apply();updPt();
 };
-B.reset=function(){killTw('Bk');B.busy=false;if(B.fp){$('#bFP').checked=false;B.setFP(false)}B.k=1;B.me=-1;B.done.clear();B.asked=false;B.fin=false;B.meas=null;B.arr.clear();B.mL.forEach(l=>l.visible=false);B.foot.forEach(m=>m.visible=false);B.meR.visible=B.meL.visible=false;B.st.forEach(s=>s.visible=true);B.apply();renderData()};
+B.reset=function(){killTw('Bk');B.busy=false;if(B.fp){$('#bFP').checked=false;B.setFP(false)}B.k=1;B.me=-1;B.pair=[];B.done.clear();B.asked=false;B.fin=false;B.meR.visible=B.meL.visible=false;B.st.forEach(s=>s.visible=true);B.apply();renderData()};
 B.apply();
 
 
@@ -783,8 +789,8 @@ const CN=[5,3,5],CS=1.25,CA=2.2;                     // 건포도 사이 1칸 = 
 const OVEN=cnv(512,512,(g,W,H)=>{const gr=g.createRadialGradient(W/2,H*.55,0,W/2,H*.55,W*.75);gr.addColorStop(0,'#5a2e14');gr.addColorStop(.6,'#2a150b');gr.addColorStop(1,'#120804');g.fillStyle=gr;g.fillRect(0,0,W,H)});
 (function buildC(){
   C.p0=[];const r2=rng(17);
-  for(let i=0;i<CN[0];i++)for(let j=0;j<CN[1];j++)for(let k=0;k<CN[2];k++)C.p0.push(new V((i-(CN[0]-1)/2)*CS+(r2()-.5)*.45,(j-(CN[1]-1)/2)*CS*.8+(r2()-.5)*.3,(k-(CN[2]-1)/2)*CS+(r2()-.5)*.45));
-  C.sel=C.p0.reduce((b,p,i)=>p.length()<C.p0[b].length()?i:b,0);
+  for(let i=0;i<CN[0];i++)for(let j=0;j<CN[1];j++)for(let k=0;k<CN[2];k++){C.p0.push(new V((i-(CN[0]-1)/2)*CS,(j-(CN[1]-1)/2)*CS*.8,(k-(CN[2]-1)/2)*CS));(C.gi=C.gi||[]).push([i,j,k])}
+  C.sel=C.gi.findIndex(g=>g[0]===3&&g[1]===1&&g[2]===2);C.cmp='13';
   // ---- 건포도 빵 ----
   C.bread=new THREE.Group();C.g.add(C.bread);
   const dt=cnv(256,256,(g)=>{g.fillStyle='#e8c07c';g.fillRect(0,0,256,256);for(let i=0;i<3000;i++){g.fillStyle=Math.random()<.5?'rgba(170,110,45,.22)':'rgba(255,240,200,.3)';g.beginPath();g.arc(Math.random()*256,Math.random()*256,1+Math.random()*2.5,0,7);g.fill()}});
@@ -805,31 +811,42 @@ const OVEN=cnv(512,512,(g,W,H)=>{const gr=g.createRadialGradient(W/2,H*.55,0,W/2
   for(let i=0;i<CN[0];i++)for(let k=0;k<CN[2];k++)L.push(new V((i-(CN[0]-1)/2)*CS,-ex[1]*CS*.8,(k-(CN[2]-1)/2)*CS),new V((i-(CN[0]-1)/2)*CS,ex[1]*CS*.8,(k-(CN[2]-1)/2)*CS));
   C.grid=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(L),new THREE.LineBasicMaterial({color:0x5a6fd0,transparent:true,opacity:.2,depthWrite:false}));C.gal.add(C.grid);
   C.gal.visible=false;
+  // 반죽 속 격자(반죽 = 공간). 반죽이 부풀면 격자 칸이 함께 커져요.
+  C.dgrid=new THREE.LineSegments(C.grid.geometry,new THREE.LineBasicMaterial({color:0xfff1d0,transparent:true,opacity:.55,depthWrite:false}));C.dgrid.renderOrder=3;C.bread.add(C.dgrid);
+  C.grid.material.opacity=.42;C.grid.material.color.setHex(0x7d92ff);
+  // 기준 ~ 가장 가까운 것 사이 줄자
+  C.tapes=[0x9be36a,0xff9f45].map(c=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,1,8),new THREE.MeshBasicMaterial({color:c,depthTest:false}));m.renderOrder=17;C.g.add(m);return m});
   // 기준 표시 · 이동 자국 · 거리 표지
   C.selR=ringSprite(0x9be36a,.75);C.selR.renderOrder=16;C.g.add(C.selR);
   C.selL=label('🐜 나 (기준)',{bg:'rgba(155,227,106,.96)',fg:'#123',size:.3});C.g.add(C.selL);
   const N=C.p0.length,P=new Float32Array(N*6);C.trail=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xff9f6b,transparent:true,opacity:.55,depthTest:false}));C.trail.renderOrder=15;
   C.trail.geometry.setAttribute('position',new THREE.BufferAttribute(P,3));C.g.add(C.trail);
-  C.dL=[0,1].map(()=>{const l=label('',{bg:'rgba(255,255,255,.95)',fg:'#151a33',size:.24});C.g.add(l);return l});
+  C.dL=[0,1].map(q=>{const l=label('',{bg:'rgba(255,255,255,.96)',fg:q?'#a3460f':'#1d5e12',size:.36});C.g.add(l);return l});
   C.note=label('',Object.assign({size:.28},LTW));C.g.add(C.note);
   C.timeL=label('',{bg:'rgba(20,24,52,.9)',fg:'#ffe38a',size:.32});C.g.add(C.timeL);
 })();
 C.unit=()=>C.mode==='bread'?' cm':'';
-C.pair=function(){const ps=C.p0[C.sel];const d=C.p0.map((p,i)=>({i,d:p.distanceTo(ps)})).filter(o=>o.i!==C.sel).sort((a,b)=>a.d-b.d);return [d[0],d[d.length-1]]};
-C.sc=()=>C.mode==='bread'?2/CS:1/C.pair()[0].d;
+C.pair=function(){const ps=C.p0[C.sel],w=C.mode==='bread'?'건포도':'은하';
+  if(C.cmp==='13'){const [i,j,k]=C.gi[C.sel],at=(a,b,c)=>C.gi.findIndex(g=>g[0]===a&&g[1]===b&&g[2]===c);
+    const opts=[[-1,0,0],[0,0,1],[1,0,0],[0,0,-1]];let best=null;
+    outer:for(const n of [3,2])for(const [dx,,dz] of opts){const f=at(i+dx*n,j,k+dz*n),c=at(i+dx,j,k+dz);if(f>=0&&c>=0){best={c,f,n};break outer}}
+    if(best)return [{i:best.c,d:C.p0[best.c].distanceTo(ps),name:'1칸 옆 '+w},{i:best.f,d:C.p0[best.f].distanceTo(ps),name:best.n+'칸 옆 '+w}]}
+  const d=C.p0.map((p,i)=>({i,d:p.distanceTo(ps)})).filter(o=>o.i!==C.sel).sort((a,b)=>a.d-b.d);d[0].name='가장 가까운 '+w;d[d.length-1].name='가장 먼 '+w;return [d[0],d[d.length-1]]};
+C.sc=()=>C.mode==='bread'?2/CS:1/CS;
 C.update=function(){
   const a=C.a,ps=C.p0[C.sel],P=C.trail.geometry.attributes.position.array,sc=C.sc();
   C.p0.forEach((p,i)=>{const now=p.clone().sub(ps).multiplyScalar(a),then=p.clone().sub(ps);
     C.gs[i].position.copy(now);C.rs[i].position.copy(now);P.set([then.x,then.y,then.z,now.x,now.y,now.z],i*6)});
-  C.trail.geometry.attributes.position.needsUpdate=true;C.trail.visible=a>1.01;
-  C.grid.scale.setScalar(a);C.grid.position.copy(ps).multiplyScalar(-a);
+  C.trail.geometry.attributes.position.needsUpdate=true;C.trail.visible=a>1.01&&$('#cTrail').checked;
+  C.grid.scale.setScalar(a);C.grid.position.copy(ps).multiplyScalar(-a);C.dgrid.scale.setScalar(a);C.dgrid.position.copy(C.grid.position);
+  C.pair().forEach((o,q)=>{const t=C.tapes[q],b=C.rs[o.i].position,L=b.length();t.scale.set(1,L,1);t.position.copy(b).multiplyScalar(.5);t.quaternion.setFromUnitVectors(new V(0,1,0),b.clone().normalize());t.visible=!C.fp&&(q===0||C.cmp==='13')});
   const ex=[(CN[0]-1)/2*CS+.75,(CN[1]-1)/2*CS*.8+.62,(CN[2]-1)/2*CS+.75],cen=ps.clone().multiplyScalar(-a);
   C.loaf.scale.set(ex[0]*a,ex[1]*a,ex[2]*a);C.loaf.position.copy(cen);
   C.selR.position.set(0,0,0);C.selR.visible=!C.fp;C.selL.position.set(0,.5,0);C.selL.visible=!C.fp;
   const pr=C.pair();
-  pr.forEach((o,q)=>{const l=C.dL[q],d0=o.d*sc,d1=o.d*a*sc;l.userData.set((q?'가장 먼 ':'가장 가까운 ')+(C.mode==='bread'?'건포도':'은하')+' '+d0.toFixed(1)+C.unit()+'에서 '+d1.toFixed(1)+C.unit()+'로');
+  pr.forEach((o,q)=>{const l=C.dL[q],d0=o.d*sc,d1=o.d*a*sc;l.userData.set(o.name+' '+d0.toFixed(1)+C.unit()+'에서 '+d1.toFixed(1)+C.unit()+'로');
     l.position.copy(C.rs[o.i].position).add(new V(0,.42,0));l.visible=a>1.01&&!C.fp});
-  C.note.userData.set(C.mode==='bread'?'빵 반죽이 부풀어도 건포도 자체는 커지지 않아요':'은하 자체는 커지지 않아요 · 은하 사이의 공간이 늘어나요');
+  C.note.userData.set(C.mode==='bread'?'건포도는 스스로 움직이지 않아요 · 반죽(격자)이 부풀어 함께 멀어져요':'은하는 스스로 움직이지 않아요 · 은하 사이의 공간(격자)이 늘어나요');
   C.note.position.copy(cen).add(new V(0,-ex[1]*a-.75,0));C.note.visible=!C.fp;
   C.timeL.userData.set(C.mode==='bread'?'굽는 시간 '+Math.round((a-1)/(CA-1)*30)+'분':'시간이 흐르면 우주가 팽창해요');C.timeL.position.copy(cen).add(new V(0,ex[1]*a+.55,0));C.timeL.visible=!C.fp&&C.mode==='bread';
   $('#cAv').textContent=a.toFixed(1)+'배';
@@ -849,7 +866,7 @@ C.setMode=function(m){
   C.mode=m;segSet('#cMode','m',m);C.gal.visible=m==='gal';C.bread.visible=m==='bread';scene.background=m==='bread'?OVEN:NIGHT;
   C.selL.userData.set(m==='bread'?'🐜 나 (기준)':'🌌 우리 은하 (기준)');
   $('#cPlay').textContent=m==='bread'?'🔥 오븐에 굽기':'🚀 우주 팽창시키기';
-  say(m==='bread'?'<b>건포도 빵 굽기</b>반죽 속 건포도에 개미가 타고 있어요. 오븐에 구우면 반죽이 부풀어요. 건포도 사이는 어떻게 될까요?':'<b>이제 우주로 바꿔 봐요</b>빵 반죽 → <b>우주 공간</b>, 건포도 → <b>은하</b>예요. 우주가 팽창하면 은하 사이의 거리가 멀어져요.',7000);
+  say(m==='bread'?'<b>건포도 빵 굽기</b>반죽 속 건포도에 개미가 타고 있어요. 하얀 격자는 반죽(공간)이에요. 구우면 건포도는 그대로 박혀 있고 <b>반죽이 부풀어요</b>. 격자의 칸을 잘 보세요.':'<b>이제 우주로 바꿔 봐요</b>빵 반죽 → <b>우주 공간</b>, 건포도 → <b>은하</b>예요. 우주가 팽창하면 은하 사이의 거리가 멀어져요.',7000);
   C.update()};
 /* 기준 건포도(은하)에서 보기 */
 C.fpCam=function(){const off=camera.position.clone().sub(controls.target);if(off.length()>.05||off.length()<1e-5)off.set(0,0,.001);controls.target.set(0,0,0);camera.position.copy(off)};
@@ -862,6 +879,8 @@ C.setFP=function(on){
   C.update();updPt();
 };
 C.tick=function(t){if(C.mode==='gal')C.gs.forEach((s,i)=>s.material.rotation+=.0015*(i%2?1:-1))};
+C.setCmp=function(m){C.cmp=m;segSet('#cCmp','c',m);C.update();
+  say(m==='13'?'<b>1칸 옆 vs 3칸 옆</b>격자의 같은 줄에서 1칸, 3칸 떨어진 '+(C.mode==='bread'?'건포도':'은하')+'를 비교해요. 구우면 칸 수는 그대로인데 칸이 커져서, 3칸 옆이 1칸 옆보다 3배 더 많이 멀어져요.':'<b>가장 가까운 것 vs 가장 먼 것</b>',5500)};
 
 
 /* =====================================================
@@ -940,12 +959,12 @@ const SC={
   A:{g:A.g,big:'풍선 실험',title:'스티커를 붙인 풍선으로 우주 팽창 실험하기',target:new V(0,-.2,0),dir:new V(0,.1,1),hw:1.75,hh:1.95,
      hint:'빨간·흰 스티커를 기준으로 녹색 스티커 1, 2까지의 거리를 재고, 풍선을 더 불어 다시 재요',
      items:['풍선에 바람을 조금 넣고 녹색 스티커를 붙인 뒤, <b>빨간 스티커</b>와 <b>흰 스티커</b>를 기준으로 녹색 스티커 <b>1, 2</b>까지의 거리를 줄자로 재요.','바람을 더 불어 넣은 뒤 같은 거리를 다시 재고 비교해요.','<b>풍선 표면 = 우주 공간</b>, <b>스티커 = 은하</b>예요. 풍선 안쪽 공간은 생각하지 않아요.','주의: 실제 우주는 <b>3차원</b>으로 팽창하지만, 이 모형은 <b>2차원</b>인 풍선 표면으로 나타낸 거예요.']},
-  B:{g:B.g,big:'체조 대형',title:'체조 대형으로 벌려! 누가 중심일까?',target:new V(0,0,.3),dir:new V(0,1.05,1.05),hw:5.6,hh:4.2,
-     hint:'학생 한 명을 눌러 ‘나’로 정한 뒤 ‘체조 대형으로 벌려!’를 눌러 보세요',
-     items:['체육 시간에 “체조 대형으로 벌려!” 하면 모두 양팔 간격으로 벌어지지요. 이때 <b>나를 기준으로</b> 친구들은 어떻게 움직일까요?','<b>나</b>는 제자리에 있어도 친구들은 모두 <b>나에게서 멀어지고</b>, 멀리 있던 친구일수록 <b>더 많이</b> 멀어져요.','다른 친구가 ‘나’가 되어도 똑같아요. → 벌어지는 데 <b>특별한 중심이 없어요</b>.','<b>운동장 = 우주 공간, 학생 = 은하</b>로 생각해 보세요. 실제 우주에서는 은하가 걸어가는 것이 아니라 <b>공간 자체가 늘어나요</b>.']},
+  B:{g:B.g,big:'늘어나는 바닥',title:'학생은 가만히, 바닥이 늘어난다면?',target:new V(0,0,.4),dir:new V(0,1.15,1.0),hw:6.2,hh:4.6,
+     hint:'학생 한 명을 눌러 ‘나’로 정한 뒤 ‘바닥 늘리기’를 눌러 보세요. 아무도 걷지 않아요!',
+     items:['운동장 바닥이 <b>고무 매트</b>처럼 늘어난다고 상상해 보세요. 학생들은 <b>걷지 않고</b> 처음 서 있던 <b>칸 위에 그대로</b> 서 있어요.','바닥이 늘어나면 <b>칸 수는 그대로</b>인데 <b>한 칸의 크기</b>가 커져요. 그래서 친구 사이의 거리가 저절로 멀어져요.','1칸 옆 친구보다 3칸 옆 친구가 <b>더 많이</b> 멀어져요. 사이에 늘어나는 칸이 더 많기 때문이에요.','<b>고무 바닥 = 우주 공간, 학생 = 은하</b>예요. 은하가 달려가는 것이 아니라 <b>우주 공간 자체가 늘어나요</b>.']},
   C:{g:C.g,big:'건포도 빵과 우주',title:'건포도 빵으로 보는 우주 팽창',target:new V(0,0,0),dir:new V(.9,.6,1),hw:6.6,hh:4.4,
      hint:'‘오븐에 굽기’를 누르고, 다른 건포도를 눌러 개미를 옮겨 타 보세요',
-     items:['건포도 빵 반죽을 오븐에 구우면 반죽이 부풀면서 <b>건포도 사이의 거리가 멀어져요</b>. 건포도 자체는 커지지 않아요.','건포도에 탄 개미에게는 다른 건포도가 모두 <b>나에게서 멀어지는 것</b>처럼 보여요. 멀리 있는 건포도일수록 더 많이 멀어져요.','<b>빵 반죽 = 우주 공간, 건포도 = 은하</b> 예요. ‘은하와 우주’로 바꾸어 같은 현상을 확인해 보세요.','우주는 <b>특별한 중심 없이 모든 방향으로 고르게</b> 팽창해요.']},
+     items:['건포도는 반죽에 박혀 있어 <b>스스로 움직이지 않아요</b>. 오븐에서 <b>반죽이 부풀면</b> 하얀 격자의 칸이 커지면서 건포도 사이의 거리가 멀어져요.','건포도에 탄 개미에게는 다른 건포도가 모두 <b>나에게서 멀어지는 것</b>처럼 보여요. 멀리 있는 건포도일수록 더 많이 멀어져요.','<b>빵 반죽 = 우주 공간, 건포도 = 은하</b> 예요. ‘은하와 우주’로 바꾸어 같은 현상을 확인해 보세요.','우주는 <b>특별한 중심 없이 모든 방향으로 고르게</b> 팽창해요.']},
   D:{g:D.g,big:'대폭발 우주론',title:'대폭발 우주론(빅뱅 우주론)',target:new V(0,.35,0),dir:new V(.15,.32,1),hw:4.9,hh:4.9,
      hint:'‘대폭발부터 재생’을 누르거나 시간 막대를 움직여 우주의 크기와 온도 변화를 보세요',
      items:['우주가 팽창하고 있다면 시간을 거꾸로 되돌릴 때 우주는 점점 작아져서, 과거에는 <b>모든 물질과 에너지가 한 점</b>에 모여 있었을 거예요.','<b>대폭발 우주론</b>: 매우 높은 온도와 밀도의 한 점에서 <b>대폭발</b>로 시작된 우주가 계속 팽창하여 현재의 우주가 되었다는 이론이에요.','팽창하면서 우주의 <b>크기는 커지고, 온도와 밀도는 낮아졌어요</b>.','20세기 초 아인슈타인은 크기가 변하지 않는 우주를, 프리드만은 팽창하는 우주를 주장했어요. 허블의 관측으로 우주가 팽창한다는 것이 밝혀졌어요.']}
@@ -979,16 +998,18 @@ function renderData(){
       h+='<tr><td>늘어난 길이</td><td>'+inc(+r3[0],+r4[0])+'</td><td><b>'+inc(+r3[1],+r4[1])+'</b></td><td>'+inc(+w3[0],+w4[0])+'</td><td><b>'+inc(+w3[1],+w4[1])+'</b></td></tr>'}
     h+='</table>'+(A.done?'<div class="ratio">멀리 있는 스티커일수록 더 많이 멀어져요 · 특별한 중심은 없어요</div>':'')+'</div>';
   }else if(cur==='B'){
-    h='<div class="card mission"><b>해 보기</b> · 서로 다른 친구 3명이 ‘나’가 되어 벌려 봐요 ('+Math.min(B.done.size,3)+'/3) '+(B.fin?'✔':'')+'</div>'+
-      '<div class="card"><table class="t"><tr><th>‘나’에게서</th><th>벌리기 전</th><th>벌린 뒤</th><th>멀어진 거리</th></tr><tr><td>바로 옆 친구</td><td>1 m</td><td>1.6 m</td><td>+0.6 m</td></tr><tr><td>2칸 옆 친구</td><td>2 m</td><td>3.2 m</td><td>+1.2 m</td></tr><tr><td>3칸 옆 친구</td><td>3 m</td><td>4.8 m</td><td><b>+1.8 m</b></td></tr></table>'+
-      '<div style="font-size:12.5px;margin-top:4px">멀리 있던 친구일수록 더 많이 멀어져요. '+(B.me>=0?'지금 ‘나’: '+(B.st[B.me].userData.j+1)+'줄 '+(B.st[B.me].userData.i+1)+'번째':'학생을 눌러 ‘나’를 정해요')+'</div>'+
-      (B.fin?'<div class="ratio">누가 ‘나’여도 똑같이 멀어져요 → 특별한 중심이 없어요</div>':'')+'</div>';
+    const k=B.k;
+    h='<div class="card mission"><b>해 보기</b> · 서로 다른 친구 3명이 ‘나’가 되어 바닥을 늘려 봐요 ('+Math.min(B.done.size,3)+'/3) '+(B.fin?'✔':'')+'</div>'+
+      '<div class="card"><b>바닥 한 칸 = '+k.toFixed(1)+' m</b><table class="t" style="margin-top:4px"><tr><th>‘나’에게서</th><th>칸 수</th><th>처음</th><th>지금</th><th>멀어진 거리</th></tr>'+
+      [1,2,3].map(c=>'<tr><td>'+c+'칸 옆 친구</td><td>'+c+'칸 (그대로)</td><td>'+c+' m</td><td>'+(c*k).toFixed(1)+' m</td><td>'+(c===3?'<b>':'')+'+'+(c*(k-1)).toFixed(1)+' m'+(c===3?'</b>':'')+'</td></tr>').join('')+'</table>'+
+      '<div style="font-size:12.5px;margin-top:4px">친구들은 움직이지 않았어요. <b>칸(공간)이 커져서</b> 멀어진 거예요. '+(B.me>=0?'지금 ‘나’: '+(B.st[B.me].userData.j+1)+'줄 '+(B.st[B.me].userData.i+1)+'번째':'학생을 눌러 ‘나’를 정해요')+'</div>'+
+      (B.fin?'<div class="ratio">공간이 늘어나 멀어져요 · 누가 ‘나’여도 똑같아요 → 특별한 중심이 없어요</div>':'')+'</div>';
   }else if(cur==='C'){
     const pr=C.pair(),sc=C.sc(),u=C.unit(),w=C.mode==='bread'?'건포도':'은하';
     h='<div class="card mission"><b>해 보기</b> · '+(C.mode==='bread'?'개미를':'기준 은하를')+' 다른 '+w+' 3곳으로 옮겨 봐요 ('+Math.min(C.seen.size,3)+'/3) '+(C.fin?'✔':'')+'</div>'+
       '<div class="card"><b>'+(C.mode==='bread'?'굽는 시간 '+Math.round((C.a-1)/(CA-1)*30)+'분':'크기 '+C.a.toFixed(1)+'배')+'</b> · 기준 '+w+'에서 잰 거리<table class="t" style="margin-top:4px"><tr><th></th><th>처음</th><th>지금</th><th>늘어난 거리</th></tr>'+
-      pr.map((o,q)=>'<tr><td>가장 '+(q?'먼':'가까운')+' '+w+'</td><td>'+(o.d*sc).toFixed(1)+u+'</td><td>'+(o.d*sc*C.a).toFixed(1)+u+'</td><td>'+(q?'<b>':'')+'+'+(o.d*sc*(C.a-1)).toFixed(1)+u+(q?'</b>':'')+'</td></tr>').join('')+'</table>'+
-      '<div style="font-size:12.5px;margin-top:4px">'+(C.mode==='bread'?'빵 반죽 = 우주 공간, 건포도 = 은하':'가장 가까운 은하까지의 처음 거리를 1로 나타냈어요. 은하가 달려가는 것이 아니라 은하 사이의 공간이 늘어나요')+'</div></div>';
+      pr.map((o,q)=>'<tr><td>'+o.name+'</td><td>'+(o.d*sc).toFixed(1)+u+'</td><td>'+(o.d*sc*C.a).toFixed(1)+u+'</td><td>'+(q?'<b>':'')+'+'+(o.d*sc*(C.a-1)).toFixed(1)+u+(q?'</b>':'')+'</td></tr>').join('')+'</table>'+
+      '<div style="font-size:12.5px;margin-top:4px">'+(C.mode==='bread'?'빵 반죽 = 우주 공간, 건포도 = 은하':'처음 격자 한 칸의 거리를 1로 나타냈어요. 은하가 달려가는 것이 아니라 은하 사이의 공간이 늘어나요')+'</div></div>';
   }else if(cur==='D'){
     const t=D.t,c=tempCol(t),hex='rgb('+c.map(v=>Math.round(v*255)).join(',')+')';
     const bar=(v,col)=>'<div class="bar" style="height:8px"><i style="width:'+Math.max(2,v*100)+'%;background:'+col+'"></i></div>';
@@ -1043,8 +1064,8 @@ $$('#aStage button').forEach(b=>b.onclick=()=>A.setStage(+b.dataset.s));
 $$('#aRef button').forEach(b=>b.onclick=()=>A.setRef(b.dataset.r));
 $('#aRec').onclick=()=>A.record();$('#aAsk').onclick=()=>A.ask();$('#aReset').onclick=()=>{A.reset();hideSay()};
 $('#bSpread').onclick=()=>B.spread();$('#bGather').onclick=()=>B.gather();$('#bFP').onchange=()=>B.setFP($('#bFP').checked);
-$('#bArrow').onchange=()=>B.showArrows();$('#bAsk').onclick=()=>B.ask();$('#bReset').onclick=()=>{B.reset();hideSay()};
-$('#cPlay').onclick=()=>{if(C.a<CA-.01)C.run(CA)};$('#cBack').onclick=()=>C.run(1);$('#cFP').onchange=()=>C.setFP($('#cFP').checked);
+$('#bAsk').onclick=()=>B.ask();$('#bReset').onclick=()=>{B.reset();hideSay()};
+$('#cPlay').onclick=()=>{if(C.a<CA-.01)C.run(CA)};$('#cBack').onclick=()=>C.run(1);$('#cFP').onchange=()=>C.setFP($('#cFP').checked);$('#cTrail').onchange=()=>C.update();$$('#cCmp button').forEach(b=>b.onclick=()=>C.setCmp(b.dataset.c));
 $('#cA').oninput=()=>{killTw('Ca');C.a=+$('#cA').value/100;C.update()};
 $$('#cMode button').forEach(b=>b.onclick=()=>C.setMode(b.dataset.m));
 $('#dPlay').onclick=()=>D.play();$('#dShrink').onclick=()=>D.shrink();
