@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>3D 과학 실험실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* 레이아웃: 단원 = 실험실 서랍 하나, 콘텐츠 = 표본 라벨이 붙은 카드. 위에서 아래로 단원 순서대로 쌓임 */
+:root{
+  --bg:#eef3f1; --surface:#ffffff; --ink:#10201b; --muted:#56685f; --line:#d2ded8;
+  --accent:#0b7a68; --accent-ink:#ffffff; --tag:#e2eee8; --tag-ink:#1d4a3f;
+  --frame:#0b1712; --focus:#d48a00;
+  --display:'Black Han Sans','IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --body:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1411; --surface:#13201b; --ink:#e2eee8; --muted:#93a79e; --line:#25362f;
+  --accent:#4fd1b5; --accent-ink:#04201a; --tag:#1a2c26; --tag-ink:#b7e6d8; --frame:#050c09; --focus:#ffb938; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1411; --surface:#13201b; --ink:#e2eee8; --muted:#93a79e; --line:#25362f;
+  --accent:#4fd1b5; --accent-ink:#04201a; --tag:#1a2c26; --tag-ink:#b7e6d8; --frame:#050c09; --focus:#ffb938; color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;padding:0 16px;word-break:keep-all;overflow-wrap:break-word}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding-block:28px 56px}
+
+/* 머리말 */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px 24px;padding-bottom:22px;border-bottom:2px solid var(--ink)}
+.top .id{flex:1;min-width:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--muted);margin:0 0 6px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);line-height:1.05;margin:0;text-wrap:balance}
+.lead{margin:10px 0 0;color:var(--muted);max-width:60ch}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1.5px solid var(--ink);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 14px;font-weight:700;font-size:14px;text-decoration:none;white-space:nowrap}
+.btn:hover{background:var(--tag)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+
+/* 찾기 */
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0 6px}
+.search{flex:1 1 260px;min-width:0;display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:0 12px}
+.search:focus-within{border-color:var(--accent)}
+.search svg{flex:none;color:var(--muted)}
+.search input{flex:1;min-width:0;border:0;background:transparent;padding:10px 0;outline:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-weight:700;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:4px 0 0}
+
+/* 단원 */
+.unit{margin-top:34px}
+.unit-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.grade{font-family:var(--mono);font-size:12.5px;font-weight:500;letter-spacing:.06em;border:1.5px solid var(--ink);border-radius:6px;padding:1px 7px}
+.unit-head h2{font-family:var(--display);font-weight:400;font-size:clamp(24px,3.4vw,30px);line-height:1.2;margin:0}
+.unit-head p{margin:0;color:var(--muted);font-size:14px;flex-basis:100%}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+
+/* 콘텐츠 카드 */
+.card{display:flex;flex-direction:column;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.thumb{display:block;position:relative;aspect-ratio:16/10;max-width:100%;background:var(--frame);overflow:hidden}
+.thumb img{position:absolute;inset:0;z-index:1;display:block;width:100%;height:100%;object-fit:cover}
+.thumb .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:34px;color:#e2eee8;background:radial-gradient(ellipse at 50% 40%,#1d3a2e,#0b1712 70%)}
+.code{position:absolute;z-index:2;left:10px;top:10px;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;background:rgba(255,255,255,.92);color:#10201b;border-radius:4px;padding:2px 7px}
+.body{display:flex;flex-direction:column;gap:8px;padding:14px 16px 16px;flex:1}
+.body h3{margin:0;font-size:18px;line-height:1.35;text-wrap:balance}
+.body p{margin:0;color:var(--muted);font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 0;padding:0;list-style:none}
+.tags li{background:var(--tag);color:var(--tag-ink);border-radius:6px;padding:1px 8px;font-size:12.5px;font-weight:500}
+.acts{display:flex;gap:8px;margin-top:auto;padding-top:8px}
+.acts .btn{flex:1}
+.empty{margin-top:30px;padding:26px;border:1.5px dashed var(--line);border-radius:14px;text-align:center;color:var(--muted)}
+
+/* 선생님용 안내 */
+.guide{margin-top:48px;border-top:2px solid var(--ink);padding-top:18px}
+.guide summary{cursor:pointer;font-weight:700;font-size:16px}
+.guide ol{padding-left:22px;max-width:70ch}
+.guide li{margin:6px 0}
+.snip{position:relative;margin:10px 0 4px}
+.snip pre{margin:0;overflow-x:auto;background:var(--frame);color:#d7efe6;border-radius:10px;padding:14px;font-family:var(--mono);font-size:12.5px;line-height:1.6}
+.snip .btn{position:absolute;right:8px;top:8px;padding:4px 10px;font-size:12.5px;background:var(--surface)}
+.guide code{font-family:var(--mono);font-size:.92em;background:var(--tag);border-radius:4px;padding:0 4px}
+.foot{margin-top:28px;font-family:var(--mono);font-size:12px;color:var(--muted);word-break:break-all}
+
+/* QR 크게 띄우기 */
+.qr{position:fixed;inset:0;z-index:20;background:#ffffff;color:#10201b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(20px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px));text-align:center}
+.qr h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,54px);line-height:1.15;margin:0;text-wrap:balance}
+.qr p{margin:0;font-size:clamp(15px,2vw,20px)}
+.qr img{width:min(62vh,80vw);height:auto;image-rendering:pixelated}
+.qr .url{font-family:var(--mono);font-size:clamp(12px,1.6vw,16px);color:#3b4d45;word-break:break-all;max-width:90vw}
+.qr .x{position:absolute;right:16px;top:calc(14px + env(safe-area-inset-top,0px));border:1.5px solid #10201b;background:#fff;color:#10201b;border-radius:10px;padding:8px 14px;font-weight:700}
+#qrMake{position:absolute;left:-9999px;top:0}
+
+@media (max-width:520px){
+  .wrap{padding-block:18px 40px}
+  .grid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:no-preference){.btn,.chip{transition:background .15s,filter .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="id">
+      <p class="eyebrow">MIDDLE SCHOOL SCIENCE · 3D</p>
+      <h1>3D 과학 실험실</h1>
+      <p class="lead">단원별 3D 수업 콘텐츠를 모아 둔 곳이에요. 콘텐츠를 눌러 바로 열거나, ‘QR’ 버튼으로 휴대폰·태블릿 접속 코드를 크게 띄울 수 있어요.</p>
+    </div>
+    <button class="btn" id="hubQR" type="button">이 페이지 QR</button>
+  </header>
+
+  <div class="tools">
+    <label class="search" for="q">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" type="search" placeholder="제목이나 개념으로 찾기 (예: 분리의 법칙)" autocomplete="off">
+    </label>
+    <div class="chips" id="grades" role="group" aria-label="학년"></div>
+  </div>
+  <p class="count" id="count"></p>
+
+  <main id="list"></main>
+
+  <details class="guide" id="guide">
+    <summary>새 콘텐츠 추가하기 (선생님용)</summary>
+    <ol>
+      <li>새로 만든 웹앱 파일(예: <code>circuit.html</code>)을 GitHub 저장소에 올려요. 화면 사진을 쓰려면 <code>thumbs</code> 폴더에 같은 이름의 <code>.jpg</code>도 올려요. 사진이 없으면 제목 글자로 대신 보여 줘요.</li>
+      <li>저장소에서 <code>index.html</code>을 열고 연필 아이콘(편집)을 눌러요.</li>
+      <li>아래쪽 <code>const APPS = [</code> 목록에 다음 한 덩어리를 복사해 붙이고 내용을 바꿔요. 새 단원이면 <code>const UNITS = [</code>에도 한 줄 추가해요.</li>
+      <li><b>Commit changes</b>를 누르고 1~2분 기다리면 이 페이지에 새 카드가 나타나요.</li>
+    </ol>
+    <p><b>잠깐 숨기기</b> · 지우지 않고 첫 화면에서만 내리려면, <code>APPS</code> 목록에서 그 콘텐츠 덩어리 안에 <code>hidden: true,</code> 한 줄을 넣고 Commit changes를 눌러요. 파일과 주소는 그대로라서 이미 나눠 준 QR은 계속 열려요. 다시 보이게 하려면 그 줄을 지워요.</p>
+    <div class="snip"><pre id="snipHide">  hidden: true,</pre><button class="btn" type="button" data-copy="snipHide">복사</button></div>
+    <div class="snip"><pre id="snipApp">{
+  file: 'circuit.html',            // 올린 파일 이름
+  unit: 'electricity',             // 아래 UNITS의 id
+  title: '전기 회로 3D',
+  desc: '한두 문장으로 무엇을 할 수 있는지 적어요.',
+  tags: ['옴의 법칙', '직렬·병렬'],
+  thumb: 'thumbs/circuit.jpg',     // 없으면 이 줄을 지워요
+  // hidden: true,                 // 숨기려면 맨 앞 // 를 지워요
+},</pre><button class="btn" type="button" data-copy="snipApp">복사</button></div>
+    <div class="snip"><pre id="snipUnit">{ id: 'electricity', grade: 2, name: '전기와 자기', note: '' },</pre><button class="btn" type="button" data-copy="snipUnit">복사</button></div>
+  </details>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<div class="qr" id="qr" hidden role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+  <button class="x" id="qrClose" type="button">닫기</button>
+  <h2 id="qrTitle"></h2>
+  <p>휴대폰·태블릿 카메라로 찍어서 들어오세요</p>
+  <img id="qrImg" alt="접속 QR 코드">
+  <p class="url" id="qrUrl"></p>
+</div>
+<div id="qrMake" aria-hidden="true"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* ============================================================
+   여기만 고치면 돼요 ① 사이트 주소
+   ============================================================ */
+const SITE = 'https://idealjade7.github.io/';
+
+/* ============================================================
+   여기만 고치면 돼요 ② 단원 목록 (위에서부터 이 순서로 보여요)
+   grade: 학년(1, 2, 3)
+   ============================================================ */
+const UNITS = [
+  { id: 'reproduction', grade: 3, name: '생식과 유전', note: '세포 분열 · 멘델의 유전 원리' },
+];
+
+/* ============================================================
+   여기만 고치면 돼요 ③ 콘텐츠 목록 (단원 안에서 이 순서로 보여요)
+   잠깐 내리고 싶으면 해당 덩어리에 hidden: true, 한 줄을 넣어요.
+   파일과 주소(QR)는 그대로 살아 있고, 첫 화면에서만 사라져요.
+   다시 보이게 하려면 그 줄을 지우거나 false로 바꿔요.
+   ============================================================ */
+const APPS = [
+  {
+    file: 'mitosis.html',
+    unit: 'reproduction',
+    title: '체세포 분열 3D 관찰실',
+    desc: '염색체 4개(2n=4)인 세포가 분열하는 과정을 영상처럼 보거나 시기마다 직접 눌러 진행해요. 식물 세포와 동물 세포를 비교할 수 있어요.',
+    tags: ['체세포 분열', '염색체', '방추사', '식물·동물 세포'],
+    thumb: 'thumbs/mitosis.jpg'
+  },
+  {
+    file: 'mendel-shape.html',
+    unit: 'reproduction',
+    title: '완두 모양 3D 실험실',
+    desc: '완두 모양(R, r) 한 가지 형질로 순종 교배, 감수 분열, F2, 바둑알 모의 활동을 직접 해 봐요. 염색체를 끌어 대립유전자를 나눠 봐요.',
+    tags: ['우열의 원리', '분리의 법칙', '감수 분열', '바둑알 모의 활동'],
+    thumb: 'thumbs/mendel-shape.jpg'
+  },
+  {
+    file: 'mendel.html',
+    unit: 'reproduction',
+    title: '완두 유전 3D 실험실',
+    desc: '완두의 모양(R, r)과 색(Y, y) 두 가지 형질로 F2 바둑판을 채우고, 많이 심을수록 9 : 3 : 3 : 1에 가까워지는지 확인해요.',
+    tags: ['독립의 법칙', '두 가지 형질', '9 : 3 : 3 : 1'],
+    thumb: 'thumbs/mendel.jpg'
+  },
+];
+
+/* ---------------- 아래는 고치지 않아도 돼요 ---------------- */
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const base=SITE.endsWith('/')?SITE:SITE+'/';
+const urlOf=a=>/^https?:/.test(a.file)?a.file:base+a.file;
+const SHOWN=APPS.filter(a=>a&&a.hidden!==true);
+const unitOf=id=>UNITS.find(u=>u.id===id)||{id,grade:0,name:'기타',note:''};
+const grades=[...new Set(UNITS.filter(u=>SHOWN.some(a=>a.unit===u.id)).map(u=>u.grade))].sort();
+let grade=0;try{grade=+(localStorage.getItem('hub-grade')||0)}catch(e){}
+if(grade&&!grades.includes(grade))grade=0;
+
+function chips(){
+  const opts=[0,...grades];
+  $('#grades').innerHTML=opts.map(g=>'<button class="chip" type="button" data-g="'+g+'" aria-pressed="'+(g===grade)+'">'+(g?'중'+g:'전체')+'</button>').join('');
+  $('#grades').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{grade=+b.dataset.g;try{localStorage.setItem('hub-grade',grade)}catch(e){}chips();render()});
+}
+function match(a,q){if(!q)return true;const u=unitOf(a.unit);return [a.title,a.desc,u.name,(a.tags||[]).join(' ')].join(' ').toLowerCase().includes(q)}
+function card(a,u,n){
+  const code=(u.grade?'중'+u.grade+' · ':'')+u.name+' · '+String(n).padStart(2,'0');
+  const ph='<div class="ph" aria-hidden="true">'+esc(a.title.slice(0,2))+'</div>';
+  return '<article class="card"><a class="thumb" href="'+esc(urlOf(a))+'" target="_blank" rel="noopener" aria-label="'+esc(a.title)+' 열기">'+ph+
+    (a.thumb?'<img src="'+esc(a.thumb)+'" alt="" loading="lazy" onerror="this.remove()">':'')+
+    '<span class="code">'+esc(code)+'</span></a><div class="body"><h3>'+esc(a.title)+'</h3><p>'+esc(a.desc||'')+'</p>'+
+    (a.tags&&a.tags.length?'<ul class="tags">'+a.tags.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>':'')+
+    '<div class="acts"><a class="btn primary" href="'+esc(urlOf(a))+'" target="_blank" rel="noopener">열기 ↗</a><button class="btn" type="button" data-qr="'+esc(a.file)+'">QR 띄우기</button></div></div></article>';
+}
+function render(){
+  const q=$('#q').value.trim().toLowerCase();
+  const units=[...UNITS,...SHOWN.filter(a=>!UNITS.some(u=>u.id===a.unit)).map(a=>unitOf(a.unit)).filter((u,i,arr)=>arr.findIndex(x=>x.id===u.id)===i)];
+  let h='',total=0;
+  units.forEach(u=>{
+    if(grade&&u.grade!==grade)return;
+    const all=SHOWN.filter(a=>a.unit===u.id);
+    const list=all.filter(a=>match(a,q));
+    if(!list.length)return;total+=list.length;
+    h+='<section class="unit" aria-labelledby="u-'+esc(u.id)+'"><div class="unit-head">'+(u.grade?'<span class="grade">중'+u.grade+'</span>':'')+
+      '<h2 id="u-'+esc(u.id)+'">'+esc(u.name)+'</h2>'+(u.note?'<p>'+esc(u.note)+'</p>':'')+'</div><div class="grid">'+
+      list.map(a=>card(a,u,all.indexOf(a)+1)).join('')+'</div></section>';
+  });
+  $('#list').innerHTML=h||'<div class="empty">‘'+esc($('#q').value)+'’에 맞는 콘텐츠가 없어요. 다른 낱말로 찾아보거나 학년을 ‘전체’로 바꿔 보세요.</div>';
+  $('#count').textContent=(q||grade?'찾은 콘텐츠 ':'콘텐츠 ')+total+'개'+(q||grade?' / 전체 '+SHOWN.length+'개':'');
+  $('#list').querySelectorAll('[data-qr]').forEach(b=>b.onclick=()=>{const a=SHOWN.find(x=>x.file===b.dataset.qr);showQR(a.title,urlOf(a),b)});
+}
+let lastFocus=null;
+function showQR(title,url,from){
+  const box=$('#qrMake');box.innerHTML='';
+  $('#qrTitle').textContent=title;$('#qrUrl').textContent=url;
+  if(typeof QRCode==='undefined'){$('#qrImg').removeAttribute('src');$('#qrImg').alt='QR 도구를 불러오지 못했어요. 인터넷 연결을 확인하고 새로 고침 해 주세요.'}
+  else{new QRCode(box,{text:url,width:640,height:640,colorDark:'#10201b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    const cv=box.querySelector('canvas');$('#qrImg').src=cv?cv.toDataURL('image/png'):(box.querySelector('img')||{}).src||'';$('#qrImg').alt=title+' 접속 QR 코드'}
+  lastFocus=from||null;$('#qr').hidden=false;$('#qrClose').focus();
+}
+function closeQR(){$('#qr').hidden=true;if(lastFocus)lastFocus.focus()}
+$('#qrClose').onclick=closeQR;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#qr').hidden)closeQR()});
+$('#hubQR').onclick=e=>showQR('3D 과학 실험실',base,e.currentTarget);
+$('#q').addEventListener('input',render);
+document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{
+  const el=document.getElementById(b.dataset.copy),t=el.textContent;
+  const done=()=>{b.textContent='복사됨';setTimeout(()=>b.textContent='복사',1500)};
+  const sel=()=>{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='선택됨 · Ctrl+C';setTimeout(()=>b.textContent='복사',2500)};
+  try{navigator.clipboard.writeText(t).then(done,sel)}catch(e){sel()}
+});
+$('#foot').textContent='사이트 주소 · '+base;
+chips();render();
+})();
+</script>
+</body>
+</html>
