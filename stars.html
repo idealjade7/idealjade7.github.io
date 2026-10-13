@@ -165,10 +165,17 @@ table.t th{color:#c3c9e8}
 .predict{color:#151a33}.predict button{border-color:#d3d8e8;background:#f3f5fb}
 .ctrl .seg button{white-space:nowrap}
 .cel-card{color:#151a33}
-.ophoto{position:absolute;left:16px;top:76px;width:min(330px,40%);margin:0;z-index:3;display:none;background:rgba(10,14,34,.9);border:1px solid rgba(255,255,255,.18);border-radius:12px;overflow:hidden;box-shadow:0 8px 26px rgba(0,0,0,.45)}
-.ophoto.show{display:block}.ophoto img{display:block;width:100%;height:auto}
-.ophoto figcaption{font-size:12.5px;line-height:1.45;padding:6px 9px 8px;color:#e4e8fa}
-@media (max-width:720px){.ophoto{left:10px;right:10px;width:auto;top:54px;display:none}.ophoto.show{display:flex;align-items:center;gap:8px}.ophoto img{width:46%;flex:none}.ophoto figcaption{font-size:12px;padding:4px 6px}}
+.ophoto{position:absolute;left:16px;top:76px;width:min(340px,40%);margin:0;z-index:3;display:none;background:rgba(10,14,34,.92);border:1px solid rgba(255,255,255,.2);border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.ophoto.show{display:block;animation:opop .35s cubic-bezier(.2,1.5,.4,1)}
+@keyframes opop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
+.ophoto .ow{position:relative;overflow:hidden}
+.ophoto img{display:block;width:100%;height:auto;transition:transform 1.4s cubic-bezier(.3,.8,.3,1)}
+.oring{position:absolute;width:9%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);border:2.5px solid #fff;box-shadow:0 0 0 3px rgba(0,0,0,.35),0 0 18px 4px currentColor;opacity:0;transition:opacity .4s .9s;pointer-events:none}
+.oring.on{opacity:1;animation:oring 1.4s ease-in-out .9s infinite}
+@keyframes oring{50%{width:12%}}
+.ophoto figcaption{font-size:12.5px;line-height:1.45;padding:7px 10px 9px;color:#e4e8fa}
+.ox{position:absolute;right:6px;top:6px;z-index:2;width:28px;height:28px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:18px;line-height:1}
+@media (max-width:720px){.ophoto{left:10px;right:10px;width:auto;top:54px}.ophoto.show{display:flex;align-items:center;gap:8px}.ophoto .ow{width:50%;flex:none}.ophoto figcaption{font-size:12px;padding:4px 30px 4px 2px}}
 .info,.big,.toast,.hint,.predict{z-index:3}
 .win{position:absolute;inset:0;pointer-events:none;display:none;z-index:1;border:solid #2d3340;border-width:clamp(14px,3vw,34px) clamp(14px,3vw,34px) clamp(30px,6vw,64px);box-shadow:inset 0 0 0 4px #4b5363,inset 0 0 40px rgba(0,0,0,.35);border-radius:6px}
 .win::after{content:'';position:absolute;left:0;right:0;top:46%;height:6px;background:#4b5363;display:none}
@@ -204,7 +211,7 @@ table.t th{color:#c3c9e8}
 <main class="stage" id="stage">
   <canvas id="gl" aria-label="별의 밝기와 색 3D 모형. 드래그하여 돌리고 두 손가락으로 확대할 수 있습니다."></canvas>
   <div class="big" id="big"></div>
-  <figure class="ophoto" id="ophoto"><img alt="실제 밤하늘에서 찍은 오리온자리 사진. 왼쪽 위 베텔게우스는 주황빛, 오른쪽 아래 리겔은 푸른빛을 띤다."><figcaption><b>실제 밤하늘의 오리온자리</b> · 맨눈과 사진에서도 <span style="color:#ffb15c">베텔게우스는 붉은빛</span>, <span style="color:#8fc7ff">리겔은 푸른빛</span>으로 보여요</figcaption></figure>
+  <figure class="ophoto" id="ophoto" aria-live="polite"><button class="ox" id="ox" aria-label="사진 닫기">×</button><div class="ow"><img alt="실제 밤하늘에서 찍은 오리온자리 사진"><i class="oring" id="oring"></i></div><figcaption id="ocap"></figcaption></figure>
   <section class="info" id="info" aria-live="polite">
     <h2><span id="infoTitle"></span><button class="toggle" id="infoToggle" aria-expanded="true">접기</button></h2>
     <ul id="infoList"></ul>
@@ -847,17 +854,33 @@ const barX=i=>-BARW/2+.6+i*(BARW-1.2)/6;
     if(k==='betel'||k==='rigel'){const h=hitSphere(.45);h.position.set(x,y,z);h.userData={tap:()=>D.orTap(k)};D.orion.add(h)}});
   [['betel','bella'],['betel','al'],['bella','mi'],['al','an'],['an','mi'],['al','saiph'],['mi','rigel']].forEach(([a,b])=>D.orion.add(line(D.ost[a].position,D.ost[b].position,0x6f7fb8,.45)));
   D.orion.position.x=0;
-  D.orL=label('베텔게우스와 리겔을 눌러 비교해 보세요',Object.assign({size:.22},LTW));D.orL.position.set(0,2.4,0);D.orion.add(D.orL);
+  D.orL=label('베텔게우스나 리겔을 눌러 실제 사진에서 찾아보세요',Object.assign({size:.22},LTW));D.orL.position.set(0,2.4,0);D.orion.add(D.orL);
 })();
 D.setHeat=function(T){const c=tCol(T);D.hb.material.color.copy(c);D.hg.material.color.copy(c);D.hb.scale.setScalar(1);
   const nm=T<3400?'붉은색':T<4600?'주황색':T<6000?'노란색':T<8000?'황백색':T<13000?'흰색':T<25000?'청백색':'청색';
   D.hl.userData.set('약 '+Math.round(T).toLocaleString()+' °C · '+nm);$('#dTv').textContent=Math.round(T).toLocaleString()+' °C';if(cur==='D')renderData()};
-D.setMode=function(m){D.mode=m;$('#ophoto').classList.toggle('show',m==='orion'&&cur==='D');D.orion.position.x=m==='orion'&&!portrait&&stage.clientWidth>760?1.25:0;segSet('#dMode','m',m);D.sort.visible=m==='sort';D.heat.visible=m==='heat';D.orion.visible=m==='orion';
+D.setMode=function(m){D.mode=m;D.photoOff();D.orion.position.x=m==='orion'&&!portrait&&stage.clientWidth>760?1.25:0;segSet('#dMode','m',m);D.sort.visible=m==='sort';D.heat.visible=m==='heat';D.orion.visible=m==='orion';
   $('#dTW').style.display=m==='heat'?'inline-flex':'none';$('#dAll').style.display=$('#dReset').style.display=m==='sort'?'':'none';
   if(m==='heat')say('<b>뜨거운 물체의 색</b>온도 막대를 움직여 보세요. 쇳물처럼 스스로 빛을 내는 물체는 온도가 높을수록 <b>흰색·파란색</b>, 낮을수록 <b>붉은색</b>을 띠어요. 별도 마찬가지예요.',8000);
   else if(m==='orion')say('<b>오리온자리</b>왼쪽 위의 붉은 별이 베텔게우스, 오른쪽 아래의 청백색 별이 리겔이에요.',6000);
   renderData()};
-D.orTap=function(k){say(k==='betel'?'<b>베텔게우스 · 적색</b>표면 온도 약 3100~3600 K로 <b>낮아요</b>. 겉보기 등급 +0.8, 절대 등급 −5.5, 거리 약 182 pc':'<b>리겔 · 청백색</b>표면 온도 약 12000 K로 <b>높아요</b>. 겉보기 등급 +0.1, 절대 등급 −6.8, 거리 약 240 pc. 리겔이 베텔게우스보다 표면 온도가 높아요.',8000)};
+const OPOS={betel:[46.3,21.6,'#ff9a5c'],rigel:[70.7,60.1,'#8fc7ff']};
+D.orTap=function(k){
+  say(k==='betel'?'<b>베텔게우스 · 적색</b>표면 온도 약 3100~3600 K로 <b>낮아요</b>. 겉보기 등급 +0.8, 절대 등급 −5.5, 거리 약 182 pc':'<b>리겔 · 청백색</b>표면 온도 약 12000 K로 <b>높아요</b>. 겉보기 등급 +0.1, 절대 등급 −6.8, 거리 약 240 pc. 리겔이 베텔게우스보다 표면 온도가 높아요.',8000);
+  D.photo(k);D.seen=D.seen||new Set();D.seen.add(k);D.orL.userData.set(D.seen.size<2?'다른 별도 눌러 실제 사진에서 찾아보세요':'베텔게우스와 리겔을 눌러 비교해 보세요');
+};
+D.photo=function(k){
+  const f=$('#ophoto'),img=f.querySelector('img'),r=$('#oring'),[x,y,c]=OPOS[k];
+  const wasOpen=f.classList.contains('show');
+  r.classList.remove('on');r.style.left=x+'%';r.style.top=y+'%';r.style.color=c;
+  $('#ocap').innerHTML=k==='betel'?'<b>실제 밤하늘 사진 속 베텔게우스</b> · 맨눈과 사진에서도 <span style="color:#ffb15c">붉은빛(주황빛)</span>으로 눈에 띄어요. 표면 온도가 낮은 별이에요.':'<b>실제 밤하늘 사진 속 리겔</b> · <span style="color:#8fc7ff">푸른빛(청백색)</span>으로 빛나요. 베텔게우스보다 표면 온도가 높은 별이에요.';
+  // 별 쪽으로 확대된 상태에서 시작해 전체 사진으로 빠져나와요
+  img.style.transition='none';img.style.transformOrigin=x+'% '+y+'%';img.style.transform='scale(3.2)';void img.offsetWidth;
+  if(!wasOpen){f.classList.remove('show');void f.offsetWidth;f.classList.add('show')}
+  setTimeout(()=>{img.style.transition='';img.style.transform='scale(1)';r.classList.add('on')},60);
+};
+D.photoOff=function(){$('#ophoto').classList.remove('show');$('#oring').classList.remove('on')};
+$('#ox').onclick=()=>D.photoOff();
 D.shuffle=function(){const ord=DST.slice().sort(()=>Math.random()-.5);D.placed=[];D.revealed=false;
   ord.forEach((s,i)=>{const g=D.obj[s.k];killTw('Dm'+s.k);g.position.set(barX(i),1.0,0);g.userData.l.userData.set(s.n);g.userData.l.position.y=.62;g.userData.tl.visible=false});renderData()};
 D.tap=function(k){
@@ -898,7 +921,7 @@ const SC={
 let cur='A';
 function showInfo(){const s=SC[cur];$('#big').textContent=s.big;$('#infoTitle').textContent=s.title;$('#infoList').innerHTML=s.items.map(t=>'<li>'+t+'</li>').join('');renderData()}
 function setScene(k){
-  cur=k;closePredict();hideSay();$('#ophoto').classList.toggle('show',k==='D'&&D.mode==='orion');
+  cur=k;closePredict();hideSay();D.photoOff();
   Object.keys(SC).forEach(x=>SC[x].g.visible=x===k);
   $$('#tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.sc===k?'step':'false'));
   $$('.ctrl').forEach(c=>c.classList.toggle('on',c.dataset.for===k));
