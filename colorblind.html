@@ -471,7 +471,7 @@ function setChromo(g,type){
   u.loc.visible=type!=='Y';u.loc.scale.set(r*1.12,.16,r*1.12);u.loc.position.y=-L/2+.24;
   const c=type==='X′'?LOC_C:LOC_N;u.lm.color.setHex(c);u.lm.emissive.setHex(c);
 }
-function chromoLabel(type,size){return label(type,{bg:'rgba(255,255,255,.95)',fg:TX[type],size:size||.3})}
+function chromoLabel(type,size){const o={bg:'rgba(255,255,255,.95)',fg:TX[type],size:size||.3};const l=label(type,o);l.userData.setType=t=>{o.fg=TX[t];l.userData.set(t)};return l}
 /* 염색체 한 쌍(작은 아이콘) */
 function pairIcon(gt,s){
   const g=new THREE.Group(),t=splitGt(gt);
@@ -564,18 +564,18 @@ A.tapChr=function(i){
   const ty=A.c[i];
   if(ty==='Y'){say('<b>Y 염색체</b>Y 염색체에는 색맹 유전자 자리가 없어요. 그래서 남자의 색각은 X 염색체 <b>하나</b>로 정해져요.');return}
   A.c[i]=ty==='X'?'X′':'X';
-  const c=A.ch[i];killTw('A'+i);tweenOwn('A'+i,0,1,.45,v=>{c.rotation.y=v*Math.PI*2},()=>{c.rotation.y=0});
+  const c=A.ch[i];killTw('Af'+i);tweenOwn('Af'+i,0,1,.45,v=>{c.rotation.y=v*Math.PI*2},()=>{c.rotation.y=0});
   A.update(true);
 };
 A.setSex=function(s){
   if(A.sex===s)return;A.sex=s;A.c[1]=s==='m'?'Y':'X';
-  const c=A.ch[1];killTw('A1');tweenOwn('A1',0,1,.4,v=>c.scale.setScalar(1.25*(v<.5?1-v*2:(v-.5)*2)+.01));
-  delay('A1',.2,()=>{setChromo(c,A.c[1])});
+  const c=A.ch[1];killTw('As');tweenOwn('As',0,1,.4,v=>c.scale.setScalar(1.25*(v<.5?1-v*2:(v-.5)*2)+.01));
+  delay('As',.2,()=>{setChromo(c,A.c[1])});
   A.update(true);
 };
 A.update=function(user){
   const gt=A.gt(),cb=isCB(gt),m=A.sex==='m';
-  A.c.forEach((ty,i)=>{if(!(i===1&&tweens.some(t=>t.owner==='A1')))setChromo(A.ch[i],ty);A.lb[i].userData.set(ty);});
+  A.c.forEach((ty,i)=>{if(!(i===1&&tweens.some(t=>t.owner==='As')))setChromo(A.ch[i],ty);A.lb[i].userData.setType(ty);});
   A.ch[1].position.y=A.c[1]==='Y'?.6:.25;
   A.pm.m.visible=m;A.pm.f.visible=!m;setPerson(A.pm.m,cb);setPerson(A.pm.f,cb);
   A.title.userData.set((m?'남자':'여자')+' · '+gt);
@@ -926,7 +926,7 @@ let last=performance.now();
 function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
   runTweens(dt);
-  if(cur==='A')A.ch.forEach((c,i)=>{if(!tweens.some(w=>w.owner==='A'+i))c.rotation.y=Math.sin(t*.8+i)*.35});
+  if(cur==='A')A.ch.forEach((c,i)=>{if(!tweens.some(w=>w.owner==='Af'+i))c.rotation.y=Math.sin(t*.8+i)*.35});
   if(cur==='B')B.tick(t);
   if(cur==='C')C.tick(t);
   controls.update();renderer.render(scene,camera);
