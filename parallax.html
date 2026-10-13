@@ -174,6 +174,26 @@ table.t th{color:#c3c9e8}
 .fpt{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(20,24,52,.9);color:#fff;font-weight:700;font-size:15px;padding:6px 14px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.35)}
 .fpt b{color:#ffe38a}
 @media (max-width:720px){.fpt{top:58px;font-size:13px;white-space:normal;text-align:center;width:calc(100% - 24px)}}
+.fbox{position:absolute;left:16px;top:74px;z-index:3;display:none;background:rgba(10,14,34,.86);border:1.5px solid rgba(255,227,138,.75);border-radius:14px;padding:10px 16px 9px;color:#fff;box-shadow:0 8px 26px rgba(0,0,0,.4)}
+.fml{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;white-space:nowrap}
+.fml .eq{font-size:22px;color:#ffe38a}
+.frac{display:inline-flex;flex-direction:column;align-items:center;line-height:1.15}
+.frac b{font-size:21px;padding:0 6px;border-bottom:2px solid #fff;width:100%;text-align:center}
+.frac i{font-style:normal;font-size:16px;padding-top:2px}
+.fcalc{margin-top:6px;font-size:15px;color:#b8f08f;font-weight:700}
+.fsub{margin-top:3px;font-size:12.5px;color:#c3c9e8}.fsub b{color:#ffe38a}
+.prac{position:absolute;left:16px;bottom:16px;width:min(330px,calc(100% - 32px));z-index:4;display:none;background:#fff;color:#151a33;border-radius:16px;padding:14px;box-shadow:0 12px 36px rgba(0,0,0,.5)}
+.prac.show{display:block}
+.prac h4{margin:0 0 2px;font-size:16px;display:flex;align-items:center;gap:6px}.prac h4 .x{margin-left:auto;border:0;background:transparent;font-size:20px;line-height:1;color:#5a6280}
+.prac .dots{display:flex;gap:5px;margin:6px 0 10px}.prac .dots i{width:22px;height:6px;border-radius:3px;background:#d3d8e8}.prac .dots i.ok{background:#2f9e44}.prac .dots i.sk{background:#f0b92b}.prac .dots i.now{outline:2px solid #4b55c9;outline-offset:1px}
+.prac .q{font-weight:700;font-size:15px;line-height:1.5}
+.prac .ans{display:flex;gap:6px;align-items:center;margin-top:10px}
+.prac input{width:96px;font-size:18px;font-weight:700;padding:6px 8px;border:1.5px solid #c7cde0;border-radius:10px;text-align:right}
+.prac .u{font-weight:700}
+.prac .fb{min-height:1.4em;margin-top:8px;font-size:13.5px;line-height:1.5}.prac .fb.ok{color:#1f7a34}.prac .fb.no{color:#b3261e}
+.prac .row{display:flex;gap:6px;margin-top:10px}.prac .row .tbtn{font-size:13px;padding:6px 10px}
+@media (max-width:720px){.fbox{left:10px;right:10px;top:54px;padding:7px 12px}.fsub{display:none}.fml{font-size:15px;gap:7px;justify-content:center}.frac b{font-size:17px}.frac i{font-size:13px}.fcalc,.fsub{text-align:center}.fcalc{font-size:13.5px}
+ .prac{left:10px;right:10px;width:auto;top:auto;bottom:10px}}
 .inset{position:absolute;display:none;z-index:2;border:2px solid rgba(255,227,138,.85);border-radius:10px;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.4)}
 .inset span{position:absolute;left:6px;top:6px;background:rgba(20,24,52,.85);color:#ffe38a;font-size:12.5px;font-weight:700;padding:2px 8px;border-radius:999px}
 .rng{display:inline-flex;align-items:center;gap:6px}.rng input{width:min(160px,32vw);accent-color:var(--leaf)}.rng b{min-width:3.6em}
@@ -205,6 +225,8 @@ table.t th{color:#c3c9e8}
   <div class="inset" id="ins0"><span></span></div>
   <div class="inset" id="ins1"><span></span></div>
   <div class="big" id="big"></div>
+  <div class="fbox" id="fbox"><div class="fml"><span class="fl">별까지의 거리(pc)</span><span class="eq">=</span><span class="frac"><b>1</b><i>연주 시차(″)</i></span></div><div class="fcalc" id="fcalc"></div><div class="fsub">연주 시차와 거리는 <b>반비례</b> · 1 pc ≈ 3.26 광년</div></div>
+  <div class="prac" id="prac" role="dialog" aria-label="계산 연습"></div>
   <section class="info" id="info" aria-live="polite">
     <h2><span id="infoTitle"></span><button class="toggle" id="infoToggle" aria-expanded="true">접기</button></h2>
     <ul id="infoList"></ul>
@@ -253,6 +275,7 @@ table.t th{color:#c3c9e8}
   </div>
   <div class="ctrl" data-for="D">
     <label class="rng">연주 시차 <input type="range" id="dP" min="10" max="100" step="1" value="50"><b id="dPv">0.50″</b></label>
+    <button class="tbtn go" id="dPrac">✏️ 계산 연습</button>
     <button class="tbtn" id="dAll">정답 모두 보기</button>
     <button class="tbtn" id="dReset">다시 섞기</button>
     <span class="sp"></span>
@@ -906,7 +929,7 @@ D.place=function(s,anim){const g=D.obj[s.k],to=new V(dx(s),0,0),from=g.position.
   killTw('Dm'+s.k);if(anim)tweenOwn('Dm'+s.k,0,1,1.1,v=>{g.position.lerpVectors(from,to,v);g.position.z=Math.sin(v*Math.PI)*1.5});else g.position.copy(to)};
 D.all=function(){D.revealed=true;DSTARS.forEach(s=>{if(!D.placed.includes(s.k)){D.placed.push(s.k);D.place(s,true)}});renderData();say('<b>정답 모두 보기</b>프록시마 센타우리 → 시리우스 → 알타이르 → 베가 → 스피카 순으로 가까워요.',5000)};
 D.setP=function(v){D.p=v;const d=1/v;D.probe.position.set(Math.min(d,10.4)*PC,-2.6,0);D.probe.userData.l.userData.set(v.toFixed(2)+'″ → '+(Math.round(d*100)/100)+' pc');D.pline.userData.set(new V(0,-2.6,0),new V(Math.min(d,10.4)*PC,-2.6,0));
-  $('#dPv').textContent=v.toFixed(2)+'″';if(cur==='D')renderData()};
+  $('#dPv').textContent=v.toFixed(2)+'″';$('#fcalc').innerHTML='예) 연주 시차 '+v.toFixed(2)+'″ → 1 ÷ '+v.toFixed(2)+' = <b>'+(Math.round(d*100)/100)+' pc</b> ≈ '+(Math.round(d*3.26*10)/10)+' 광년';if(cur==='D')renderData()};
 D.svg=function(){
   const W=300,H=170,x0=36,y0=140,xs=(W-50),ys=120,X=p=>x0+p*xs,Y=d=>y0-Math.min(d,10)/10*ys;
   let path='';for(let i=0;i<=90;i++){const p=.1+i/90*.9;path+=(i?'L':'M')+X(p).toFixed(1)+' '+Y(1/p).toFixed(1)}
@@ -919,6 +942,56 @@ D.svg=function(){
   DSTARS.forEach(s=>{if(D.placed.includes(s.k)&&s.d<=10)h+='<circle cx="'+X(s.p)+'" cy="'+Y(s.d)+'" r="4" fill="'+s.c+'" stroke="#151a33"/><text x="'+(X(s.p)+6)+'" y="'+(Y(s.d)-5)+'" fill="#e4e8fa" font-size="10">'+s.n.replace('프록시마 센타우리','프록시마')+'</text>'});
   h+='<circle cx="'+X(D.p)+'" cy="'+Y(1/D.p)+'" r="5" fill="#9be36a"/></svg>';return h;
 };
+
+/* ---------- 계산 연습 ---------- */
+const PQ=[
+  {q:'연주 시차가 <b>0.5″</b>인 별까지의 거리는?',a:2,u:'pc',tol:.01,h:'거리(pc) = 1 ÷ 0.5'},
+  {q:'연주 시차가 <b>0.25″</b>인 별까지의 거리는?',a:4,u:'pc',tol:.01,h:'거리(pc) = 1 ÷ 0.25'},
+  {q:'연주 시차가 <b>0.1″</b>인 별까지의 거리는?',a:10,u:'pc',tol:.01,h:'거리(pc) = 1 ÷ 0.1'},
+  {q:'시리우스의 연주 시차는 <b>0.38″</b>예요. 시리우스까지의 거리는? (소수 첫째 자리까지)',a:2.6,u:'pc',tol:.06,h:'1 ÷ 0.38 ≈ 2.63…'},
+  {q:'거리가 <b>5 pc</b>인 별의 연주 시차는? (거꾸로 구하기)',a:.2,u:'″',tol:.005,h:'반비례이므로 연주 시차(″) = 1 ÷ 거리(pc) = 1 ÷ 5'},
+  {q:'연주 시차가 <b>0.5″</b>인 별까지의 거리는 약 몇 <b>광년</b>일까? (1 pc ≈ 3.26 광년)',a:6.52,u:'광년',tol:.08,h:'먼저 1 ÷ 0.5 = 2 pc를 구한 뒤 × 3.26'}
+];
+const P={i:0,st:PQ.map(()=>0),tries:0,open:false};       // st: 0 미풀이, 1 정답, 2 답 봄
+P.render=function(){
+  const q=PQ[P.i],el=$('#prac');
+  el.innerHTML='<h4>✏️ 계산 연습 <span style="font-weight:500;font-size:13px;color:#5a6280">'+(P.i+1)+' / '+PQ.length+'</span><button class="x" aria-label="닫기">×</button></h4>'+
+    '<div class="dots">'+PQ.map((_,k)=>'<i class="'+(P.st[k]===1?'ok':P.st[k]===2?'sk':'')+(k===P.i?' now':'')+'"></i>').join('')+'</div>'+
+    '<div class="q">'+q.q+'</div><div class="ans"><input id="pIn" type="text" inputmode="decimal" autocomplete="off" aria-label="답"><span class="u">'+q.u+'</span><button class="tbtn go" id="pOk">확인</button></div>'+
+    '<div class="fb" id="pFb"></div><div class="row"><button class="tbtn" id="pHint">힌트</button><button class="tbtn" id="pShow">답 보기</button><span style="flex:1"></span><button class="tbtn" id="pPrev">이전</button><button class="tbtn primary" id="pNext">다음</button></div>';
+  el.querySelector('.x').onclick=()=>P.close();
+  const inp=$('#pIn');inp.onkeydown=e=>{if(e.key==='Enter')P.check()};
+  $('#pOk').onclick=()=>P.check();$('#pHint').onclick=()=>P.fb('💡 '+q.h,'');
+  $('#pShow').onclick=()=>{if(P.st[P.i]!==1)P.st[P.i]=2;P.fb('정답: <b>'+q.a+' '+q.u+'</b> ('+q.h+(P.i===3||P.i===5?'':' = '+q.a)+')','');P.dots()};
+  $('#pPrev').onclick=()=>{P.i=(P.i+PQ.length-1)%PQ.length;P.tries=0;P.render()};
+  $('#pNext').onclick=()=>{P.i=(P.i+1)%PQ.length;P.tries=0;P.render()};
+  $('#pPrev').disabled=P.i===0;
+  if(P.st[P.i]===1)P.fb('✔ 이미 맞힌 문제예요. 정답 '+q.a+' '+q.u,'ok');
+  if(window.innerWidth>720)setTimeout(()=>inp.focus(),30);
+};
+P.dots=function(){$$('#prac .dots i').forEach((d,k)=>d.className=(P.st[k]===1?'ok':P.st[k]===2?'sk':'')+(k===P.i?' now':''))};
+P.fb=function(h,c){const f=$('#pFb');f.className='fb '+c;f.innerHTML=h};
+P.check=function(){
+  const q=PQ[P.i],raw=$('#pIn').value.trim().replace(',','.').replace(/[^0-9.\-]/g,''),v=parseFloat(raw);
+  if(!raw||isNaN(v)){P.fb('숫자로 답을 적어 주세요.','no');return}
+  if(Math.abs(v-q.a)<=q.tol+1e-9){
+    const first=P.st[P.i]!==1;if(P.st[P.i]!==2)P.st[P.i]=1;P.dots();
+    P.fb('정답! '+q.h+(P.i===3?' → 약 2.6':P.i===5?' = 약 6.52':' = '+q.a)+' '+q.u,'ok');
+    const solved=P.st.filter(x=>x===1).length;
+    if(first&&P.st.every(x=>x===1))celebrate('성공!','계산 연습 6문제를 모두 맞혔어요');
+    else if(first&&P.st.every(x=>x>0))P.fb('정답! 모든 문제를 풀었어요. 답 보기를 쓴 문제는 다시 도전해 보세요.','ok');
+    else setTimeout(()=>{if(P.open&&P.st[P.i]===1){const nx=P.st.findIndex(x=>x!==1);if(nx>=0){P.i=nx;P.tries=0;P.render()}}},1400);
+    D.setP(clamp(P.i===4?.2:q.u==='pc'?1/q.a:.5,.1,1));$('#dP').value=Math.round(D.p*100);
+  }else{P.tries++;
+    let m='아쉬워요. ';
+    if(q.u!=='″'&&Math.abs(v-1/q.a)<1e-6)m+='주어진 값을 그대로 적은 것 같아요. 거리는 1을 연주 시차로 <b>나누어</b> 구해요.';
+    else if(q.u==='광년'&&Math.abs(v-2)<.01)m+='2는 pc 단위의 거리예요. 광년으로 바꾸려면 3.26을 곱해요.';
+    else m+=P.tries>=2?'💡 '+q.h:'공식 거리(pc) = 1 ÷ 연주 시차(″)를 다시 확인해 보세요.';
+    P.fb(m,'no')}
+};
+P.toggle=function(){P.open?P.close():(P.open=true,$('#prac').classList.add('show'),hideSay(),P.render())};
+P.close=function(){P.open=false;$('#prac').classList.remove('show')};
+$('#dPrac').onclick=()=>P.toggle();
 
 
 /* =====================================================
@@ -939,13 +1012,13 @@ const SC={
      items:['지구는 태양 주위를 공전하므로 <b>6개월 간격</b>으로 공전 궤도의 양쪽 끝(A, B)에서 별을 관측할 수 있어요.','가까운 별은 멀리 있는 배경 별에 대해 위치가 달라져 보여요. A와 B에서 잰 시차의 <b>절반(1/2)</b>을 <b>연주 시차</b>라고 해요.','가까운 별일수록 연주 시차가 커요. 단위는 초(″)를 써요. 1° = 3600″','이 모형은 크게 과장했어요. 실제로는 가장 가까운 별도 연주 시차가 <b>1″보다 작아요</b>.']},
   D:{g:D.g,big:'별까지의 거리',title:'연주 시차로 거리 구하기',bg:NIGHT,fov:40,near:.1,far:600,orbit:true,target:new V(15.4,1.2,0),dir:new V(0,.32,1),hw:17,hh:6.2,
      hint:'연주 시차가 적힌 별을 가까운 순서대로 눌러 거리 자 위에 놓아요',
-     items:['연주 시차가 <b>1″</b>인 별까지의 거리를 <b>1 pc(파섹)</b>이라고 해요. 1 pc ≈ <b>3.26 광년</b> ≈ 3×10¹³ km','별까지의 거리와 연주 시차는 <b>반비례</b>해요 → 별까지의 거리(pc) = 1 ÷ 연주 시차(″)','연주 시차는 매우 작아서 측정하기 어려워요. 1838년 베셀이 백조자리 61번 별의 연주 시차(약 0.314″)를 처음 측정했어요.','연주 시차로는 비교적 <b>가까운 별</b>까지의 거리만 구할 수 있어요.']}
+     items:['연주 시차가 <b>1″</b>인 별까지의 거리를 <b>1 pc(파섹)</b>이라고 해요. 1 pc ≈ <b>3.26 광년</b> ≈ 3×10¹³ km','별까지의 거리와 연주 시차는 <b>반비례</b>해요 → 별까지의 거리(pc) = 1 ÷ 연주 시차(″)','연주 시차는 매우 작아서 측정하기 어려워요. 1838년 베셀이 백조자리 61번 별의 연주 시차(약 0.314″)를 처음 측정했어요.','연주 시차로는 비교적 <b>가까운 별</b>까지의 거리만 구할 수 있어요.','<b>✏️ 계산 연습</b>을 눌러 공식으로 거리를 직접 구해 보세요.']}
 };
 let cur='A';
 function showInfo(){const s=SC[cur];$('#big').textContent=s.big;$('#infoTitle').textContent=s.title;$('#infoList').innerHTML=s.items.map(t=>'<li>'+t+'</li>').join('');renderData()}
 function setScene(k){
   if(cur==='B'&&k!=='B')B.setView('all');
-  cur=k;closePredict();hideSay();if(k!=='A')A.fwOff();
+  cur=k;closePredict();hideSay();$('#fbox').style.display=k==='D'?'block':'none';if(k!=='D')P.close();if(k!=='A')A.fwOff();
   Object.keys(SC).forEach(x=>SC[x].g.visible=x===k);
   const s=SC[k];scene.background=s.bg;scene.fog=s.fog?A.g.userData.fog:null;
   camera.fov=s.fov;camera.near=s.near;camera.far=s.far;camera.updateProjectionMatrix();updPt();
@@ -955,6 +1028,7 @@ function setScene(k){
   $$('.ctrl').forEach(c=>c.classList.toggle('on',c.dataset.for===k));
   $('#hint').textContent=s.hint;$('#hint').style.opacity=1;clearTimeout(setScene.h);setScene.h=setTimeout(()=>$('#hint').style.opacity=0,7000);
   showInfo();fit(true);
+  if(k==='D'&&stage.clientWidth<720)$('#hint').style.opacity=0;
 }
 $$('#tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.sc!==cur)setScene(b.dataset.sc)});
 $$('[data-reset-view]').forEach(b=>b.onclick=()=>fit(true,true));
@@ -1007,7 +1081,7 @@ function fit(force,anim){
   if(p!==portrait){portrait=p;portraitLayout(p);force=true}
   const s=SC[cur];
   const off=(!portrait&&w>760&&!$('#info').classList.contains('collapsed'))?Math.min(390,w*.34):0;
-  let top=0,bot=w<720?62:0;const on=INS.filter(v=>v.on&&v.r);if(on.length){const r=on[0].r;if(w<720)top=r.y+r.h;else bot=h-r.y}
+  let top=0,bot=w<720?62:0;if(cur==='D'){const fb=$('#fbox');if(fb.offsetHeight)top=fb.offsetTop+fb.offsetHeight-(w<720?40:30)}const on=INS.filter(v=>v.on&&v.r);if(on.length){const r=on[0].r;if(w<720)top=r.y+r.h;else bot=h-r.y}
   const oy=(bot-top)/2;
   if(off||oy)camera.setViewOffset(w,h,off/2,oy,w,h);else camera.clearViewOffset();
   if(!s.orbit){A.place();return}
