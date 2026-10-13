@@ -161,6 +161,17 @@ table.t tr.now td{color:#ffe38a;font-weight:700}
 .pico.ci{border-radius:50%}.pico.cb{background:#e98ab8}
 .predict small{color:#56654f;font-weight:500}
 .ctrl .seg button{white-space:nowrap}
+#celebrate{position:absolute;inset:0;z-index:8;pointer-events:none;display:none}
+#celebrate.show{display:block}
+#celebrate canvas{position:absolute;inset:0;width:100%;height:100%}
+#celebrate::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(255,244,190,.75),rgba(255,244,190,.18) 45%,rgba(255,244,190,0) 75%);animation:celFlash 1.3s ease-out forwards}
+.cel-card{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.5);opacity:0;background:#fff;color:#1b2a17;border-radius:20px;padding:14px 28px 16px;text-align:center;box-shadow:0 14px 44px rgba(0,0,0,.45),0 0 0 4px #ffe38a,0 0 40px 10px rgba(255,227,138,.55);animation:celPop .55s cubic-bezier(.2,1.6,.4,1) forwards,celOut .5s ease-in 2.8s forwards;max-width:calc(100% - 32px)}
+.cel-t{font-family:var(--display);font-size:clamp(36px,6.5vw,58px);color:#e09a00;line-height:1.1;letter-spacing:.02em}
+.cel-s{font-size:15px;font-weight:700;margin-top:4px}
+@keyframes celFlash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+@keyframes celPop{to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@keyframes celOut{to{opacity:0;transform:translate(-50%,-50%) scale(.92)}}
+@media (prefers-reduced-motion:reduce){#celebrate::before{animation:none;opacity:0}.cel-card{animation:celOut .5s ease-in 2.8s forwards;transform:translate(-50%,-50%);opacity:1}}
 </style>
 </head>
 <body>
@@ -432,6 +443,30 @@ function fresnel(color,base,rim){
 function say(html,ms){$('#toast').innerHTML=html;$('#toast').classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>$('#toast').classList.remove('show'),ms||5200)}
 function hideSay(){$('#toast').classList.remove('show')}
 
+/* ---------- 성공 효과: 화면 반짝임 + 성공 표지 + 반짝이 ---------- */
+function celebrate(title,sub){
+  let o=document.getElementById('celebrate');
+  if(!o){o=document.createElement('div');o.id='celebrate';o.setAttribute('role','status');o.innerHTML='<canvas></canvas><div class="cel-card"><div class="cel-t"></div><div class="cel-s"></div></div>';stage.appendChild(o)}
+  o.querySelector('.cel-t').textContent=title;o.querySelector('.cel-s').textContent=sub||'';
+  o.classList.remove('show');void o.offsetWidth;o.classList.add('show');
+  clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>o.classList.remove('show'),3400);
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const cv=o.querySelector('canvas'),r=stage.getBoundingClientRect(),dp=Math.min(2,window.devicePixelRatio||1);
+  cv.width=r.width*dp;cv.height=r.height*dp;const g=cv.getContext('2d');g.setTransform(dp,0,0,dp,0,0);
+  const cx=r.width/2,cy=r.height*.38,cols=['#ffe38a','#ffffff','#ffd166','#ff9ccc','#9be36a','#8fd3ff'];
+  const P=[];for(let i=0;i<150;i++){const a=Math.random()*Math.PI*2,sp=3+Math.random()*9;
+    P.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,s:3+Math.random()*6,c:cols[i%cols.length],rot:Math.random()*6,vr:(Math.random()-.5)*.3,star:i%3===0,life:1})}
+  for(let i=0;i<40;i++)P.push({x:Math.random()*r.width,y:Math.random()*r.height,vx:0,vy:0,s:2+Math.random()*5,c:'#ffffff',rot:0,vr:0,star:true,life:1,tw:Math.random()*6});
+  const star=(x,y,s,rot)=>{g.save();g.translate(x,y);g.rotate(rot);g.beginPath();for(let k=0;k<8;k++){const rr=k%2?s*.38:s;g.lineTo(Math.cos(k*Math.PI/4)*rr,Math.sin(k*Math.PI/4)*rr)}g.closePath();g.fill();g.restore()};
+  const t0=performance.now();cancelAnimationFrame(celebrate.raf);
+  const step=now=>{const t=(now-t0)/1000;g.clearRect(0,0,r.width,r.height);
+    P.forEach(p=>{if(p.tw===undefined){p.vy+=.18;p.vx*=.985;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life=Math.max(0,1-t/2.4)}else p.life=Math.max(0,Math.sin(t*6+p.tw))*(1-t/2.6);
+      g.globalAlpha=p.life;g.fillStyle=p.c;if(p.star)star(p.x,p.y,p.s,p.rot);else{g.save();g.translate(p.x,p.y);g.rotate(p.rot);g.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);g.restore()}});
+    g.globalAlpha=1;if(t<2.6)celebrate.raf=requestAnimationFrame(step);else g.clearRect(0,0,r.width,r.height)};
+  celebrate.raf=requestAnimationFrame(step);
+}
+
+
 /* =====================================================
    혈액형 유전 공통: 대립유전자 A·B·O · 염색체 · 사람 아이콘
    ===================================================== */
@@ -645,6 +680,7 @@ A.update=function(user){
   A.title.userData.set('유전자형 '+gt);A.res.userData.setPh(ph);A.girl.userData.set(ph,gt);
   const isNew=!A.found.has(gt);A.found.add(gt);
   if(user)say('<b>'+gt+' → '+ph+'형'+(isNew?' (새로 찾음 '+A.found.size+'/6)':'')+'</b>'+AMSG[gt]+(A.found.size===6&&isNew?'<br><b>여섯 가지 유전자형을 모두 찾았어요! 표현형은 4가지예요.</b>':''),7000);
+  if(user&&isNew&&A.found.size===6)celebrate('성공!','여섯 가지 유전자형을 모두 찾았어요');
   if(cur==='A')renderData();
 };
 
@@ -798,6 +834,7 @@ C.solve=function(P,p,right){
   if(p.gt.length===2){const ic=pairIcon(p.gt,.36);ic.position.set(p.x+.68,p.y+.1,0);P.G.add(ic);p.icon=ic}
   const s0=p.m.scale.x;tweenOwn('C',0,1,.5,v=>p.m.scale.setScalar(s0*(1+.25*Math.sin(v*Math.PI))));
   say('<b>'+(right?'정답! ':'')+p.id+' · '+p.gt+'</b>'+p.why+(P.done.size===P.people.length?'<br><b>가계도를 모두 완성했어요!</b>':''),7500);
+  if(right&&P.done.size===P.people.length)celebrate('가계도 완성!','모든 가족의 유전자형을 찾았어요');
   renderData();
 };
 C.all=function(){const P=C.P();P.people.forEach(p=>{if(!P.done.has(p))C.solve(P,p)});say('<b>가계도 완성</b>'+(C.which==='chal'?'할아버지는 가계도만으로 AA인지 AO인지 정할 수 없어요.':'O형 자녀가 있어서 부모 모두 O를 가진다는 것을 알 수 있어요.'))};
