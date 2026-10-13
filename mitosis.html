@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>3D 체세포 분열 관찰실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --ui:#eef3f6;          /* 슬라이드 유리 */
+  --ui-2:#ffffff;
+  --ink:#14213d;
+  --muted:#51607a;
+  --line:#cfd9e2;
+  --stain:#5b3fa6;       /* 헤마톡실린 보라 */
+  --stain-ink:#ffffff;
+  --eosin:#d6336c;
+  --stage:#0c1330;
+  --stage-2:#1b2456;
+  --stage-ink:#e9edff;
+  --glass:rgba(18,26,60,.72);
+  --font:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --display:'Black Han Sans','IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ui:#151b2e; --ui-2:#1c2440; --ink:#e7ecf8; --muted:#9aa6c2; --line:#2b3558;
+    --stain:#8f75e6; --stain-ink:#10132a; --eosin:#f06595;
+  }
+}
+:root[data-theme="dark"]{
+  --ui:#151b2e; --ui-2:#1c2440; --ink:#e7ecf8; --muted:#9aa6c2; --line:#2b3558;
+  --stain:#8f75e6; --stain-ink:#10132a; --eosin:#f06595;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;height:100%;display:flex;flex-direction:column;background:var(--ui);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;-webkit-tap-highlight-color:transparent;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--eosin);outline-offset:2px}
+
+/* 상단 */
+.top{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--ui);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{font-family:var(--display);font-size:20px;letter-spacing:.01em;margin-right:auto;white-space:nowrap}
+.brand small{font-family:var(--font);font-size:12px;color:var(--muted);margin-left:8px;font-weight:500}
+.seg{display:inline-flex;background:var(--ui-2);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-weight:700;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--stain);color:var(--stain-ink)}
+.tbtn{border:1px solid var(--line);background:var(--ui-2);border-radius:10px;padding:7px 12px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.tbtn.primary{background:var(--ink);color:var(--ui);border-color:var(--ink)}
+
+/* 무대 */
+.stage{position:relative;flex:1;min-height:0;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,var(--stage-2) 0%,var(--stage) 62%,#060a1c 100%);color:var(--stage-ink);touch-action:none}
+#gl{display:block;width:100%;height:100%}
+.phase-big{position:absolute;left:16px;top:10px;font-family:var(--display);font-size:clamp(44px,9vw,92px);line-height:1;color:#fff;opacity:.92;pointer-events:none;text-shadow:0 2px 24px rgba(91,63,166,.7)}
+.info{position:absolute;right:12px;top:12px;width:min(360px,calc(100% - 24px));background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:12px 14px 12px;font-size:14px;max-height:calc(100% - 24px);overflow:auto}
+.info h2{margin:0;font-size:17px;display:flex;align-items:center;gap:8px}
+.info h2 .lead{font-weight:700}
+.info .toggle{margin-left:auto;white-space:nowrap;flex:none;border:0;background:rgba(255,255,255,.12);border-radius:8px;padding:3px 9px;font-size:13px;color:inherit}
+.info ul{margin:8px 0 0;padding-left:18px}
+.info li{margin:4px 0}
+.info li b{color:#ffd4e3}
+.count{margin-top:10px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.08);font-size:13.5px}
+.count strong{font-size:15px;color:#fff}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:10px;font-size:12.5px;color:#cdd5f5}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:18px;height:7px;border-radius:4px;display:inline-block}
+.legend .wide{grid-column:1/-1;color:#aab4dc}
+.info.collapsed ul,.info.collapsed .count,.info.collapsed .legend{display:none}
+.labels{position:absolute;inset:0;pointer-events:none}
+.lbl{position:absolute;left:0;top:0;transform:translate(-50%,-135%);background:rgba(255,255,255,.94);color:#14213d;font-weight:700;font-size:13px;padding:2px 9px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.35);transition:opacity .2s}
+.lbl::after{content:"";position:absolute;left:50%;bottom:-7px;width:2px;height:7px;background:rgba(255,255,255,.9);transform:translateX(-50%)}
+.hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:rgba(0,0,0,.45);padding:6px 14px;border-radius:999px;font-size:13px;white-space:nowrap;pointer-events:none;transition:opacity .6s}
+.toast{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);max-width:min(520px,calc(100% - 24px));background:#fff;color:#14213d;padding:10px 14px;border-radius:14px;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.4);display:none}
+.toast.show{display:block}
+.toast b{display:block;margin-bottom:2px}
+.toast .swatch{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+.glfail[hidden]{display:none}
+.glfail{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:16px}
+
+/* 하단 조작 */
+.dock{background:var(--ui);border-top:1px solid var(--line);padding:10px 14px 12px}
+.timeline{position:relative}
+.phases{display:flex;gap:3px;margin-bottom:6px}
+.phases button{border:1px solid var(--line);background:var(--ui-2);border-radius:8px;padding:6px 2px;font-weight:700;font-size:14px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phases button[aria-current="step"]{background:var(--stain);color:var(--stain-ink);border-color:var(--stain)}
+.row{display:flex;align-items:center;gap:10px}
+.play{width:46px;height:46px;flex:none;border-radius:50%;border:0;background:var(--eosin);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center}
+input[type=range]{flex:1;min-width:0;accent-color:var(--stain);height:32px}
+.speed{border:1px solid var(--line);background:var(--ui-2);border-radius:8px;padding:6px 4px;font-weight:700}
+.opts{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:14px;align-items:center}
+.opts label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.opts input{width:18px;height:18px;accent-color:var(--stain)}
+.opts .spacer{flex:1}
+
+/* 모달 */
+.modal{position:fixed;inset:0;background:rgba(6,10,28,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal.open{display:flex}
+.sheet{background:var(--ui-2);color:var(--ink);border-radius:18px;width:min(560px,100%);max-height:100%;overflow:auto;padding:18px 18px 16px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.sheet h3{margin:0 0 4px;font-family:var(--display);font-weight:400;font-size:26px}
+.sheet p{margin:6px 0;color:var(--muted);font-size:14px}
+.sheet .close{float:right;border:0;background:transparent;font-size:24px;line-height:1;padding:2px 6px}
+.urlrow{display:flex;gap:6px;margin:10px 0}
+.urlrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--ui)}
+.qrbox{display:flex;justify-content:center;padding:14px;background:#fff;border-radius:14px;margin:8px auto;width:fit-content}
+.qrbox img,.qrbox canvas{display:block;width:min(300px,70vw)!important;height:auto!important;image-rendering:pixelated}
+.qr-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.note{font-size:13px;background:var(--ui);border-radius:10px;padding:8px 10px;color:var(--muted)}
+.bigqr{position:fixed;inset:0;background:#fff;color:#14213d;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center}
+.bigqr.open{display:flex}
+.bigqr h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,56px);margin:0}
+.bigqr img{width:min(70vh,80vw);height:auto;image-rendering:pixelated}
+.bigqr p{margin:0;font-size:clamp(15px,2.2vw,22px)}
+.bigqr button{position:absolute;right:16px;top:calc(12px + env(safe-area-inset-top,0px));border:1px solid #cfd9e2;background:#fff;border-radius:10px;padding:8px 14px;font-weight:700;color:#14213d}
+
+.quiz-q{margin:14px 0 6px;font-weight:700}
+.quiz-opts{display:grid;gap:6px}
+.quiz-opts button{text-align:left;border:1px solid var(--line);background:var(--ui);border-radius:10px;padding:9px 12px}
+.quiz-opts button.ok{background:#d3f9d8;border-color:#2b8a3e;color:#123}
+.quiz-opts button.no{background:#ffe3e3;border-color:#c92a2a;color:#123}
+.quiz-why{font-size:13.5px;color:var(--muted);margin-top:6px;min-height:1em}
+.quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+
+#printSheet{display:none}
+@media print{
+  body{background:#fff;height:auto;overflow:visible}
+  body>*:not(#printSheet){display:none!important}
+  #printSheet{display:block;text-align:center;color:#000;font-family:var(--font);padding-top:20mm}
+  #printSheet h1{font-family:var(--display);font-weight:400;font-size:34pt;margin:0 0 4mm}
+  #printSheet img{width:110mm;height:110mm;image-rendering:pixelated;margin:6mm auto;display:block}
+  #printSheet ol{text-align:left;display:inline-block;font-size:14pt;line-height:1.8}
+  #printSheet .u{font-size:10pt;word-break:break-all;color:#333}
+}
+
+/* 직접 해 보기 */
+.modebar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.modebar .seg button{font-size:14px}
+.modebar .spacer{flex:1}
+.mission{display:flex;gap:10px;align-items:center;background:var(--ui-2);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.m-main{flex:1;min-width:0}
+.m-head{display:flex;align-items:center;gap:10px;font-size:16px;flex-wrap:wrap}
+.m-dots{display:inline-flex;gap:4px}
+.m-dots i{width:11px;height:11px;border-radius:50%;border:2px solid var(--stain);display:inline-block}
+.m-dots i.on{background:var(--stain)}
+.m-ask{font-size:14px;color:var(--muted);margin-top:2px}
+.m-btns{display:flex;gap:6px;flex:none}
+#mNext.ready{background:var(--eosin);border-color:var(--eosin);color:#fff;animation:nudge 1.2s ease-in-out infinite}
+@keyframes nudge{50%{transform:scale(1.07)}}
+.hold{position:relative;overflow:hidden;width:100%;margin-top:8px;height:54px;border-radius:14px;border:2px solid var(--eosin);background:var(--ui-2);font-weight:700;font-size:16px;user-select:none;-webkit-user-select:none;touch-action:none;-webkit-touch-callout:none}
+.hold[hidden]{display:none}
+.hold .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--eosin);opacity:.35;pointer-events:none}
+.hold .txt{position:relative;pointer-events:none}
+.hold.active{border-style:dashed}
+.dock:not(.is-mission) .mission,.dock:not(.is-mission) .hold{display:none!important}
+.dock.is-mission .row.video{display:none}
+@media (prefers-reduced-motion:reduce){#mNext.ready{animation:none}}
+@media (max-width:720px){
+  .mission{flex-wrap:wrap;padding:7px 9px}
+  .m-btns{width:100%;justify-content:flex-end}
+  .m-ask{font-size:13.5px}
+  .dock.is-mission .opts{display:none}
+  .dock{padding:8px 10px 10px}
+  .hold{height:48px;margin-top:6px}
+  .modebar .seg button{font-size:13px;padding:5px 9px}
+  .brand small{display:none}
+  .phase-big{font-size:48px;top:8px;left:12px}
+  .info{top:auto;bottom:10px;right:10px;left:10px;width:auto;max-height:46%;font-size:13.5px}
+  .hint{bottom:auto;top:64px;white-space:normal;text-align:center;width:calc(100% - 24px);border-radius:14px}
+  .toast{bottom:auto;top:66px}
+  .phases button{font-size:13px}
+  .phases .long{display:none}
+  .top{gap:6px;padding:6px 10px}
+  .seg button{padding:5px 10px;font-size:13px}
+  .tbtn{padding:6px 9px;font-size:13px}
+  .opts{gap:4px 12px}
+}
+@media (max-width:480px){.brand{display:none}.seg{margin-right:auto}}
+@media (prefers-reduced-motion:reduce){.lbl,.hint{transition:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">체세포 분열 3D 관찰실<small>염색체 4개(2n=4) 세포</small></div>
+  <div class="seg" role="group" aria-label="세포 종류">
+    <button id="btnPlant" aria-pressed="false">식물 세포</button>
+    <button id="btnAnimal" aria-pressed="true">동물 세포</button>
+  </div>
+  <button class="tbtn" id="btnQuiz">확인 문제</button>
+  <button class="tbtn primary" id="btnQR">QR 코드</button>
+</header>
+
+<main class="stage" id="stage">
+  <canvas id="gl" aria-label="3D 세포 분열 모형. 드래그하여 회전하고 두 손가락으로 확대할 수 있습니다."></canvas>
+  <div class="labels" id="labels"></div>
+  <div class="phase-big" id="phaseBig">간기</div>
+  <section class="info" id="info" aria-live="polite">
+    <h2><span class="lead" id="infoLead"></span><button class="toggle" id="infoToggle" aria-expanded="true">접기</button></h2>
+    <ul id="infoList"></ul>
+    <div class="count" id="count"></div>
+    <div class="legend">
+      <span><i style="background:#e5484d"></i>긴 염색체 · 어머니</span>
+      <span><i style="background:#3b82f6"></i>긴 염색체 · 아버지</span>
+      <span><i style="background:#f59e0b"></i>짧은 염색체 · 어머니</span>
+      <span><i style="background:#14b8a6"></i>짧은 염색체 · 아버지</span>
+      <span class="wide">같은 크기끼리 상동 염색체예요. 색은 어느 부모에게서 받았는지를 나타내요.</span>
+    </div>
+  </section>
+  <div class="hint" id="hint">한 손가락: 돌리기 · 두 손가락: 확대/이동 · 염색체를 톡 누르면 따라가요</div>
+  <div class="toast" id="toast"></div>
+  <div class="glfail" id="glFail" hidden>이 기기에서는 3D 화면(WebGL)을 표시할 수 없어요.<br>다른 브라우저(크롬, 사파리)로 다시 열어 주세요.</div>
+</main>
+
+<footer class="dock" id="dock">
+  <div class="modebar">
+    <div class="seg" role="group" aria-label="보기 방식">
+      <button id="modeVideo" aria-pressed="true">▶ 영상으로 보기</button>
+      <button id="modeMission" aria-pressed="false">✋ 직접 해 보기</button>
+    </div>
+    <span class="spacer"></span>
+    <button class="tbtn" id="btnReset">시점 처음으로</button>
+  </div>
+  <div class="timeline">
+    <div class="phases" id="phases"></div>
+    <div class="mission" id="mission">
+      <div class="m-main">
+        <div class="m-head"><b id="mTitle"></b><span class="m-dots" id="mDots"></span></div>
+        <div class="m-ask" id="mAsk"></div>
+      </div>
+      <div class="m-btns">
+        <button class="tbtn" id="mHelp">도와줘</button>
+        <button class="tbtn" id="mRetry">다시 하기</button>
+        <button class="tbtn primary" id="mNext">다음 단계</button>
+      </div>
+    </div>
+    <button class="hold" id="mHold" hidden><span class="fill" id="mFill"></span><span class="txt" id="mHoldTxt"></span></button>
+    <div class="row video">
+      <button class="play" id="btnPlay" aria-label="재생">▶</button>
+      <input type="range" id="slider" min="0" max="1000" value="0" aria-label="분열 진행 정도">
+      <select class="speed" id="speed" aria-label="재생 속도">
+        <option value="0.5">0.5배</option>
+        <option value="1" selected>1배</option>
+        <option value="2">2배</option>
+      </select>
+    </div>
+  </div>
+  <div class="opts">
+    <label><input type="checkbox" id="optLabels" checked>이름표</label>
+    <label><input type="checkbox" id="optSpindle" checked>방추사</label>
+    <label><input type="checkbox" id="optMem" checked>세포막·핵막</label>
+  </div>
+</footer>
+
+<div class="modal" id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+  <div class="sheet">
+    <button class="close" data-close aria-label="닫기">×</button>
+    <h3 id="qrTitle">학생 접속 QR 코드</h3>
+    <p>학생들이 휴대폰·태블릿 카메라로 찍으면 이 관찰실이 열려요.</p>
+    <div class="urlrow">
+      <input id="qrUrl" type="url" inputmode="url" aria-label="접속 주소">
+      <button class="tbtn primary" id="qrMake">QR 만들기</button>
+    </div>
+    <div class="note" id="qrNote">학생 기기에서 열리려면 이 페이지를 먼저 ‘공유’해서 링크를 만든 뒤, 그 링크를 위 칸에 붙여 넣고 ‘QR 만들기’를 누르세요. 한 번 넣은 주소는 이 기기에 기억돼요.</div>
+    <div class="qrbox" id="qrBox"></div>
+    <div class="qr-actions">
+      <button class="tbtn" id="qrBig">화면 가득 띄우기</button>
+      <button class="tbtn" id="qrPrint">인쇄하기</button>
+    </div>
+    <p style="text-align:center;font-size:12.5px">인쇄 창이 뜨지 않으면 ‘화면 가득 띄우기’를 누른 뒤 브라우저 메뉴의 인쇄(Ctrl+P)를 사용하세요.</p>
+  </div>
+</div>
+
+<div class="bigqr" id="bigQR">
+  <button id="bigClose">닫기</button>
+  <h2>카메라로 찍고 입장하세요</h2>
+  <img id="bigImg" alt="관찰실 접속 QR 코드">
+  <p>체세포 분열 3D 관찰실 · 손가락으로 세포를 돌려 보세요</p>
+</div>
+
+<div class="modal" id="quizModal" role="dialog" aria-modal="true" aria-labelledby="quizTitle">
+  <div class="sheet">
+    <button class="close" data-close aria-label="닫기">×</button>
+    <h3 id="quizTitle">확인 문제</h3>
+    <p id="quizProg"></p>
+    <div class="quiz-q" id="quizQ"></div>
+    <div class="quiz-opts" id="quizOpts"></div>
+    <div class="quiz-why" id="quizWhy"></div>
+    <div class="quiz-nav">
+      <button class="tbtn" id="quizPrev">이전</button>
+      <span id="quizScore" style="font-weight:700"></span>
+      <button class="tbtn primary" id="quizNext">다음</button>
+    </div>
+  </div>
+</div>
+
+<div id="printSheet">
+  <h1>체세포 분열 3D 관찰실</h1>
+  <p style="font-size:14pt;margin:0">휴대폰·태블릿 카메라로 QR 코드를 찍어 입장하세요</p>
+  <img id="printImg" alt="">
+  <ol>
+    <li>세포 종류(식물/동물)를 고르고 단계 버튼을 눌러 보세요.</li>
+    <li>한 손가락으로 돌리고, 두 손가락으로 확대해 보세요.</li>
+    <li>염색체 하나를 눌러 끝까지 어디로 가는지 따라가 보세요.</li>
+  </ol>
+  <p class="u" id="printUrl"></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+
+/* ---------- 단계 · 설명 (중학교 과학 수준) ---------- */
+const PHASES=[
+  {key:'inter',name:'간기',from:0,to:.16,jump:.14},
+  {key:'pro',name:'전기',from:.16,to:.34,jump:.28},
+  {key:'meta',name:'중기',from:.34,to:.52,jump:.46},
+  {key:'ana',name:'후기',from:.52,to:.70,jump:.63},
+  {key:'telo',name:'말기',from:.70,to:.93,jump:.85},
+  {key:'done',name:'분열 완료',from:.93,to:1.001,jump:1}
+];
+const INFO={
+  inter:{lead:'분열을 준비해요',items:[
+    '핵막이 뚜렷하고, 염색체는 가는 실 모양(<b>염색사</b>)으로 풀어져 있어 막대 모양으로 보이지 않아요.',
+    '세포가 자라고 <b>DNA가 복제</b>돼요. 슬라이더를 맨 앞으로 옮기면 실 한 가닥이 똑같은 두 가닥이 되는 모습을 볼 수 있어요.',
+    '세포 주기에서 가장 긴 시기예요.',
+    {a:'동물 세포의 <b>중심체</b>도 이때 2개로 복제돼요.',p:'식물 세포는 단단한 <b>세포벽</b>으로 둘러싸여 있어요.'}]},
+  pro:{lead:'염색체가 나타나요',items:[
+    '염색사가 꼬이고 뭉쳐 굵고 짧은 <b>염색체</b>가 돼요.',
+    '염색체 하나는 <b>동원체</b>로 붙어 있는 <b>염색 분체</b> 2개로 되어 있어요. 두 염색 분체의 유전 정보는 똑같아요.',
+    '<b>핵막</b>과 인이 사라지고 <b>방추사</b>가 만들어져요.',
+    {a:'두 <b>중심체</b>가 세포의 양쪽 끝(극)으로 이동하며 방추사를 만들어요.',p:'식물 세포에는 중심체가 없지만 양쪽 극에서 방추사가 만들어져요.'}]},
+  meta:{lead:'적도면에 한 줄로 늘어서요',items:[
+    '양쪽 극에서 뻗어 나온 방추사가 각 염색체의 <b>동원체</b>에 붙어요.',
+    '염색체가 세포 한가운데(<b>적도면</b>)에 배열돼요.',
+    '염색체가 가장 굵고 뚜렷해서 <b>모양과 수를 관찰하기 가장 좋은</b> 시기예요.',
+    '상동 염색체끼리 짝을 짓지 않고 각자 배열돼요. (감수 분열과 다른 점!)']},
+  ana:{lead:'염색 분체가 양쪽 극으로',items:[
+    '동원체가 나뉘면서 <b>염색 분체가 분리</b>돼요.',
+    '분리된 염색 분체는 <b>방추사에 끌려</b> 양쪽 극으로 이동해요. 동원체가 앞장서고 팔 부분이 뒤따라 V자 모양이 돼요.',
+    '양쪽 극에 똑같은 염색체가 4개씩 모여요.',
+    {a:'후기 끝 무렵부터 세포막이 가운데에서 오목하게 들어가기 시작해요.',p:'식물 세포는 세포벽이 있어 모양이 거의 변하지 않아요.'}]},
+  telo:{lead:'핵이 2개가 되고, 세포질이 나뉘어요',items:[
+    '염색체가 다시 풀어져 염색사가 되고, <b>핵막</b>과 인이 다시 나타나요.',
+    '방추사가 사라져요.',
+    {a:'세포막이 <b>바깥쪽에서 안쪽으로</b> 오목하게 들어가(<b>세포막 함입</b>) 세포질이 둘로 나뉘어요.',
+     p:'세포 가운데에 <b>세포판</b>이 <b>안쪽에서 바깥쪽으로</b> 만들어져 세포질이 둘로 나뉘어요.'}]},
+  done:{lead:'딸세포 2개가 만들어졌어요',items:[
+    '딸세포 2개는 모세포와 <b>염색체 수(4개)</b>와 <b>유전 정보</b>가 같아요.',
+    {a:'동물 세포의 두 딸세포는 완전히 떨어져요.',p:'세포판은 새로운 세포벽이 되어 두 딸세포를 나눠요.'},
+    '딸세포는 간기를 거치며 자라고, 다시 분열할 수 있어요.',
+    '체세포 분열로 우리 몸이 자라고(생장), 상처가 회복돼요(재생).']}
+};
+
+/* ---------- 시간표 (0~1) ---------- */
+const T={repA:.03,repB:.12,condA:.17,condB:.31,envA:.23,envB:.32,spinA:.19,spinB:.33,centA:.16,centB:.30,
+  congA:.29,congB:.42,attA:.30,attB:.37,anaA:.53,anaB:.69,furA:.64,furB:.90,plateA:.74,plateB:.91,
+  decA:.72,decB:.89,nucA:.76,nucB:.90,offA:.73,offB:.87,sepA:.92,sepB:.99};
+const CFG={
+  animal:{pole:2.45,poleEnd:2.95,chromEnd:2.2,D:2.5,R:3.2,view:[5.6,3.4]},
+  plant:{pole:2.6,poleEnd:2.75,chromEnd:1.9,D:1.75,W:3.5,H:2.5,Z:1.9,view:[4.3,3.1]}
+};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const seg=(t,a,b)=>clamp((t-a)/(b-a),0,1);
+const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+const sm=(t,a,b)=>ease(seg(t,a,b));
+function phaseOf(t){for(const p of PHASES){if(t>=p.from&&t<p.to)return p}return PHASES[PHASES.length-1]}
+
+/* ---------- 상태 ---------- */
+const S={t:0,playing:false,speed:1,cell:'animal',labels:true,spindle:true,mem:true,sel:-1,dirty:true,
+  mode:'video',tk:new Array(8).fill(0),offK:[0,0,0,0],mkey:'inter',done:new Set(),sides:new Set(),fin:0,step:0,complete:false,holding:false};
+
+/* ---------- UI: 단계 버튼 ---------- */
+const phasesEl=$('#phases');
+PHASES.forEach(p=>{
+  const b=document.createElement('button');
+  b.innerHTML=p.key==='done'?'<span class="long">분열 </span>완료':p.name; b.style.flex=String(Math.max(.13,p.to-p.from));
+  b.addEventListener('click',()=>{if(S.mode==='mission'){startMission(p.key)}else{setT(p.jump);pause()}});
+  phasesEl.appendChild(b); p.btn=b;
+});
+
+if(!window.THREE||!THREE.OrbitControls||!webglOK()){
+  $('#glFail').hidden=false; $('#hint').style.display='none';
+  bindNonGL(); return;
+}
+function webglOK(){try{const c=document.createElement('canvas');return !!(window.WebGLRenderingContext&&(c.getContext('webgl')||c.getContext('experimental-webgl')))}catch(e){return false}}
+
+/* ---------- 3D 기본 ---------- */
+const V=THREE.Vector3, X=new V(1,0,0);
+const stage=$('#stage'), canvas=$('#gl');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(38,1,.1,200);
+const controls=new THREE.OrbitControls(camera,canvas);
+controls.enableDamping=true; controls.dampingFactor=.08; controls.minDistance=3.5; controls.maxDistance=48; controls.rotateSpeed=.8;
+scene.add(new THREE.HemisphereLight(0xe3eaff,0x241438,.8));
+const dl=new THREE.DirectionalLight(0xffffff,.95); dl.position.set(4,6,9); scene.add(dl);
+const dl2=new THREE.DirectionalLight(0x9fb4ff,.4); dl2.position.set(-6,-3,-5); scene.add(dl2);
+const root=new THREE.Group(); scene.add(root);
+
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=rng(20260929);
+function randUnit(){const u=R()*2-1,th=R()*Math.PI*2,s=Math.sqrt(1-u*u);return new V(s*Math.cos(th),u,s*Math.sin(th))}
+
+function fresnel(color,base,rim,pw){
+  return new THREE.ShaderMaterial({
+    uniforms:{uColor:{value:new THREE.Color(color)},uBase:{value:base},uRim:{value:rim},uPow:{value:pw||2.0},uOp:{value:1}},
+    vertexShader:'varying vec3 vN;varying vec3 vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'uniform vec3 uColor;uniform float uBase,uRim,uPow,uOp;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),uPow);gl_FragColor=vec4(uColor*(0.75+0.7*f),(uBase+uRim*f)*uOp);}',
+    transparent:true,depthWrite:false,side:THREE.DoubleSide});
+}
+
+/* ---------- 염색체 데이터 (2n=4 : 긴 것 1쌍, 짧은 것 1쌍) ---------- */
+const NP=22;
+const CH=[
+  {size:'긴',origin:'어머니',color:'#e5484d',l1:.74,l2:.58,my:1.22,mz:.34,tilt:.32,T:[-.42,.48,.22]},
+  {size:'짧은',origin:'아버지',color:'#14b8a6',l1:.44,l2:.34,my:.42,mz:-.34,tilt:-.4,T:[.44,.36,-.34]},
+  {size:'긴',origin:'아버지',color:'#3b82f6',l1:.74,l2:.58,my:-.4,mz:.34,tilt:-.3,T:[-.36,-.46,-.3]},
+  {size:'짧은',origin:'어머니',color:'#f59e0b',l1:.44,l2:.34,my:-1.16,mz:-.34,tilt:.4,T:[.42,-.42,.36]}
+];
+function makeCoil(center,rad){
+  const pts=[]; const p=center.clone().add(randUnit().multiplyScalar(rad*.3)); const dir=randUnit();
+  for(let j=0;j<NP;j++){
+    pts.push(p.clone());
+    dir.add(randUnit().multiplyScalar(.85)).normalize();
+    p.addScaledVector(dir,rad*.55);
+    const d=p.clone().sub(center);
+    if(d.length()>rad){d.setLength(rad);p.copy(center).add(d);dir.addScaledVector(d.normalize(),-1.2).normalize()}
+  }
+  return pts;
+}
+CH.forEach(ch=>{
+  ch.Tv=new V(...ch.T);
+  ch.Mv=new V(0,ch.my,ch.mz);
+  ch.aM=new V(0,1,ch.tilt).normalize();
+  ch.a0=randUnit();
+  ch.n0=new V().crossVectors(ch.a0,randUnit()).normalize();
+  const c0=makeCoil(ch.Tv,.6); const off=randUnit().multiplyScalar(.06);
+  ch.coil=[c0,c0.map(p=>p.clone().add(off).add(randUnit().multiplyScalar(.015)))];
+  ch.coil2={}; ch.off=new V();
+});
+function buildCoil2(){ // 딸세포 핵 속 염색사 (세포 종류마다 위치가 다름)
+  ['animal','plant'].forEach(type=>{
+    const D=CFG[type].D;
+    CH.forEach(ch=>{
+      ch.coil2[type]=[-1,1].map(side=>makeCoil(new V(side*D+ch.T[0]*.5,ch.T[1]*.6,ch.T[2]*.6),.42));
+    });
+  });
+}
+buildCoil2();
+
+const capGeo=new THREE.SphereGeometry(1,14,10);
+const beadGeo=new THREE.SphereGeometry(1,12,8);
+const chromatids=[];
+CH.forEach((ch,i)=>{[0,1].forEach(k=>{
+  const mat=new THREE.MeshStandardMaterial({color:ch.color,roughness:.42,metalness:.06,emissive:new THREE.Color(ch.color),emissiveIntensity:0});
+  const mesh=new THREE.Mesh(new THREE.BufferGeometry(),mat);
+  const c1=new THREE.Mesh(capGeo,mat), c2=new THREE.Mesh(capGeo,mat);
+  const beadMat=new THREE.MeshStandardMaterial({color:0xf4f1ff,roughness:.3,emissive:0x6655aa,emissiveIntensity:.25,transparent:true});
+  const bead=new THREE.Mesh(beadGeo,beadMat);
+  [mesh,c1,c2].forEach(m=>{m.userData={i,k};root.add(m)}); root.add(bead);
+  chromatids.push({i,k,mesh,c1,c2,mat,bead,beadMat,st:null});
+})});
+
+/* ---------- 핵 · 인 ---------- */
+const nucMat=fresnel(0x9b8cff,.05,.55,2.2);
+const nucleus=new THREE.Mesh(new THREE.SphereGeometry(1.45,48,32),nucMat); nucleus.renderOrder=2; root.add(nucleus);
+const nolMat=new THREE.MeshStandardMaterial({color:0x4b2a86,roughness:.6,transparent:true,opacity:.6,depthWrite:false});
+const nucleolus=new THREE.Mesh(new THREE.SphereGeometry(.3,24,16),nolMat); nucleolus.position.set(.22,-.12,-.55); root.add(nucleolus);
+const dNuc=[-1,1].map(()=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.95,40,28),fresnel(0x9b8cff,.05,.55,2.2));m.renderOrder=2;root.add(m);return m});
+const dNol=[-1,1].map(()=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.2,20,14),nolMat.clone());root.add(m);return m});
+
+/* ---------- 동물 세포: 세포막(두 반쪽 회전체) · 중심체 ---------- */
+const animalG=new THREE.Group(); root.add(animalG);
+const memMat=fresnel(0x8fb0ff,.045,.6,2.0);
+const memHalves=[-1,1].map(()=>{const m=new THREE.Mesh(new THREE.BufferGeometry(),memMat);m.renderOrder=3;animalG.add(m);return m});
+function memProfile(u,el,f,Rr){
+  const phi=u*Math.PI/2, ax=Rr*(1+.14*el), ar=Rr*(1-.04*el);
+  const x0=ax*Math.cos(phi), r0=ar*Math.sin(phi);
+  const Rd=Rr*.7937, ph2=u*Math.PI; // 부피가 반인 구의 반지름
+  const x1=Rd+Rd*Math.cos(ph2), r1=Rd*Math.sin(ph2);
+  return [lerp(x0,x1,f),lerp(r0,r1,f)];
+}
+function buildMembrane(el,f,g){
+  const Rr=CFG.animal.R;
+  [-1,1].forEach((side,idx)=>{
+    const pts=[];
+    for(let j=0;j<=40;j++){const [x,r]=memProfile(j/40,el,f,Rr);pts.push(new THREE.Vector2(Math.max(r,.0001),side*(x+g)))}
+    const m=memHalves[idx]; m.geometry.dispose();
+    m.geometry=new THREE.LatheGeometry(pts,56);
+    m.rotation.z=-Math.PI/2;
+  });
+  return (1-f)*Rr*(1-.04*el); // 잘록한 부분 반지름
+}
+function makeCentrosome(){
+  const g=new THREE.Group();
+  const cm=new THREE.MeshStandardMaterial({color:0xffe08a,emissive:0xffb300,emissiveIntensity:.5,transparent:true});
+  const cy=new THREE.CylinderGeometry(.045,.045,.24,10);
+  const a=new THREE.Mesh(cy,cm), b=new THREE.Mesh(cy,cm); b.rotation.z=Math.PI/2; b.position.x=.07;
+  const halo=new THREE.Mesh(new THREE.SphereGeometry(.22,16,12),new THREE.MeshBasicMaterial({color:0xffd166,transparent:true,opacity:.18,depthWrite:false}));
+  g.add(a,b,halo); g.userData={mats:[cm,halo.material]}; animalG.add(g); return g;
+}
+const centrosomes=[makeCentrosome(),makeCentrosome()];
+
+/* ---------- 식물 세포: 세포벽 · 세포판 ---------- */
+const plantG=new THREE.Group(); root.add(plantG);
+const P=CFG.plant;
+const wallGeo=new THREE.BoxGeometry(P.W*2,P.H*2,P.Z*2);
+const wall=new THREE.Mesh(wallGeo,fresnel(0x7ed957,.06,.4,1.6)); wall.renderOrder=3; plantG.add(wall);
+const wallEdges=new THREE.LineSegments(new THREE.EdgesGeometry(wallGeo),new THREE.LineBasicMaterial({color:0x9be46f,transparent:true,opacity:.85}));
+plantG.add(wallEdges);
+const innerMem=new THREE.Mesh(new THREE.BoxGeometry(P.W*2-.16,P.H*2-.16,P.Z*2-.16),fresnel(0x8fb0ff,.02,.25,2.4)); innerMem.renderOrder=3; plantG.add(innerMem);
+const plateMat=new THREE.MeshStandardMaterial({color:0xfff3a6,emissive:0xffd43b,emissiveIntensity:.35,transparent:true,opacity:.85,side:THREE.DoubleSide});
+const plate=new THREE.Mesh(new THREE.BoxGeometry(.07,P.H*2-.1,P.Z*2-.1),plateMat); plantG.add(plate);
+
+/* ---------- 적도면 표시 ---------- */
+const eqG=new THREE.Group(); root.add(eqG);
+const eqRingMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.5,side:THREE.DoubleSide,depthWrite:false});
+const eqDiskMat=new THREE.MeshBasicMaterial({color:0xc9b8ff,transparent:true,opacity:.08,side:THREE.DoubleSide,depthWrite:false});
+const eqRing=new THREE.Mesh(new THREE.RingGeometry(2.02,2.07,72),eqRingMat);
+const eqDisk=new THREE.Mesh(new THREE.CircleGeometry(2.02,72),eqDiskMat);
+eqRing.rotation.y=eqDisk.rotation.y=Math.PI/2; eqG.add(eqRing,eqDisk);
+
+/* ---------- 방추사 ---------- */
+const MAXV=2400;
+const fiberPos=new Float32Array(MAXV*3);
+const fiberGeo=new THREE.BufferGeometry(); fiberGeo.setAttribute('position',new THREE.BufferAttribute(fiberPos,3));
+const fiberMat=new THREE.LineBasicMaterial({color:0xcfe8ff,transparent:true,opacity:.6,depthWrite:false});
+const fibers=new THREE.LineSegments(fiberGeo,fiberMat); fibers.frustumCulled=false; root.add(fibers);
+const polar={};[-1,1].forEach(side=>{polar[side]=[];for(let j=0;j<14;j++){const ph=(j/14)*Math.PI*2+R()*.3;polar[side].push({ph,rq:.35+R()*1.25,jy:(R()-.5)*.9,jz:(R()-.5)*.9})}});
+const asters={};[-1,1].forEach(side=>{asters[side]=[];for(let j=0;j<12;j++)asters[side].push(randUnit().multiplyScalar(.45+R()*.3))});
+let fv=0;
+function pushSeg(a,b){if(fv+2>MAXV)return;fiberPos.set([a.x,a.y,a.z,b.x,b.y,b.z],fv*3);fv+=2}
+const _q=new V();
+function quad(A,M,B,u,out){const w=1-u;return out.set(w*w*A.x+2*w*u*M.x+u*u*B.x,w*w*A.y+2*w*u*M.y+u*u*B.y,w*w*A.z+2*w*u*M.z+u*u*B.z)}
+function pushCurve(A,B,bulge,frac,steps){
+  if(frac<=.001)return null;
+  const M=A.clone().add(B).multiplyScalar(.5); M.y*=bulge; M.z*=bulge;
+  let prev=A.clone(); let mid=null;
+  for(let s=1;s<=steps;s++){const p=quad(A,M,B,frac*s/steps,new V());pushSeg(prev,p);prev=p;if(s===Math.round(steps/2))mid=p.clone()}
+  return mid;
+}
+
+/* ---------- 계산 함수 ---------- */
+function gap(t){return S.cell==='animal'?sm(t,T.sepA,T.sepB)*.55:0}
+function polePos(side,t,out){
+  const c=CFG[S.cell], ana=sm(t,T.anaA,T.anaB), g=gap(t);
+  const px=lerp(c.pole,c.poleEnd,ana)+g;
+  if(S.cell==='animal'){
+    const m=sm(t,T.centA,T.centB), phi=m*Math.PI/2, rr=lerp(1.78,px,m);
+    return out.set(side*(Math.sin(phi)*rr+.2*(1-m)),Math.cos(phi)*rr,.3*(1-m));
+  }
+  return out.set(side*px,0,0);
+}
+function condensed(ch,C,a,n,side,bend,spread){
+  const th=bend*1.0, tw=new V(-side,0,0);
+  const d1=a.clone().multiplyScalar(Math.cos(th)).addScaledVector(tw,Math.sin(th)).normalize();
+  const d2=a.clone().multiplyScalar(-Math.cos(th)).addScaledVector(tw,Math.sin(th)).normalize();
+  const L=ch.l1+ch.l2, out=[];
+  for(let j=0;j<NP;j++){
+    const s=-ch.l1+L*j/(NP-1), dist=Math.abs(s), d=s<0?d1:d2;
+    const p=C.clone().addScaledVector(d,dist).addScaledVector(n,side*(.05+spread*.11*dist/.74));
+    if(bend>0)p.addScaledVector(tw,bend*.12*dist*dist);
+    out.push(p);
+  }
+  return out;
+}
+function chromatidState(i,k){
+  const t=S.tk[i*2+k];
+  const ch=CH[i], c=CFG[S.cell], side=k?1:-1;
+  const rep=sm(t,T.repA,T.repB), cUp=sm(t,T.condA,T.condB), cDown=sm(t,T.decA,T.decB);
+  const cong=sm(t,T.congA,T.congB), ana=sm(t,T.anaA,T.anaB), bend=sm(t,T.anaA,T.anaA+.06), g=gap(S.t);
+  const shrink=lerp(1,.55,ana);
+  const C=new V().lerpVectors(ch.Tv,ch.Mv,cong); C.y*=shrink; C.z*=shrink;
+  C.x+=side*(c.chromEnd*ana+g);
+  const a=new V().lerpVectors(ch.a0,ch.aM,cong).normalize();
+  const n=new V().lerpVectors(ch.n0,X,cong).normalize();
+  const cond=condensed(ch,C,a,n,side,bend,cUp*(1-bend));
+  let cc,coil;
+  if(t<T.decA){cc=cUp;coil=k===0?ch.coil[0]:ch.coil[0].map((p,j)=>p.clone().lerp(ch.coil[1][j],rep))}
+  else{cc=1-cDown;const off=side*g;coil=ch.coil2[S.cell][k].map(p=>new V(p.x+off,p.y,p.z))}
+  const pts=cond.map((q,j)=>coil[j].clone().lerp(q,cc));
+  const kin=C.clone().addScaledVector(n,side*.06);
+  if(S.offK[i]>0){const o=ch.off.clone().multiplyScalar(S.offK[i]);pts.forEach(p=>p.add(o));kin.add(o)}
+  return {pts,r:lerp(.028,.1,cc),c:cc,kin,op:(k===1&&t<T.decA)?rep:1,sep:bend>0,side};
+}
+
+/* ---------- 이름표 ---------- */
+const labelsEl=$('#labels'); const LBL={};
+function lbl(key,text){if(!LBL[key]){const d=document.createElement('div');d.className='lbl';labelsEl.appendChild(d);LBL[key]={el:d,pos:new V(),on:false}}const L=LBL[key];L.el.textContent=text;return L}
+function setLbl(key,text,pos,on){const L=lbl(key,text);L.on=on&&S.labels;if(pos)L.pos.copy(pos)}
+
+/* ---------- 매 장면 갱신 ---------- */
+const _p=new V(), _p2=new V();
+function update(){
+  const t=S.t, animal=S.cell==='animal', c=CFG[S.cell], g=gap(t);
+  if(S.mode==='video')S.tk.fill(t);
+  animalG.visible=animal; plantG.visible=!animal;
+  const rep=sm(t,T.repA,T.repB);
+  const sGrow=sm(t,T.spinA,T.spinB), sFade=1-sm(t,T.offA,T.offB), sVis=sGrow*sFade;
+  const env=1-sm(t,T.envA,T.envB), nucNew=sm(t,T.nucA,T.nucB);
+
+  // 염색 분체
+  const states=[];
+  chromatids.forEach(o=>{
+    const st=chromatidState(o.i,o.k); o.st=st; states.push(st);
+    o.mesh.geometry.dispose();
+    o.mesh.geometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(st.pts,false,'catmullrom',.5),64,st.r,8,false);
+    o.c1.position.copy(st.pts[0]); o.c2.position.copy(st.pts[NP-1]); o.c1.scale.setScalar(st.r); o.c2.scale.setScalar(st.r);
+    let op=st.op; const selected=S.sel===o.i;
+    if(S.sel>=0&&!selected&&S.mode==='video')op*=.22;
+    o.mat.opacity=op; const tr=op<.999;
+    if(o.mat.transparent!==tr){o.mat.transparent=tr;o.mat.needsUpdate=true}
+    o.mat.depthWrite=!tr; o.mat.emissiveIntensity=selected?.45:0;
+    const vis=op>.01; o.mesh.visible=o.c1.visible=o.c2.visible=vis;
+    const bo=clamp((st.c-.55)/.3,0,1)*(S.sel>=0&&!selected&&S.mode==='video'?.2:1);
+    o.bead.visible=bo>.02; o.beadMat.opacity=bo; o.bead.position.copy(st.kin); o.bead.scale.setScalar(st.r*.95);
+  });
+
+  // 핵
+  nucleus.visible=S.mem&&env>.01; nucMat.uniforms.uOp.value=env; nucleus.scale.setScalar(1+.06*(1-env));
+  nucleolus.visible=env>.01; nolMat.opacity=.6*(1-sm(t,.18,.27)); nucleolus.visible=nolMat.opacity>.01;
+  const sideT=[Math.min(S.tk[0],S.tk[2],S.tk[4],S.tk[6]),Math.min(S.tk[1],S.tk[3],S.tk[5],S.tk[7])];
+  const nucSide=sideT.map(v=>sm(v,T.nucA,T.nucB));
+  [-1,1].forEach((side,idx)=>{
+    const nucNew=nucSide[idx];
+    const m=dNuc[idx]; m.position.set(side*(c.D+g),0,0); m.scale.setScalar(lerp(.75,1,nucNew));
+    m.material.uniforms.uOp.value=nucNew; m.visible=S.mem&&nucNew>.01;
+    const n=dNol[idx]; n.position.set(side*(c.D+g)+.15,-.1,-.35); n.material.opacity=.55*sm(sideT[idx],.83,.92); n.visible=n.material.opacity>.01;
+  });
+
+  // 세포막 / 세포벽
+  let neck=0;
+  if(animal){
+    const el=sm(t,T.anaA+.03,T.furA+.03), f=sm(t,T.furA,T.furB);
+    neck=buildMembrane(el,f,g);
+    memHalves.forEach(m=>m.visible=S.mem);
+    centrosomes.forEach((cs,idx)=>{
+      const side=idx?1:-1; polePos(side,t,cs.position);
+      const o=idx?rep:1; cs.visible=o>.01; cs.scale.setScalar(lerp(.4,1,o));
+      cs.userData.mats[0].opacity=o; cs.userData.mats[1].opacity=.18*o;
+    });
+  }else{
+    wall.visible=true; innerMem.visible=S.mem; wallEdges.visible=true;
+    const pp=sm(t,T.plateA,T.plateB);
+    plate.visible=pp>.005; plate.scale.set(1,Math.max(.001,pp),Math.max(.001,pp));
+    const toWall=sm(t,.93,1);
+    plateMat.color.setRGB(lerp(1,.62,toWall),lerp(.95,.88,toWall),lerp(.65,.42,toWall));
+    plateMat.emissiveIntensity=lerp(.35,.05,toWall);
+  }
+
+  // 적도면
+  let eq=sm(t,.38,.44)*(1-sm(t,.52,.56));
+  if(S.mode==='mission'&&S.mkey==='meta')eq=Math.max(eq,S.complete?0:1);
+  eqG.visible=eq>.01; eqRingMat.opacity=.5*eq; eqDiskMat.opacity=.08*eq;
+
+  // 방추사
+  fv=0; let spMid=null;
+  if(S.spindle&&sVis>.001){
+    [-1,1].forEach(side=>{
+      const pole=polePos(side,t,new V());
+      polar[side].forEach((f,j)=>{
+        const A=animal?pole.clone():pole.clone().add(new V(0,f.jy,f.jz));
+        const B=new V(-side*.45,f.rq*Math.cos(f.ph),f.rq*Math.sin(f.ph));
+        const m=pushCurve(A,B,1.55,sVis,8); if(side===-1&&j===2&&m)spMid=m;
+      });
+      if(animal){asters[side].forEach(d=>pushSeg(pole,pole.clone().addScaledVector(d,sVis)))}
+    });
+    chromatids.forEach(o=>{
+      const att=sm(S.tk[o.i*2+o.k],T.attA,T.attB)*sFade; if(att<=.001||o.st.op<.3)return;
+      const pole=polePos(o.st.side,t,new V());
+      const A=animal?pole:pole.clone().add(new V(0,o.st.kin.y*.35,o.st.kin.z*.35));
+      pushCurve(A,o.st.kin,1.12,att,8);
+    });
+  }
+  fiberGeo.setDrawRange(0,fv); fiberGeo.attributes.position.needsUpdate=true;
+  fibers.visible=fv>0;
+
+  // 이름표
+  const ph=S.mode==='mission'?PHASES.find(p=>p.key===S.mkey):phaseOf(t);
+  if(animal){_p.set(-2.26,2.26,0);setLbl('mem','세포막',_p,t<.16)}else setLbl('mem','',null,false);
+  if(!animal){_p.set(-P.W,P.H,0);setLbl('wall','세포벽',_p,t<.16)}else setLbl('wall','',null,false);
+  _p.set(.95,1.1,0); setLbl('nuc','핵막',_p,S.mem&&env>.4);
+  _p.set(c.D+g,.95,0); setLbl('nuc2','새로 생긴 핵막',_p,S.mem&&nucSide[1]>.5);
+  setLbl('chromatin','염색사',states[0].pts[6],t<.2&&states[0].c<.3);
+  setLbl('chromosome','염색체',states[0].pts[0],t>.27&&t<.53);
+  setLbl('chromatid','염색 분체',states[5].pts[NP-1],t>.36&&t<.53);
+  setLbl('centromere','동원체',states[3].kin,t>.39&&t<.53);
+  setLbl('spindle','방추사',spMid,!!spMid&&sVis>.6&&t<.72);
+  if(animal){polePos(1,t,_p);setLbl('centrosome','중심체',_p,t>.06&&t<.9)}else setLbl('centrosome','',null,false);
+  _p.set(0,-2.07,0); setLbl('eq','적도면',_p,eq>.5);
+  if(animal){_p.set(0,Math.max(neck,.2),0);setLbl('furrow','세포막 함입',_p,t>.66&&t<.95)}else setLbl('furrow','',null,false);
+  if(!animal){const pp=sm(t,T.plateA,T.plateB);_p.set(0,P.H*pp*.7,0);setLbl('plate',t>.95?'새로운 세포벽':'세포판',_p,pp>.1)}else setLbl('plate','',null,false);
+  const dy=animal?CFG.animal.R*.7937*.92:P.H*.8;
+  _p.set(-(c.D+g),dy,0); setLbl('d1','딸세포',_p,t>.93);
+  _p2.set(c.D+g,dy,0); setLbl('d2','딸세포',_p2,t>.93);
+
+  // 글 정보
+  updateInfo(ph,t);
+  S.dirty=false;
+}
+
+/* ---------- 정보 패널 ---------- */
+let lastInfoKey='';
+function updateInfo(ph,t){
+  PHASES.forEach(p=>p.btn.setAttribute('aria-current',p===ph?'step':'false'));
+  $('#phaseBig').textContent=ph.name;
+  let cnt;
+  if(t<T.repA)cnt='세포 속 염색체: <strong>4개</strong> (아직 복제 전)';
+  else if(t<T.repB)cnt='DNA 복제 중… 염색체 수는 그대로 <strong>4개</strong>';
+  else if(t<T.condA)cnt='염색체 <strong>4개</strong> (각각 복제되어 두 가닥)';
+  else if(t<T.anaA)cnt='염색체 <strong>4개</strong> · 염색 분체 <strong>8개</strong>';
+  else if(t<T.decA)cnt='양쪽 극으로 염색체가 <strong>4개씩</strong> 이동';
+  else cnt='딸세포 1개당 염색체 <strong>4개</strong> (모세포와 같음)';
+  $('#count').innerHTML=cnt;
+  const key=ph.key+S.cell;
+  if(key!==lastInfoKey){
+    lastInfoKey=key; const inf=INFO[ph.key];
+    $('#infoLead').textContent=inf.lead;
+    $('#infoList').innerHTML=inf.items.map(it=>'<li>'+(typeof it==='string'?it:(S.cell==='animal'?it.a:it.p))+'</li>').join('');
+  }
+  if(S.mode==='video')$('#slider').value=Math.round(t*1000);
+  if(S.sel>=0&&(S.mode==='video'||S.mkey==='done'))showSel();
+}
+
+/* ---------- 카메라 맞추기 ---------- */
+let portrait=null;
+function fit(force){
+  const w=stage.clientWidth,h=stage.clientHeight; if(!w||!h)return;
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+  const pNow=window.innerHeight>window.innerWidth*1.05&&h>w*.8;
+  if(!force&&pNow===portrait)return;
+  portrait=pNow; root.rotation.z=portrait?Math.PI/2:0;
+  const ext=CFG[S.cell].view, hw=portrait?ext[1]:ext[0], hh=portrait?ext[0]:ext[1];
+  const tf=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+  const d=Math.max(hw/(tf*camera.aspect),hh/tf)*(portrait?1.2:1.02)+2.2;
+  camera.position.set(0,d*.2,d*.98); controls.target.set(0,0,0); controls.update();
+}
+new ResizeObserver(()=>fit(false)).observe(stage);
+
+/* ---------- 렌더 루프 ---------- */
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000); last=now;
+  if(S.playing){S.t=Math.min(1,S.t+dt*S.speed/48);S.dirty=true;if(S.t>=1)pause()}
+  runTweens(dt);
+  if(S.holding&&S.mode==='mission'&&S.mkey==='telo'&&S.step===1&&!S.complete){
+    S.t=Math.min(1,S.t+dt/4.5);S.dirty=true;
+    if(S.t>=1){S.holding=false;$('#mHold').classList.remove('active');missionComplete()}
+  }
+  if(S.mode==='mission'&&S.mkey==='telo'&&S.step===1)$('#mFill').style.width=(seg(S.t,.70,1)*100).toFixed(1)+'%';
+  if(S.dirty)update();
+  pulse(now);
+  controls.update();
+  renderer.render(scene,camera);
+  placeLabels();
+  requestAnimationFrame(loop);
+}
+const _w=new V();
+function placeLabels(){
+  const w=stage.clientWidth,h=stage.clientHeight; root.updateMatrixWorld();
+  for(const k in LBL){const L=LBL[k];
+    if(!L.on){L.el.style.opacity=0;continue}
+    _w.copy(L.pos).applyMatrix4(root.matrixWorld).project(camera);
+    if(_w.z>1){L.el.style.opacity=0;continue}
+    L.el.style.opacity=1;
+    L.el.style.transform='translate('+((_w.x+1)/2*w).toFixed(1)+'px,'+((1-_w.y)/2*h).toFixed(1)+'px) translate(-50%,-135%)';
+  }
+}
+
+/* ---------- 조작 ---------- */
+function setT(v){S.t=clamp(v,0,1);S.dirty=true}
+function play(){if(S.t>=1)S.t=0;S.playing=true;$('#btnPlay').textContent='❚❚';$('#btnPlay').setAttribute('aria-label','일시정지')}
+function pause(){S.playing=false;$('#btnPlay').textContent='▶';$('#btnPlay').setAttribute('aria-label','재생')}
+$('#btnPlay').onclick=()=>S.playing?pause():play();
+$('#slider').addEventListener('input',e=>{pause();setT(e.target.value/1000)});
+$('#speed').onchange=e=>S.speed=+e.target.value;
+$('#optLabels').onchange=e=>{S.labels=e.target.checked;S.dirty=true};
+$('#optSpindle').onchange=e=>{S.spindle=e.target.checked;S.dirty=true};
+$('#optMem').onchange=e=>{S.mem=e.target.checked;S.dirty=true};
+$('#btnReset').onclick=()=>fit(true);
+function setCell(type){
+  S.cell=type; $('#btnAnimal').setAttribute('aria-pressed',type==='animal');$('#btnPlant').setAttribute('aria-pressed',type==='plant');
+  lastInfoKey=''; S.dirty=true; fit(true);
+}
+$('#btnAnimal').onclick=()=>setCell('animal');
+$('#btnPlant').onclick=()=>setCell('plant');
+$('#infoToggle').onclick=()=>{const c=$('#info').classList.toggle('collapsed');$('#infoToggle').textContent=c?'펼치기':'접기';$('#infoToggle').setAttribute('aria-expanded',!c)};
+if(window.innerWidth<720){$('#info').classList.add('collapsed');$('#infoToggle').textContent='펼치기'}
+document.addEventListener('keydown',e=>{
+  if(e.target.closest('input,select,textarea,button')||document.querySelector('.modal.open')||S.mode==='mission')return;
+  if(e.code==='Space'){e.preventDefault();S.playing?pause():play()}
+  if(e.key==='ArrowRight'){pause();setT(S.t+.01)}
+  if(e.key==='ArrowLeft'){pause();setT(S.t-.01)}
+});
+
+// 염색체 누르기
+const ray=new THREE.Raycaster(), ndc=new THREE.Vector2(); let down=null;
+canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};hideHint()});
+canvas.addEventListener('pointerup',e=>{
+  if(drag||!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>8)return;
+  const o=pick(e.clientX,e.clientY);
+  if(S.mode==='mission'){missionTap(o);return}
+  S.sel=o?(S.sel===o.i?-1:o.i):-1;
+  S.dirty=true; if(S.sel<0)$('#toast').classList.remove('show'); else showSel();
+});
+const _s=new V();
+function pick(cx,cy){
+  const r=canvas.getBoundingClientRect(); root.updateMatrixWorld();
+  const x=cx-r.left,y=cy-r.top; let best=null,bd=Math.max(30,Math.min(r.width,r.height)*.055);
+  chromatids.forEach(o=>{
+    if(!o.st||!o.mesh.visible||o.st.op<.3)return;
+    const list=o.st.pts.filter((p,j)=>j%2===0).concat([o.st.kin]);
+    for(const p of list){
+      _s.copy(p).applyMatrix4(root.matrixWorld).project(camera);
+      const d=Math.hypot((_s.x+1)/2*r.width-x,(1-_s.y)/2*r.height-y);
+      if(d<bd){bd=d;best=o}
+    }
+  });
+  return best;
+}
+function showSel(){
+  const ch=CH[S.sel], t=S.t; let msg;
+  if(t<T.repA)msg='아직 복제되기 전의 염색사 한 가닥이에요. 슬라이더를 움직여 복제되는 모습을 보세요.';
+  else if(t<T.condA)msg='복제가 끝나 똑같은 두 가닥이 나란히 있어요. 곧 뭉쳐서 염색체가 돼요.';
+  else if(t<T.anaA)msg='똑같은 <b style="display:inline">염색 분체 2개</b>가 동원체로 붙어 있는 염색체 1개예요.';
+  else if(t<T.decA)msg='분리된 두 염색 분체가 서로 반대쪽 극으로 가고 있어요. 이제 각각을 염색체 1개로 세요.';
+  else msg='두 염색 분체가 각각 다른 딸세포로 들어갔어요. 그래서 두 딸세포의 유전 정보가 같아요.';
+  $('#toast').innerHTML='<b><span class="swatch" style="background:'+ch.color+'"></span>'+ch.size+' 염색체 ('+ch.origin+'에게서 받음)</b>'+msg+'<br><span style="color:#51607a;font-size:12.5px">빈 곳을 누르면 선택이 풀려요</span>';
+  $('#toast').classList.add('show');
+}
+let hintHidden=false;
+function hideHint(){if(hintHidden)return;hintHidden=true;$('#hint').style.opacity=0}
+setTimeout(hideHint,9000);
+
+/* ---------- 직접 해 보기 ---------- */
+const tweens=[];
+function tween(from,to,dur,set,done){tweens.push({from,to,dur,set,done,e:0})}
+function runTweens(dt){
+  for(const tw of tweens.slice()){
+    tw.e+=dt; const p=Math.min(1,tw.e/tw.dur); tw.set(lerp(tw.from,tw.to,ease(p))); S.dirty=true;
+    if(p>=1){tweens.splice(tweens.indexOf(tw),1); if(tw.done)tw.done()}
+  }
+}
+const ORDER=['inter','pro','meta','ana','telo','done'];
+const MIS={
+  inter:{title:'DNA 복제하기',ask:()=>'핵 속의 가는 실(염색사)을 하나씩 눌러 DNA를 복제하세요.',
+    each:'복제됐어요! 똑같은 두 가닥이 나란히 붙어 있어요.',
+    fin:()=>'복제 완료! 모든 염색사가 두 가닥이 됐지만, 염색체 수는 그대로 4개예요.'+(S.cell==='animal'?' 중심체도 2개가 됐어요.':'')},
+  pro:{title:'염색체 뭉치기',ask:()=>'복제된 염색사를 하나씩 눌러 굵고 짧은 염색체로 뭉쳐 보세요.',
+    each:'뭉쳐서 염색체가 됐어요. 동원체(흰 점)로 붙은 염색 분체 2개가 보이나요?',
+    fin:()=>'핵막이 사라지고 방추사가 만들어졌어요.'+(S.cell==='animal'?' 두 중심체는 양쪽 극으로 갔어요.':'')},
+  meta:{title:'적도면에 배열하기',ask:()=>'염색체를 손가락으로 끌어서 세포 가운데의 흰 원(적도면)에 놓으세요.',
+    each:'딱 맞아요! 양쪽 극의 방추사가 동원체에 붙었어요.',
+    fin:()=>'모든 염색체가 적도면에 늘어섰어요. 상동 염색체끼리 짝짓지 않고 각자 섰다는 점도 확인해 보세요.'},
+  ana:{title:'염색 분체 떼어 보내기',ask:()=>'염색체를 눌러 두 염색 분체를 양쪽 극으로 떼어 보내세요.',
+    each:'동원체가 나뉘고, 두 염색 분체가 방추사에 끌려 반대쪽 극으로 가요.',
+    fin:()=>'양쪽 극에 똑같은 염색체가 4개씩 모였어요.'},
+  telo:{title:'핵 만들고 세포질 나누기',
+    ask:()=>S.step===0?'양쪽 끝에 모인 염색체 무리를 각각 눌러 새 핵을 만드세요.':
+      (S.cell==='animal'?'아래 버튼을 꾹 누르고 있으면 세포막이 바깥에서 안쪽으로 조여들어요.':'아래 버튼을 꾹 누르고 있으면 세포판이 가운데에서 바깥쪽으로 자라요.'),
+    each:'염색체가 다시 풀어지고 핵막이 생겼어요.',
+    fin:()=>'세포질 분열 끝! 딸세포 2개가 생겼어요.'},
+  done:{title:'딸세포 확인하기',ask:()=>'두 딸세포 속 염색체를 세어 보세요. 각각 4개로 모세포와 같아요!',each:'',fin:()=>''}
+};
+function say(html){$('#toast').innerHTML=html;$('#toast').classList.add('show');clearTimeout(say.tm);say.tm=setTimeout(()=>$('#toast').classList.remove('show'),5200)}
+function setMode(m){
+  tweens.length=0; S.holding=false; S.sel=-1; S.offK=[0,0,0,0]; $('#toast').classList.remove('show');
+  $('#modeVideo').setAttribute('aria-pressed',m==='video'); $('#modeMission').setAttribute('aria-pressed',m==='mission');
+  $('#dock').classList.toggle('is-mission',m==='mission');
+  if(m==='video'){S.mode='video';lastInfoKey='';S.dirty=true}
+  else{pause();startMission(S.t>=.999?'inter':phaseOf(S.t).key)}
+}
+$('#modeVideo').onclick=()=>setMode('video');
+$('#modeMission').onclick=()=>setMode('mission');
+function startMission(key){
+  tweens.length=0; S.mode='mission'; S.mkey=key; S.done=new Set(); S.sides=new Set(); S.fin=0; S.step=0;
+  S.complete=false; S.holding=false; S.autoHold=false; S.sel=-1; S.offK=[0,0,0,0]; $('#toast').classList.remove('show');
+  const set=(g,c)=>{S.t=g;S.tk.fill(c)};
+  if(key==='inter')set(.02,.02);
+  if(key==='pro')set(.14,.14);
+  if(key==='meta'){
+    set(.33,.29);
+    CH.forEach(ch=>ch.off.set(Math.sign(ch.T[0])*1.3,ch.T[1]*.7,0));
+    tween(0,1,.8,v=>CH.forEach((_,j)=>{if(!S.done.has(j))S.offK[j]=v}));
+  }
+  if(key==='ana')set(.50,.50);
+  if(key==='telo')set(.70,.70);
+  if(key==='done'){set(1,1);S.complete=true}
+  lastInfoKey=''; S.dirty=true; renderMission();
+}
+function renderMission(){
+  const m=MIS[S.mkey];
+  $('#mTitle').textContent=m.title; $('#mAsk').textContent=m.ask();
+  let n=0,on=0;
+  if(['inter','pro','meta','ana'].includes(S.mkey)){n=4;on=S.done.size}
+  if(S.mkey==='telo'){n=3;on=S.sides.size+(S.complete?1:0)}
+  $('#mDots').innerHTML=Array.from({length:n},(_,j)=>'<i class="'+(j<on?'on':'')+'"></i>').join('');
+  const last=S.mkey==='done';
+  $('#mNext').textContent=last?'처음부터 다시':'다음 단계';
+  $('#mNext').classList.toggle('ready',S.complete&&!last);
+  $('#mHelp').disabled=S.complete; $('#mRetry').style.display=last?'none':'';
+  $('#mHold').hidden=!(S.mkey==='telo'&&S.step===1&&!S.complete);
+  $('#mHoldTxt').textContent=S.cell==='animal'?'꾹 눌러서 세포막 조이기':'꾹 눌러서 세포판 만들기';
+  S.dirty=true;
+}
+function finOne(total,after){S.fin++;if(S.fin===total)after()}
+function missionComplete(){
+  if(S.complete)return; S.complete=true;
+  if(S.mkey==='telo'){S.t=1;S.tk.fill(1)}
+  say('<b>잘했어요!</b>'+MIS[S.mkey].fin()); renderMission();
+}
+function chipName(ch){return '<b><span class="swatch" style="background:'+ch.color+'"></span>'+ch.size+' 염색체 ('+ch.origin+'에게서 받음)</b>'}
+function act(i){
+  if(S.done.has(i)||S.complete)return; S.done.add(i);
+  const k=S.mkey, to={inter:.15,pro:.29,ana:.70}[k], dur={inter:1.3,pro:1.5,ana:2.2}[k];
+  say(chipName(CH[i])+MIS[k].each);
+  tween(S.tk[i*2],to,dur,v=>{S.tk[i*2]=S.tk[i*2+1]=v},()=>finOne(4,()=>{
+    if(k==='inter')tween(S.t,.15,1,v=>S.t=v,missionComplete);
+    else if(k==='pro')tween(S.t,.33,2.4,v=>S.t=v,missionComplete);
+    else missionComplete();
+  }));
+  if(k==='ana')tween(S.t,.50+.05*S.done.size,1,v=>S.t=v);
+  renderMission();
+}
+function placeMeta(i){
+  if(S.done.has(i))return; S.done.add(i);
+  const k0=S.offK[i];
+  say(chipName(CH[i])+MIS.meta.each);
+  tween(0,1,1.3,v=>{S.tk[i*2]=S.tk[i*2+1]=lerp(.29,.46,v);S.offK[i]=k0*(1-v)},()=>finOne(4,()=>tween(S.t,.46,1,v=>S.t=v,missionComplete)));
+  renderMission();
+}
+function teloSide(side){
+  if(S.step!==0||S.sides.has(side))return; S.sides.add(side);
+  const k=side>0?1:0;
+  say('<b>새 핵 완성 ('+S.sides.size+'/2)</b>'+MIS.telo.each);
+  tween(.70,.90,1.6,v=>{for(let i=0;i<4;i++)S.tk[i*2+k]=v},()=>finOne(2,()=>{S.step=1;renderMission();say('<b>이제 세포질을 나눌 차례예요</b>'+MIS.telo.ask())}));
+  renderMission();
+}
+function missionTap(o){
+  if(S.complete){if(S.mkey==='done'){S.sel=o?o.i:-1;if(o)showSel();else $('#toast').classList.remove('show');S.dirty=true}return}
+  if(!o)return;
+  const k=S.mkey;
+  if(k==='inter'||k==='pro'||k==='ana')act(o.i);
+  else if(k==='meta'&&!S.done.has(o.i))say('<b>끌어서 옮겨요</b>손가락을 떼지 말고 가운데 흰 원까지 움직여 보세요.');
+  else if(k==='telo'&&S.step===0)teloSide(o.st.side);
+}
+$('#mHelp').onclick=()=>{
+  if(S.complete)return; const k=S.mkey, next=[0,1,2,3].find(j=>!S.done.has(j));
+  if(k==='meta'){if(next!=null)placeMeta(next)}
+  else if(k==='telo'){
+    if(S.step===0){const s=[-1,1].find(x=>!S.sides.has(x));if(s!=null)teloSide(s)}
+    else if(!S.autoHold){S.autoHold=true;tween(S.t,1,3,v=>S.t=v,()=>{S.autoHold=false;missionComplete()})}
+  }
+  else if(next!=null)act(next);
+};
+$('#mRetry').onclick=()=>startMission(S.mkey);
+$('#mNext').onclick=()=>startMission(S.mkey==='done'?'inter':ORDER[ORDER.indexOf(S.mkey)+1]);
+const hold=$('#mHold');
+hold.addEventListener('pointerdown',e=>{e.preventDefault();S.holding=true;hold.classList.add('active');try{hold.setPointerCapture(e.pointerId)}catch(_){}});
+const holdOff=()=>{S.holding=false;hold.classList.remove('active')};
+['pointerup','pointercancel','lostpointercapture'].forEach(ev=>hold.addEventListener(ev,holdOff));
+hold.addEventListener('contextmenu',e=>e.preventDefault());
+hold.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();S.holding=true;hold.classList.add('active')}});
+hold.addEventListener('keyup',holdOff);
+
+// 중기: 염색체 끌어 옮기기
+let drag=null; const dragPlane=new THREE.Plane(), _cd=new V();
+function rayLocal(cx,cy){
+  const r=canvas.getBoundingClientRect();
+  ndc.set((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1); ray.setFromCamera(ndc,camera);
+  const p=new V(); if(!ray.ray.intersectPlane(dragPlane,p))return null;
+  root.updateMatrixWorld(); return root.worldToLocal(p);
+}
+stage.addEventListener('pointerdown',e=>{
+  if(e.target!==canvas||S.mode!=='mission'||S.mkey!=='meta'||S.complete||drag)return;
+  const o=pick(e.clientX,e.clientY); if(!o||S.done.has(o.i))return;
+  camera.getWorldDirection(_cd); root.updateMatrixWorld();
+  dragPlane.setFromNormalAndCoplanarPoint(_cd,o.st.kin.clone().applyMatrix4(root.matrixWorld));
+  const start=rayLocal(e.clientX,e.clientY); if(!start)return;
+  controls.enabled=false;
+  const ch=CH[o.i]; ch.off.multiplyScalar(S.offK[o.i]); S.offK[o.i]=1;
+  drag={i:o.i,start,base:ch.off.clone(),x:e.clientX,y:e.clientY,moved:false};
+  S.sel=o.i; S.dirty=true;
+},{capture:true});
+window.addEventListener('pointermove',e=>{
+  if(!drag)return; const p=rayLocal(e.clientX,e.clientY); if(!p)return;
+  if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>6)drag.moved=true;
+  const ch=CH[drag.i]; ch.off.copy(drag.base).add(p.sub(drag.start));
+  const C=ch.Tv.clone().add(ch.off); if(C.length()>2.4){C.setLength(2.4);ch.off.copy(C).sub(ch.Tv)}
+  S.dirty=true;
+});
+function endDrag(){
+  if(!drag)return; const i=drag.i, moved=drag.moved; drag=null; controls.enabled=true; S.sel=-1; S.dirty=true;
+  const ch=CH[i], C=ch.Tv.clone().add(ch.off);
+  if(!moved){say('<b>끌어서 옮겨요</b>손가락을 떼지 말고 가운데 흰 원까지 움직여 보세요.');return}
+  if(Math.abs(C.x)<.55&&Math.hypot(C.y,C.z)<2.3)placeMeta(i);
+  else say('<b>조금 더 가운데로!</b>염색체의 가운데(동원체)를 흰 원(적도면) 위에 맞춰 놓아 보세요.');
+}
+window.addEventListener('pointerup',endDrag);
+window.addEventListener('pointercancel',endDrag);
+function pulse(now){
+  const active=S.mode==='mission'&&!S.complete&&!drag;
+  const glow=.12+.3*(.5+.5*Math.sin(now*.006));
+  chromatids.forEach(o=>{
+    if(!o.st)return;
+    let pend=false;
+    if(active){
+      if(['inter','pro','meta','ana'].includes(S.mkey))pend=!S.done.has(o.i);
+      else if(S.mkey==='telo'&&S.step===0)pend=!S.sides.has(o.st.side);
+    }
+    o.mat.emissiveIntensity=S.sel===o.i?.45:(pend?glow:0);
+  });
+}
+
+bindNonGL();
+fit(true);
+requestAnimationFrame(loop);
+
+/* ---------- QR · 퀴즈 (3D 없이도 동작) ---------- */
+function bindNonGL(){
+  if(bindNonGL.done)return; bindNonGL.done=true;
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('open'));
+  document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));$('#bigQR').classList.remove('open')}});
+
+  let saved='';try{saved=localStorage.getItem('mitosis-qr-url')||''}catch(e){}
+  $('#qrUrl').value=saved||location.href;
+  let dataURL='';
+  function makeQR(){
+    const url=$('#qrUrl').value.trim(); const box=$('#qrBox'); box.innerHTML='';
+    if(!url){box.textContent='주소를 먼저 넣어 주세요.';return}
+    if(typeof QRCode==='undefined'){box.textContent='QR 도구를 불러오지 못했어요. 인터넷 연결을 확인하고 새로 고침 해 주세요.';return}
+    try{localStorage.setItem('mitosis-qr-url',url)}catch(e){}
+    new QRCode(box,{text:url,width:512,height:512,colorDark:'#14213d',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    const cv=box.querySelector('canvas');
+    dataURL=cv?cv.toDataURL('image/png'):'';
+    const img=box.querySelector('img'); if(cv&&img){img.style.display='none';cv.style.display='block'}
+    $('#bigImg').src=dataURL; $('#printImg').src=dataURL; $('#printUrl').textContent=url;
+  }
+  $('#btnQR').onclick=()=>{$('#qrModal').classList.add('open');makeQR()};
+  $('#qrMake').onclick=makeQR;
+  $('#qrUrl').addEventListener('keydown',e=>{if(e.key==='Enter')makeQR()});
+  $('#qrBig').onclick=()=>{if(!dataURL)makeQR();$('#qrModal').classList.remove('open');$('#bigQR').classList.add('open')};
+  $('#bigClose').onclick=()=>$('#bigQR').classList.remove('open');
+  $('#qrPrint').onclick=()=>{if(!dataURL)makeQR();try{window.print()}catch(e){}};
+
+  const QZ=[
+    {q:'염색체가 세포 한가운데(적도면)에 한 줄로 늘어서는 시기는?',o:['전기','중기','후기','말기'],a:1,w:'중기에는 방추사가 동원체에 붙고 염색체가 적도면에 배열돼요. 염색체를 관찰하기 가장 좋은 시기예요.'},
+    {q:'후기에 방추사에 끌려 양쪽 극으로 이동하는 것은?',o:['상동 염색체 쌍','염색 분체','핵막','세포판'],a:1,w:'동원체가 나뉘면서 한 염색체의 두 염색 분체가 서로 반대쪽 극으로 이동해요.'},
+    {q:'핵막이 사라지고 방추사가 나타나기 시작하는 시기는?',o:['간기','전기','후기','말기'],a:1,w:'전기에 염색체가 나타나고, 핵막이 사라지며, 방추사가 만들어져요.'},
+    {q:'식물 세포에서 세포질이 나뉘는 방법으로 옳은 것은?',o:['세포막이 바깥에서 안쪽으로 오목하게 들어간다','세포판이 안쪽에서 바깥쪽으로 만들어진다','핵이 둘로 잘린다','세포벽이 녹아 없어진다'],a:1,w:'식물 세포는 세포벽이 있어 함입이 일어나지 않고, 세포판이 가운데에서 바깥쪽으로 만들어져요.'},
+    {q:'DNA가 복제되는 시기는?',o:['간기','전기','중기','후기'],a:0,w:'간기에 DNA가 복제되어, 전기에 나타나는 염색체는 염색 분체 2개로 되어 있어요.'},
+    {q:'염색체가 4개인 세포가 체세포 분열을 하면 딸세포 1개의 염색체 수는?',o:['2개','4개','8개','16개'],a:1,w:'체세포 분열로 생긴 딸세포는 모세포와 염색체 수와 유전 정보가 같아요.'}
+  ];
+  let qi=0; const ans=QZ.map(()=>-1);
+  function renderQ(){
+    const q=QZ[qi]; $('#quizProg').textContent=(qi+1)+' / '+QZ.length; $('#quizQ').textContent=q.q;
+    const box=$('#quizOpts'); box.innerHTML='';
+    q.o.forEach((txt,j)=>{const b=document.createElement('button');b.textContent=txt;
+      if(ans[qi]>=0){if(j===q.a)b.classList.add('ok');else if(j===ans[qi])b.classList.add('no')}
+      b.onclick=()=>{if(ans[qi]>=0)return;ans[qi]=j;renderQ()};box.appendChild(b)});
+    $('#quizWhy').textContent=ans[qi]>=0?(ans[qi]===q.a?'정답이에요! ':'아쉬워요. ')+q.w:'';
+    const done=ans.filter(v=>v>=0).length, right=ans.filter((v,j)=>v===QZ[j].a).length;
+    $('#quizScore').textContent=done?right+' / '+done+' 정답':'';
+    $('#quizPrev').disabled=qi===0; $('#quizNext').textContent=qi===QZ.length-1?'처음부터':'다음';
+  }
+  $('#quizPrev').onclick=()=>{qi=Math.max(0,qi-1);renderQ()};
+  $('#quizNext').onclick=()=>{if(qi===QZ.length-1){qi=0;ans.fill(-1)}else qi++;renderQ()};
+  $('#btnQuiz').onclick=()=>{$('#quizModal').classList.add('open');renderQ()};
+}
+})();
+</script>
+</body>
+</html>
