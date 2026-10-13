@@ -181,6 +181,8 @@ input[type=range]{flex:1;min-width:0;accent-color:var(--stain);height:32px}
 }
 @media (max-width:480px){.brand{display:none}.seg{margin-right:auto}}
 @media (prefers-reduced-motion:reduce){.lbl,.hint{transition:none}}
+.credit{margin:10px 0 0;font-size:11.5px;letter-spacing:.02em;color:rgba(230,240,225,.6);text-align:right}
+.info.collapsed .credit{display:none}
 </style>
 </head>
 <body>
@@ -209,6 +211,7 @@ input[type=range]{flex:1;min-width:0;accent-color:var(--stain);height:32px}
       <span><i style="background:#14b8a6"></i>짧은 염색체 · 아버지</span>
       <span class="wide">같은 크기끼리 상동 염색체예요. 색은 어느 부모에게서 받았는지를 나타내요.</span>
     </div>
+    <p class="credit">made by 한광여중 이상민</p>
   </section>
   <div class="hint" id="hint">한 손가락: 돌리기 · 두 손가락: 확대/이동 · 염색체를 톡 누르면 따라가요</div>
   <div class="toast" id="toast"></div>
