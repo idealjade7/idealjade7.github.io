@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>우리은하 3D 탐험</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#2b3a8f">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -948,12 +954,12 @@ const SLOTS=[new V(-3.5,1.35,0),new V(0,1.35,0),new V(3.5,1.35,0),new V(-1.75,-1
       const c=hex(R2()<.55?'#ffd9a0':R2()<.6?'#ffb980':'#fff2dc');S.push(d.x,d.y,d.z,c[0],c[1],c[2],R2()<.02?.06:.032)}
     return makePoints(S,starMat({max:10,gain:.9}))};
   mk.oc=()=>{const S=[],g=new THREE.Group();
-    for(let i=0;i<9;i++){const d=new V(g2()*.5,g2()*.4,g2()*.5);const c=hex('#dbe7ff');S.push(d.x,d.y,d.z,c[0],c[1],c[2],.3)}
-    for(let i=0;i<70;i++){const d=new V(g2()*.65,g2()*.55,g2()*.65);const c=hex(R2()<.8?'#b8d0ff':'#ffffff');S.push(d.x,d.y,d.z,c[0]*.8,c[1]*.8,c[2]*.8,.065+R2()*.05)}
+    for(let i=0;i<9;i++){const d=new V(g2()*.5,g2()*.4,g2()*.5);const c=hex(i%3?'#7fb0ff':'#a9cbff');S.push(d.x,d.y,d.z,c[0],c[1],c[2],.32)}
+    for(let i=0;i<70;i++){const d=new V(g2()*.65,g2()*.55,g2()*.65);const c=hex(R2()<.85?'#6fa3ff':'#bcd6ff');S.push(d.x,d.y,d.z,c[0],c[1],c[2],.07+R2()*.05)}
     const p=makePoints(S,starMat({max:40,gain:1.5}));g.add(p);
     // 희미한 푸른 빛(티끌)
-    const H=[];for(let i=0;i<50;i++){const d=new V(g2()*.5,g2()*.4,g2()*.5);H.push(d.x,d.y,d.z,.12,.18,.36,.45)}
-    g.add(makePoints(H,starMat({max:70,op:.22})));return g};
+    const H=[];for(let i=0;i<50;i++){const d=new V(g2()*.5,g2()*.4,g2()*.5);H.push(d.x,d.y,d.z,.08,.2,.6,.5)}
+    g.add(makePoints(H,starMat({max:80,op:.4})));return g};
   mk.em=()=>{const g=new THREE.Group(),H=[];
     for(let i=0;i<1500;i++){const d=new V(g2(),g2(),g2()).normalize(),r=.55+.38*Math.abs(g2())*.6;d.multiplyScalar(r);d.y*=.9;
       const c=R2()<.75?[.9,.16,.3]:[.95,.35,.55];H.push(d.x,d.y,d.z,c[0]*.5,c[1]*.5,c[2]*.5,.22+R2()*.25)}

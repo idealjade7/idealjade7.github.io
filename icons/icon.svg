@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b3a8f"/><stop offset="1" stop-color="#121a4a"/></linearGradient>
+    <linearGradient id="liq" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7ef0c2"/><stop offset="1" stop-color="#25b38a"/></linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- 원자 궤도 -->
+  <g fill="none" stroke="#ffd84a" stroke-width="2.2" opacity=".95">
+    <ellipse cx="32" cy="34" rx="25" ry="9.5"/>
+    <ellipse cx="32" cy="34" rx="25" ry="9.5" transform="rotate(60 32 34)"/>
+    <ellipse cx="32" cy="34" rx="25" ry="9.5" transform="rotate(-60 32 34)"/>
+  </g>
+  <!-- 플라스크 -->
+  <path d="M26.5 14h11v4h-1.6v9.2l9.6 16.6c1.6 2.8-.4 6.2-3.6 6.2H22.1c-3.2 0-5.2-3.4-3.6-6.2l9.6-16.6V18h-1.6z" fill="#eef3ff" stroke="#ffffff" stroke-width="1.2"/>
+  <path d="M23.3 39h17.4l3.9 6.8c.8 1.4-.2 3.2-1.8 3.2H21.2c-1.6 0-2.6-1.8-1.8-3.2z" fill="url(#liq)"/>
+  <circle cx="28" cy="43" r="1.6" fill="#ffffff" opacity=".85"/>
+  <circle cx="34.5" cy="45.2" r="1.1" fill="#ffffff" opacity=".85"/>
+  <circle cx="31.5" cy="35.5" r="1.2" fill="#7ef0c2"/>
+  <!-- 반짝이는 별 -->
+  <path d="M50 8l1.6 4.4L56 14l-4.4 1.6L50 20l-1.6-4.4L44 14l4.4-1.6z" fill="#ffd84a"/>
+</svg>

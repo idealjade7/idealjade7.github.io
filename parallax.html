@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>연주 시차 3D 관측소</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#2b3a8f">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -697,11 +703,31 @@ const EYE={A:new V(-BD.e,BD.y,BD.D),B:new V(BD.e,BD.y,BD.D)};
   const rod=new THREE.Mesh(new THREE.CylinderGeometry(.004,.004,BD.y-.74,8),lam(0x888888));rod.position.y=-(BD.y-.74)/2;const clay=new THREE.Mesh(new THREE.SphereGeometry(.03,12,8),lam(0x5aa36a));clay.scale.y=.5;clay.position.y=-(BD.y-.74);
   B.ball.add(bm,rod,clay);B.g.add(B.ball);
   // 학생 A, B
-  const student=(col,hair)=>{const g=new THREE.Group();const head=new THREE.Mesh(new THREE.SphereGeometry(.1,24,16),lam(0xffe0cc));
-    const hr=new THREE.Mesh(new THREE.SphereGeometry(.106,24,16,0,Math.PI*2,0,Math.PI*.5),lam(hair));hr.rotation.x=-.5;
-    const body=new THREE.Mesh(new THREE.CylinderGeometry(.13,.17,.5,16),lam(col));body.position.y=-.38;head.position.z=.07;hr.position.z=.075;hr.position.y=.008;g.add(head,hr,body);return g};
-  B.stA=student(0xd1495b,0x2a2230);B.stA.position.copy(EYE.A).add(new V(-.02,0,.02));B.g.add(B.stA);
-  B.stB=student(0x3d6fb6,0x3a2a1e);B.stB.position.copy(EYE.B).add(new V(.02,0,.02));B.g.add(B.stB);
+  // 의자에 앉아 화이트보드(앞, -z 방향)를 바라보는 학생
+  const student=(col,hair,longHair)=>{const g=new THREE.Group(),skin=lam(0xffe0cc),hm=lam(hair),cm=lam(col);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.095,28,20),skin);head.position.set(0,.01,0);head.scale.set(1,1.05,1);
+    const cap=new THREE.Mesh(new THREE.SphereGeometry(.104,28,20,0,Math.PI*2,0,Math.PI*.62),hm);cap.rotation.x=.75;cap.position.set(0,.02,.006);
+    const bang=new THREE.Mesh(new THREE.SphereGeometry(.101,24,12,0,Math.PI*2,0,Math.PI*.3),hm);bang.rotation.x=-.35;bang.position.set(0,.022,0);
+    g.add(head,cap,bang);
+    if(longHair){const back=new THREE.Mesh(new THREE.BoxGeometry(.17,.2,.05),hm);back.position.set(0,-.08,.075);back.rotation.x=.12;g.add(back)}
+    [-1,1].forEach(sx=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.012,10,8),lam(0x2a1c20));e.position.set(sx*.034,.0,-.088);g.add(e);
+      const ear=new THREE.Mesh(new THREE.SphereGeometry(.02,10,8),skin);ear.position.set(sx*.094,0,.005);g.add(ear)});
+    const neck=new THREE.Mesh(new THREE.CylinderGeometry(.03,.035,.06,12),skin);neck.position.y=-.11;g.add(neck);
+    const torso=new THREE.Mesh(new THREE.CylinderGeometry(.1,.13,.32,18),cm);torso.position.set(0,-.29,.01);g.add(torso);
+    const sh=new THREE.Mesh(new THREE.SphereGeometry(.105,18,10,0,Math.PI*2,0,Math.PI*.5),cm);sh.scale.set(1.15,.45,1);sh.position.set(0,-.14,.01);g.add(sh);
+    const collar=new THREE.Mesh(new THREE.TorusGeometry(.045,.012,8,18),lam(0xffffff));collar.rotation.x=Math.PI/2;collar.position.y=-.135;g.add(collar);
+    // 팔: 어깨에서 책상 위로 뻗어요
+    [-1,1].forEach(sx=>{const up=new THREE.Mesh(new THREE.CylinderGeometry(.028,.026,.2,10),cm);up.position.set(sx*.125,-.23,-.03);up.rotation.x=.55;up.rotation.z=sx*.12;g.add(up);
+      const fo=new THREE.Mesh(new THREE.CylinderGeometry(.025,.024,.2,10),cm);fo.position.set(sx*.1,-.32,-.16);fo.rotation.x=Math.PI/2-.15;g.add(fo);
+      const hand=new THREE.Mesh(new THREE.SphereGeometry(.026,10,8),skin);hand.position.set(sx*.09,-.33,-.26);g.add(hand)});
+    // 의자
+    const seat=new THREE.Mesh(new THREE.BoxGeometry(.32,.03,.3),lam(0x7a5a3a));seat.position.set(0,-.5,.04);g.add(seat);
+    const bk=new THREE.Mesh(new THREE.BoxGeometry(.32,.26,.03),lam(0x7a5a3a));bk.position.set(0,-.33,.2);g.add(bk);
+    [[-.14,-.1],[.14,-.1],[-.14,.17],[.14,.17]].forEach(([x,z])=>{const l=new THREE.Mesh(new THREE.BoxGeometry(.025,.5,.025),lam(0x9aa0a8));l.position.set(x,-.76,z);g.add(l)});
+    const legs=new THREE.Mesh(new THREE.BoxGeometry(.22,.08,.24),lam(0x2c3550));legs.position.set(0,-.47,-.06);g.add(legs);
+    return g};
+  B.stA=student(0xd1495b,0x2a2230,true);B.stA.position.copy(EYE.A).add(new V(-.02,0,.02));B.g.add(B.stA);
+  B.stB=student(0x3d6fb6,0x3a2a1e,false);B.stB.position.copy(EYE.B).add(new V(.02,0,.02));B.g.add(B.stB);
   const la=B.la=label('학생 A',{bg:'rgba(209,73,91,.95)',fg:'#fff',size:.07});la.position.copy(EYE.A).add(new V(-.05,.2,0));B.g.add(la);
   const lb=B.lb=label('학생 B',{bg:'rgba(61,111,182,.95)',fg:'#fff',size:.07});lb.position.copy(EYE.B).add(new V(.05,.2,0));B.g.add(lb);
   // 시선
@@ -737,7 +763,7 @@ B.ask=function(){
 };
 B.reset=function(){B.setView('all');B.rows=[];B.asked=false;B.done=false;B.d=.5;$('#bD').value=50;B.update();renderData()};
 
-INS.before=()=>{if(cur==='B'){B.hid=[B.lA,B.lB,B.mA,B.mB,B.dl,B.ruler].map(o=>[o,o.visible]);B.hid.forEach(([o])=>o.visible=false)}else if(cur==='C'){C.hid=[C.ang3,C.ln,C.plL,C.mA,C.mB,C.pl,C.st.S.children[1],C.st.T.children[1]].map(o=>[o,o.visible]);C.hid.forEach(([o])=>o.visible=false)}};
+INS.before=()=>{if(cur==='B'){B.hid=[B.lA,B.lB,B.mA,B.mB,B.dl,B.ruler,B.stA,B.stB].map(o=>[o,o.visible]);B.hid.forEach(([o])=>o.visible=false)}else if(cur==='C'){C.hid=[C.ang3,C.ln,C.plL,C.mA,C.mB,C.pl,C.st.S.children[1],C.st.T.children[1]].map(o=>[o,o.visible]);C.hid.forEach(([o])=>o.visible=false)}};
 INS.after=()=>{const h=cur==='B'?B.hid:cur==='C'?C.hid:null;if(h)h.forEach(([o,v])=>o.visible=v)};
 
 /* ---------- 1인칭: 학생의 눈으로 보기 ---------- */
@@ -765,7 +791,7 @@ B.setView=function(v){
     else if(target!==B.who||B.tr)B.goEye(target,null,v==='alt'?()=>B.alt():null);
     else if(v==='alt')B.alt();
   }else{
-    killTw('Btr');B.tr=null;controls.enabled=true;camera.fov=SC.B.fov;camera.updateProjectionMatrix();setInsets(SC.B.insets);controls.target.copy(BLOOK);fit(true,true);
+    killTw('Btr');B.tr=null;B.stA.visible=B.stB.visible=true;controls.enabled=true;camera.fov=SC.B.fov;camera.updateProjectionMatrix();setInsets(SC.B.insets);controls.target.copy(BLOOK);fit(true,true);
   }
   B.update();
   if(v==='alt')say('<b>번갈아 보기</b>학생 A와 학생 B의 눈으로 번갈아 들어가 봐요. 두 학생이 본 <b>공의 위치(쪽지 번호)</b>를 비교해 보세요. 공을 가까이, 멀리 옮기며 차이를 비교해요.',8000);
@@ -776,6 +802,7 @@ B.fpTick=function(){
   if(B.view==='all')return;
   const fv=Math.max(40,2*THREE.MathUtils.radToDeg(Math.atan(.62/(BD.D*camera.aspect))));
   B.la.visible=!!(B.tr&&B.tr.to==='A'&&B.tr.t<.8);B.lb.visible=!!(B.tr&&B.tr.to==='B'&&B.tr.t<.8);
+  {const near=B.tr?B.tr.t>.75?B.tr.to:null:B.who;B.stA.visible=near!=='A';B.stB.visible=near!=='B'}
   if(B.tr){const r=B.tr,t=r.t;camera.position.copy(bez(r.P0,r.P1,r.P2,r.P3,t));
     const L=r.L0.clone().lerp(BLOOK,Math.min(1,t*2));camera.lookAt(L);controls.target.copy(L);
     const f=lerp(Math.max(fv,48),fv,Math.pow(t,3));if(Math.abs(camera.fov-f)>.05){camera.fov=f;camera.updateProjectionMatrix()}
@@ -804,7 +831,11 @@ const AU=3,BGZ=-48,STARS={S:new V(0,0,-14),T:new V(0,0,-25)};
   C.orbit=new THREE.Group();C.g.add(C.orbit);
   C.mkOrbit=r=>{C.orbit.clear();const pts=[];for(let i=0;i<=128;i++){const a=i/128*Math.PI*2;pts.push(new V(Math.cos(a)*r,0,Math.sin(a)*r))}
     const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineDashedMaterial({color:0x8fa6d8,dashSize:.25,gapSize:.18,transparent:true,opacity:.8}));l.computeLineDistances();C.orbit.add(l);
-    const rl=dashed(new V(0,0,0),new V(-r,0,0),0xffe38a,.12);C.orbit.add(rl);const t=label(C.mars?'1.5 AU':'1 AU',{bg:'rgba(20,24,52,.85)',fg:'#ffe38a',size:.6});t.position.set(-r/2,.4,-.9);C.orbit.add(t)};
+    const rl=dashed(new V(0,0,0),new V(-r,0,0),0xffe38a,.12);C.orbit.add(rl);const t=label(C.mars?'1.5 AU':'1 AU',{bg:'rgba(20,24,52,.85)',fg:'#ffe38a',size:.6});t.position.set(-r/2,.4,-.9);C.orbit.add(t);
+    // 공전 방향 화살표(위에서 보면 시계 반대 방향)
+    [.6,2.2,3.8,5.4].forEach(an=>{const c=new THREE.Mesh(new THREE.ConeGeometry(.16,.42,12),new THREE.MeshBasicMaterial({color:0x8fa6d8}));c.position.set(Math.cos(an)*r,0,-Math.sin(an)*r);
+      c.quaternion.setFromUnitVectors(new V(0,1,0),new V(-Math.sin(an),0,-Math.cos(an)));C.orbit.add(c)});
+    const dl=label('공전 방향',Object.assign({size:.45},LTW));dl.position.set(Math.cos(.6)*r+.6,.35,-Math.sin(.6)*r);C.orbit.add(dl)};
   C.mkOrbit(AU);
   // 행성(지구/화성)
   C.pl=new THREE.Mesh(new THREE.SphereGeometry(.28,32,24),new THREE.MeshLambertMaterial({color:0x3b7de0,emissive:0x0c2a5a}));C.g.add(C.pl);
@@ -830,7 +861,7 @@ const AU=3,BGZ=-48,STARS={S:new V(0,0,-14),T:new V(0,0,-25)};
   C.ang3=new THREE.Group();C.ang3.add(C.la,C.lb,C.lc,C.arcP,C.arcH,C.tP,C.tH);C.ang3.visible=false;C.g.add(C.ang3);
 })();
 C.R=()=>C.mars?AU*1.5:AU;
-C.plPos=()=>new V(Math.cos(C.ang)*C.R(),0,Math.sin(C.ang)*C.R());
+C.plPos=()=>new V(Math.cos(C.ang)*C.R(),0,-Math.sin(C.ang)*C.R());   // 위에서 보면 시계 반대 방향
 C.apparent=(E,k)=>{const S=STARS[k],t=(BGZ-E.z)/(S.z-E.z);return E.clone().add(S.clone().sub(E).multiplyScalar(t))};
 C.update=function(){
   const E=C.plPos(),R=C.R();C.pl.position.copy(E);C.plL.position.copy(E).add(new V(0,.85,0));
@@ -846,10 +877,8 @@ C.update=function(){
 };
 C.goTo=function(k){
   if(C.play){C.play=false;$('#cPlay').textContent='공전 보기'}
-  const target=k==='A'?Math.PI:0;let from=C.ang;
-  // 앞쪽(+z) 반원을 따라 이동
-  if(k==='B'&&from>Math.PI*1.5)from-=Math.PI*2;
-  killTw('Corb');tweenOwn('Corb',from,target,1.6,v=>{C.ang=v;C.update()},()=>{C.ang=target;C.observe(k)});
+  const target=k==='A'?Math.PI:0,from=C.ang,dl=((target-from)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+  killTw('Corb');if(dl<1e-4){C.ang=target;C.observe(k);return}tweenOwn('Corb',from,from+dl,1.6*Math.max(.35,dl/Math.PI),v=>{C.ang=v%(2*Math.PI);C.update()},()=>{C.ang=target;C.observe(k)});
 };
 C.observe=function(k){
   const E=C.plPos();C.obs[C.star][k]=C.apparent(E,C.star);C.update();
