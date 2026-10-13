@@ -118,6 +118,8 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
 .guide code{font-family:var(--mono);font-size:.92em;background:var(--tag);border-radius:4px;padding:0 4px}
 .foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;margin-top:28px;font-family:var(--mono);font-size:12px;color:var(--muted);word-break:break-all}
 .foot .by{color:var(--ink);letter-spacing:.03em}
+.foot .yt{color:inherit;text-decoration:none;border-bottom:1px solid currentColor}
+.foot .yt:hover{color:#e03131}
 
 /* QR 크게 띄우기 */
 .qr{position:fixed;inset:0;z-index:20;background:#ffffff;color:#10201b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(20px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px));text-align:center}
@@ -185,7 +187,7 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
     <div class="snip"><pre id="snipUnit">{ id: '2022-3-1', cur: '2022', grade: 3, no: 'Ⅰ', name: '단원 이름' },</pre><button class="btn" type="button" data-copy="snipUnit">복사</button></div>
   </details>
 
-  <footer class="foot"><span class="by">made by 한광여중 이상민</span><span id="foot"></span></footer>
+  <footer class="foot"><span class="by">made by 한광여중 이상민 · <a class="yt" href="https://www.youtube.com/@%EC%9D%B4%EC%83%81%EB%AF%BC-c7j6d" target="_blank" rel="noopener">▶ 강의 영상 유튜브 채널</a></span><span id="foot"></span></footer>
 </div>
 
 <div class="qr" id="qr" hidden role="dialog" aria-modal="true" aria-labelledby="qrTitle">
