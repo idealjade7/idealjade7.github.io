@@ -162,6 +162,46 @@ table.t th{font-weight:500;color:#c9d8bf}
 .ctrl .seg button{white-space:nowrap}
 
 #bHomo[aria-pressed=true]{background:#efe2ff;border-color:#b98cf0;color:#4b2a7a}
+/* F2 개수비 메인 표시 */
+.tally{position:absolute;top:14px;left:150px;right:calc(min(390px,34vw) + 16px);display:none;justify-content:center;pointer-events:none;z-index:3}
+.tally.show{display:flex}
+.tally .in{display:flex;align-items:center;gap:6px;background:rgba(10,20,8,.72);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:8px 14px;backdrop-filter:blur(4px)}
+.tally .in{pointer-events:auto}
+.tally .it{display:flex;flex-direction:column;align-items:center;min-width:64px;background:transparent;border:1px solid transparent;border-radius:12px;padding:4px 6px;color:inherit;font:inherit;cursor:pointer;transition:background .2s,border-color .2s}
+.tally .it:hover{background:rgba(255,255,255,.08)}
+.tally .it[aria-pressed=true]{background:rgba(255,227,107,.18);border-color:#ffe36b;box-shadow:0 0 14px rgba(255,227,107,.45)}
+.tally .it[aria-pressed=true] span{color:#ffe36b}
+.tally .it .tp{display:flex;align-items:center;gap:6px}
+.tally .it .ico{width:22px;height:22px}
+.tally .it b{font-size:30px;line-height:1;color:#fff;font-variant-numeric:tabular-nums;transition:transform .25s}
+.tally .it b.bump{transform:scale(1.25);color:#ffe36b}
+.tally .it span{font-size:12px;color:#cfe0c4;margin-top:3px;white-space:nowrap}
+.tally .co{font-size:26px;font-weight:700;color:#9fb796;margin:0 2px 16px}
+.tally .rt{margin-left:10px;padding-left:12px;border-left:1px solid rgba(255,255,255,.2);font-size:13px;color:#cfe0c4;line-height:1.35}
+.tally .rt b{display:block;font-size:17px;color:#ffe36b;white-space:nowrap}
+.stage:has(.info.collapsed) .tally{right:16px}
+@media (max-width:720px){
+  .tally{left:8px;right:8px;top:58px}
+  .stage:has(.tally.show) .hint{display:none}
+  .tally .in{padding:6px 8px;gap:2px;border-radius:12px}
+  .tally .it{min-width:46px;padding:3px 3px}.tally .it b{font-size:22px}.tally .it span{font-size:10.5px}.tally .it .ico{width:16px;height:16px}
+  .tally .co{font-size:18px;margin-bottom:12px}
+  .tally .rt{margin-left:4px;padding-left:6px;font-size:11px}.tally .rt b{font-size:13px}
+}
+/* 감수 분열 결과 메인 표시 */
+#bTally .hd{font-size:12px;color:#cfe0c4;writing-mode:horizontal-tb;margin-right:6px;line-height:1.2;max-width:4.5em;text-align:center}
+#bTally .gm{display:flex;flex-direction:column;align-items:center;min-width:62px;padding:5px 8px;border-radius:12px;border:1.5px dashed rgba(255,255,255,.25);color:#7f9179;transition:all .3s}
+#bTally .gm b{font-size:28px;line-height:1.05;letter-spacing:1px}
+#bTally .gm span{font-size:11.5px;margin-top:2px}
+#bTally .gm.on{border-style:solid;border-color:#8fd0f2;background:rgba(143,208,242,.16);color:#fff}
+#bTally .gm.on span{color:#cfe0c4}
+#bTally .gm.new{border-color:#ffe36b;background:rgba(255,227,107,.2);box-shadow:0 0 14px rgba(255,227,107,.45)}
+#bTally .gm.new b{color:#ffe36b}
+#bTally .gm.pop{animation:gmPop .65s ease-out}
+@keyframes gmPop{0%{transform:scale(.6)}55%{transform:scale(1.25)}100%{transform:scale(1)}}
+@media (max-width:720px){#bTally .gm{min-width:44px;padding:3px 5px}#bTally .gm b{font-size:19px}#bTally .gm span{font-size:10px}#bTally .hd{font-size:10.5px;margin-right:2px}}
+@media (prefers-reduced-motion:reduce){#bTally .gm.pop{animation:none}}
+@media (min-width:721px){#bTally{left:270px}}
 #celebrate{position:absolute;inset:0;z-index:8;pointer-events:none;display:none}
 #celebrate.show{display:block}
 #celebrate canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -185,6 +225,8 @@ table.t th{font-weight:500;color:#c9d8bf}
 <main class="stage" id="stage">
   <canvas id="gl" aria-label="완두 유전 3D 모형. 드래그하여 돌리고 두 손가락으로 확대할 수 있습니다."></canvas>
   <div class="big" id="big"></div>
+  <div class="tally" id="cTally" aria-live="polite"></div>
+  <div class="tally" id="bTally" aria-live="polite"></div>
   <section class="info" id="info" aria-live="polite">
     <h2><span id="infoTitle"></span><button class="toggle" id="infoToggle" aria-expanded="true">접기</button></h2>
     <ul id="infoList"></ul>
@@ -607,7 +649,7 @@ B.random=function(){
 };
 B.run=function(){
   if(B.busy||B.m>0)return; B.busy=true;ctrlB(); hideSay();
-  const t=topType(),b=botType();
+  const t=topType(),b=botType();B.last=null;renderData();
   B.ql.forEach((l,i)=>l.userData.set(B.q[i].userData.sy>0?t:b));
   tween(0,1,3.4,v=>B.m=v,()=>{B.m=1;B.busy=false;B.count[t]=(B.count[t]||0)+2;B.count[b]=(B.count[b]||0)+2;B.last=[t,b];B.made.add(t);B.made.add(b);ctrlB();renderData();B.check();
     say('<b>생식세포 4개 완성: '+t+' 2개, '+b+' 2개</b>상동 염색체가 나뉘면서 R과 r, Y와 y가 서로 다른 생식세포로 들어갔어요. ‘다시 배열하기’로 다른 배열도 해 보세요.',7000)});
@@ -615,7 +657,7 @@ B.run=function(){
 B.back=function(){if(B.busy||B.m===0)return;B.busy=true;ctrlB();tween(B.m,0,.8,v=>B.m=v,()=>{B.m=0;B.busy=false;ctrlB()})};
 B.fast=function(){
   for(let i=0;i<20;i++){const r=Math.random()<.5?0:1,y=Math.random()<.5?0:1;const t=B.al.R[r]+B.al.Y[y],b=B.al.R[1-r]+B.al.Y[1-y];B.count[t]=(B.count[t]||0)+2;B.count[b]=(B.count[b]||0)+2}
-  renderData(); say('<b>감수 분열 20번 = 생식세포 80개 추가</b>4종류의 개수가 거의 같아지는지 오른쪽 표에서 확인해 보세요.');
+  B.last=null;renderData(); say('<b>감수 분열 20번 = 생식세포 80개 추가</b>4종류의 개수가 거의 같아지는지 오른쪽 표에서 확인해 보세요.');
 };
 function ctrlB(){
   $('#bFlip').disabled=$('#bRand').disabled=B.busy||B.m>0;
@@ -632,6 +674,17 @@ B.setGt=function(gt){
   ctrlB();renderData();
   const ty=B.types();
   say('<b>'+gt+'인 개체의 세포</b>'+(gt==='RrYy'?'모양과 색깔 모두 잡종이에요.':ty.length===1?'두 형질 모두 같은 대립유전자를 가진 <b>순종</b>이에요.':'한 형질은 잡종, 다른 형질은 순종이라 <b>잡종</b>이에요.')+' 감수 분열로 어떤 생식세포가 만들어지는지 확인해 보세요.',6500);
+};
+B.prevMade=0;
+B.tally=function(){
+  const el=$('#bTally'),TY=B.types(),t=B.count,last=B.last||[];
+  const full=TY.every(k=>B.made.has(k)||(t[k]||0)>0);
+  const nMade=TY.filter(k=>B.made.has(k)||(t[k]||0)>0).length;
+  el.innerHTML='<div class="in"><div class="hd">만든 생식세포</div>'+TY.map(k=>{const has=B.made.has(k)||(t[k]||0)>0,nw=last.includes(k);
+    return '<div class="gm'+(has?' on':'')+(nw?' new':'')+'"><b>'+(has?k:'?')+'</b><span>'+(has?(t[k]||0)+'개':'아직')+'</span></div>'}).join('')+
+    '<div class="rt">'+(full?'<b>'+TY.length+'종류 완성</b>'+TY.map(()=>1).join(' : '):'<b>'+nMade+' / '+TY.length+'</b>종류')+'</div></div>';
+  if(nMade>B.prevMade&&B.prevMade>=0)el.querySelectorAll('.gm.new').forEach(g=>{g.classList.add('pop');setTimeout(()=>g.classList.remove('pop'),700)});
+  B.prevMade=nMade;
 };
 $('#bGt').onchange=()=>B.setGt($('#bGt').value);
 B.check=function(){
@@ -764,6 +817,41 @@ C.setMode=function(m){C.mode=m;C.hl=null;$$('[data-cm]').forEach(b=>b.setAttribu
   if(m==='shape')say('<b>모양만 보기</b>색을 모두 같게 칠했어요. 둥근 것과 주름진 것의 비를 세어 보세요.');
   if(m==='color')say('<b>색만 보기</b>모양을 모두 둥글게 바꿨어요. 황색과 녹색의 비를 세어 보세요.');
 };
+C.prevCnt=null;
+C.tally=function(cats,cnt,nf){
+  const el=$('#cTally');
+  const short={'둥근 모양':'둥근','주름진 모양':'주름진'};
+  const key=C.mode;const prev=(C.prevCnt&&C.prevCnt.mode===key)?C.prevCnt.v:null;
+  el.innerHTML='<div class="in">'+cats.map((c,i)=>(i?'<i class="co">:</i>':'')+'<button class="it" data-hl="'+c.k+'" aria-pressed="'+(C.hl===c.k)+'" title="눌러서 '+c.n+' 칸 빛내기"><div class="tp">'+c.i+'<b data-i="'+i+'">'+cnt[i]+'</b></div><span>'+(short[c.n]||c.n)+'</span></button>').join('')+
+    '<div class="rt">'+(nf===16?'<b>'+(C.mode==='all'?'9 : 3 : 3 : 1':'3 : 1')+'</b>16칸 완성':'<b>'+nf+' / 16</b>채운 칸')+'</div></div>';
+  if(prev)cnt.forEach((v,i)=>{if(v!==prev[i]){const b=el.querySelector('b[data-i="'+i+'"]');b.classList.add('bump');setTimeout(()=>b.classList.remove('bump'),280)}});
+  C.prevCnt={mode:key,v:cnt.slice()};
+};
+/* ---- 선택한 표현형 칸: 3번 점멸 후 밝게 ---- */
+(function(){
+  const cv=document.createElement('canvas');cv.width=cv.height=128;const g=cv.getContext('2d');
+  const gr=g.createRadialGradient(64,64,18,64,64,64);gr.addColorStop(0,'rgba(255,240,150,1)');gr.addColorStop(.55,'rgba(255,215,70,.75)');gr.addColorStop(1,'rgba(255,200,40,0)');
+  g.fillStyle=gr;g.fillRect(0,0,128,128);const tex=new THREE.CanvasTexture(cv);
+  C.cells.forEach(c=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(1.7,1.7),new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false}));
+    m.rotation.x=-Math.PI/2;m.position.set(c.tile.position.x,.045,c.tile.position.z);m.renderOrder=4;m.visible=false;C.g.add(m);c.glow=m});
+})();
+C.hlT=0;
+const _cOn=new THREE.Color(0xffe38a),_cDim=new THREE.Color(0x5d6852),_cOff=new THREE.Color(0xf2f5ea),_cEm=new THREE.Color(0xffc531);
+C.glowTick=function(){
+  const t=performance.now()/1000-C.hlT;
+  // 0.5초 주기로 3번 깜빡인 뒤(1.5초) 밝게 유지
+  const v=t<1.5?(.5+.5*Math.cos(t/.5*Math.PI*2)):(.88+.12*Math.sin(t*3));
+  C.cells.forEach(c=>{
+    const on=!!C.hl&&c.filled&&catOf(c.ph)===C.hl;
+    if(on){c.tm.color.copy(_cDim).lerp(_cOn,v);c.tm.emissive.copy(_cEm).multiplyScalar(.55*v);
+      c.glow.visible=true;c.glow.material.opacity=.95*v;c.glow.scale.setScalar(.9+.25*v);
+      c.pea.scale.setScalar(.34*(1+.18*v));c.l.material.opacity=1}
+    else{c.tm.emissive.setRGB(0,0,0);c.glow.visible=false;
+      if(C.hl){c.tm.color.copy(_cDim);if(c.filled)c.pea.scale.setScalar(.3)}
+      else{c.tm.color.copy(_cOff);if(c.filled&&c.hlScaled)c.pea.scale.setScalar(.34)}}
+    c.hlScaled=!!C.hl;
+  });
+};
 $('#cAll').onclick=C.all;$('#cClear').onclick=C.clear;$$('[data-cm]').forEach(b=>b.onclick=()=>C.setMode(b.dataset.cm));
 
 /* =====================================================
@@ -887,7 +975,7 @@ $$('[data-reset-view]').forEach(b=>b.onclick=()=>fit(true));
 
 function pct(a,t){return t?(a/t*100).toFixed(1):'0.0'}
 function renderData(){
-  const el=$('#infoData'); let h='';
+  const el=$('#infoData'); let h='';$('#cTally').classList.toggle('show',cur==='C');$('#bTally').classList.toggle('show',cur==='B');if(cur==='B')B.tally();
   if(cur==='A'){
     h='<div class="card">P의 생식세포: RRYY → <b>RY</b> 한 종류, rryy → <b>ry</b> 한 종류<br>F1의 유전자형: <b>RrYy</b> (잡종)</div>';
   }else if(cur==='B'){
@@ -900,7 +988,7 @@ function renderData(){
     if(C.mode==='shape')cats=[{k:'round',n:'둥근 모양',i:ico(true,false).replace('ico g','ico n')},{k:'wr',n:'주름진 모양',i:ico(false,false).replace('ico g','ico n')}];
     else if(C.mode==='color')cats=[{k:'yellow',n:'황색',i:ico(true,true)},{k:'green',n:'녹색',i:ico(true,false)}];
     else cats=PH.map(p=>({k:(p.r?'R':'W')+(p.y?'Y':'G'),n:p.name,i:ico(p.r,p.y)}));
-    const cnt=cats.map(c=>f.filter(x=>catOf(x.ph)===c.k).length);
+    const cnt=cats.map(c=>f.filter(x=>catOf(x.ph)===c.k).length);C.tally(cats,cnt,f.length);
     h='<div class="card"><b>채운 칸 '+f.length+' / 16</b> <span style="color:#c9d8bf;font-size:12.5px">(줄을 누르면 해당 칸이 빛나요)</span>'+
       cats.map((c,i)=>'<button class="rowp" data-hl="'+c.k+'" aria-pressed="'+(C.hl===c.k)+'">'+c.i+'<span class="nm">'+c.n+'</span><span class="n">'+cnt[i]+'</span></button>').join('');
     if(f.length===16){
@@ -920,7 +1008,7 @@ function renderData(){
     D.bins.forEach((b,i)=>b.cnt.userData.set(n[i]+'개'+(n[i]>CAP?' (일부만 표시)':'')));
   }
   el.innerHTML=h;
-  $$('[data-hl]').forEach(b=>b.onclick=()=>{C.hl=C.hl===b.dataset.hl?null:b.dataset.hl;C.cells.forEach(styleCell);renderData()});
+  $$('[data-hl]').forEach(b=>b.onclick=()=>{C.hl=C.hl===b.dataset.hl?null:b.dataset.hl;C.hlT=performance.now()/1000;C.cells.forEach(styleCell);renderData()});
 }
 $('#infoToggle').onclick=()=>{const c=$('#info').classList.toggle('collapsed');$('#infoToggle').textContent=c?(window.innerWidth<720?'설명·결과 보기':'펼치기'):'접기';$('#infoToggle').setAttribute('aria-expanded',!c);fit(true)};
 if(window.innerWidth<720){$('#info').classList.add('collapsed');$('#infoToggle').textContent='설명·결과 보기'}
@@ -964,6 +1052,7 @@ function loop(now){
   runTweens(dt);
   if(cur==='A')A.spin.forEach(m=>m.rotation.y+=dt*.35);
   if(cur==='B')B.apply();
+  if(cur==='C')C.glowTick();
   updateD(dt);
   controls.update(); renderer.render(scene,camera);
   requestAnimationFrame(loop);
