@@ -202,6 +202,11 @@ table.t th{font-weight:500;color:#c9d8bf}
 @media (max-width:720px){#bTally .gm{min-width:44px;padding:3px 5px}#bTally .gm b{font-size:19px}#bTally .gm span{font-size:10px}#bTally .hd{font-size:10.5px;margin-right:2px}}
 @media (prefers-reduced-motion:reduce){#bTally .gm.pop{animation:none}}
 @media (min-width:721px){#bTally{left:270px}}
+/* 많이 심기 실시간 비 */
+#dTally .it{cursor:default}
+#dTally .it span{font-size:11.5px}
+#dTally .rt small{display:block;font-size:11.5px;color:#9fb796;margin-top:2px}
+@media (max-width:720px){#dTally .it span{font-size:9.5px}#dTally .it{min-width:52px}#dTally .rt{font-size:0}#dTally .rt b{font-size:13px}#dTally .rt small{display:none}}
 #celebrate{position:absolute;inset:0;z-index:8;pointer-events:none;display:none}
 #celebrate.show{display:block}
 #celebrate canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -226,6 +231,7 @@ table.t th{font-weight:500;color:#c9d8bf}
   <canvas id="gl" aria-label="완두 유전 3D 모형. 드래그하여 돌리고 두 손가락으로 확대할 수 있습니다."></canvas>
   <div class="big" id="big"></div>
   <div class="tally" id="cTally" aria-live="polite"></div>
+  <div class="tally" id="dTally"></div>
   <div class="tally" id="bTally" aria-live="polite"></div>
   <section class="info" id="info" aria-live="polite">
     <h2><span id="infoTitle"></span><button class="toggle" id="infoToggle" aria-expanded="true">접기</button></h2>
@@ -247,7 +253,7 @@ table.t th{font-weight:500;color:#c9d8bf}
   <nav class="tabs" id="tabs" aria-label="실험 단계">
     <button data-sc="A">① 순종 교배<small>P → F1</small></button>
     <button data-sc="B">② 생식세포<small>F1의 감수 분열</small></button>
-    <button data-sc="C">③ F2 바둑판<small>자화 수분</small></button>
+    <button data-sc="C">③ F2 바둑판<small>자가 수분</small></button>
     <button data-sc="D">④ 많이 심기<small>확률과 비율</small></button>
   </nav>
   <div class="ctrl" data-for="A">
@@ -726,7 +732,7 @@ $('#bHomo').onclick=()=>{B.homoOn=!B.homoOn;$('#bHomo').setAttribute('aria-press
 
 
 /* =====================================================
-   ③ F2 바둑판 (자화 수분)
+   ③ F2 바둑판 (자가 수분)
    ===================================================== */
 const GAM=['RY','Ry','rY','ry'];
 const C={g:new THREE.Group(),cells:[],mode:'all',hl:null,busy:0};
@@ -882,7 +888,7 @@ const DISK=(function(){const pts=[],s=.2;for(let row=-5;row<=5;row++)for(let col
     g.add(cyl,top,base,inst,icon,nm,cnt); D.g.add(g);
     D.bins.push({g,inst,cnt,seeds:[]});
   });
-  const hop=label('F1 × F1 (자화 수분)',Object.assign({size:.3},LT)); hop.position.set(0,4.05,0); D.g.add(hop); D.hop=hop;
+  const hop=label('F1 × F1 (자가 수분)',Object.assign({size:.3},LT)); hop.position.set(0,4.05,0); D.g.add(hop); D.hop=hop;
 })();
 const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_s=new V(PR,PR,PR),_p=new V();
 function slotPos(bin,slot,out){
@@ -890,6 +896,12 @@ function slotPos(bin,slot,out){
   const jx=Math.sin(slot*12.9898)*.03, jz=Math.cos(slot*78.233)*.03;
   return out.set(b.x+d[0]+jx,.1+L*.165,b.z+d[1]+jz);
 }
+D.tally=function(){
+  const el=$('#dTally'),n=D.n,tot=n[0]+n[1]+n[2]+n[3],TH=[9,3,3,1],SH=['둥글고 황색','둥글고 녹색','주름지고 황색','주름지고 녹색'];
+  const base=n[3];
+  el.innerHTML='<div class="in">'+PH.map((p,i)=>(i?'<i class="co">:</i>':'')+'<div class="it dt"><div class="tp">'+ico(p.r,p.y)+'<b>'+(tot&&base?(n[i]/base).toFixed(1):'–')+'</b></div><span>'+n[i]+'개 · 이론 '+TH[i]+'</span></div>').join('')+
+    '<div class="rt"><b>'+tot+'개</b>'+(tot?(base?'주름지고 녹색 = 1':'주름지고 녹색이 아직 없어요'):'심어 보세요')+'<small>이론 9 : 3 : 3 : 1</small></div></div>';
+};
 function layoutD(){
   const pos=D.portrait?[[-1.1,-1.9],[1.1,-1.9],[-1.1,1.7],[1.1,1.7]]:[[-3.3,0],[-1.1,0],[1.1,0],[3.3,0]];
   D.bins.forEach((b,i)=>b.g.position.set(pos[i][0],0,pos[i][1]));
@@ -945,7 +957,7 @@ const SC={
       '그래서 생식세포 <b>RY : Ry : rY : ry = 1 : 1 : 1 : 1</b>이에요(<b>독립의 법칙</b>).',
       '<b>상동 염색체 찾기</b>: 같은 색 <b>점선 테두리</b> 안의 두 염색체가 한 쌍의 상동 염색체예요. 크기와 모양이 같고, 같은 위치에 같은 형질의 유전자(R과 r / Y와 y)가 있어요. 하나는 RRYY 어버이(주황), 하나는 rryy 어버이(파랑)에게서 왔어요. 색이 같다고 상동 염색체인 것은 아니에요!',
       '<b>궁금증</b>: Rryy는 모양은 잡종(Rr), 색깔은 순종(yy)이라 <b>잡종</b>이에요. 위의 ‘유전자형’에서 골라 어떤 생식세포가 만들어지는지 확인해 보세요.']},
-  C:{g:C.g,big:'F2',title:'F1 자화 수분 → F2',target:new V(-.55,0,-.35),dir:new V(0,1.15,.8),hw:3.5,hh:3.5,
+  C:{g:C.g,big:'F2',title:'F1 자가 수분 → F2',target:new V(-.55,0,-.35),dir:new V(0,1.15,.8),hw:3.5,hh:3.5,
      hint:'빈칸을 누르고 어떤 완두가 나올지 예측해 보세요',
      items:['F1의 ♀ 생식세포 4종류와 ♂ 생식세포 4종류가 <b>무작위로</b> 만나 16가지 조합이 생겨요.',
       'R이 하나라도 있으면 둥근 모양, Y가 하나라도 있으면 황색이에요.',
@@ -953,7 +965,7 @@ const SC={
       '‘모양만’, ‘색만’ 보기로 세어 보면 각각 <b>3 : 1</b>이에요. 모양과 색은 서로 영향을 주지 않고 유전돼요.',
       '<b>독립의 법칙</b>: 두 쌍 이상의 대립 형질이 함께 유전될 때, 각 형질이 다른 형질의 영향을 받지 않고 우열의 원리와 분리의 법칙에 따라 독립적으로 유전되는 현상이에요.',
       '<b>오개념 주의</b>: 9 : 3 : 3 : 1이라는 분리비 자체가 독립의 법칙인 것은 아니에요. 독립적으로 유전된 <b>결과</b>로 이런 비가 나타나요.']},
-  D:{g:D.g,big:'확률',title:'많이 심어 보기',target:new V(0,1.4,0),dir:new V(0,.35,1),hw:4.4,hh:2.9,
+  D:{g:D.g,big:'확률',title:'많이 심어 보기',target:new V(0,1.62,0),dir:new V(0,.35,1),hw:4.4,hh:3.25,
      hint:'버튼을 눌러 F2 완두를 심어 보세요. 심을 때마다 생식세포가 무작위로 만나요',
      items:['완두 하나하나는 ♀와 ♂ 생식세포가 <b>무작위로</b> 만나서 생겨요.',
       '적게 심으면 비율이 9 : 3 : 3 : 1과 꽤 다를 수 있어요. <b>많이 심을수록</b> 9 : 3 : 3 : 1에 가까워져요.',
@@ -975,7 +987,7 @@ $$('[data-reset-view]').forEach(b=>b.onclick=()=>fit(true));
 
 function pct(a,t){return t?(a/t*100).toFixed(1):'0.0'}
 function renderData(){
-  const el=$('#infoData'); let h='';$('#cTally').classList.toggle('show',cur==='C');$('#bTally').classList.toggle('show',cur==='B');if(cur==='B')B.tally();
+  const el=$('#infoData'); let h='';$('#cTally').classList.toggle('show',cur==='C');$('#dTally').classList.toggle('show',cur==='D');if(cur==='D')D.tally();$('#bTally').classList.toggle('show',cur==='B');if(cur==='B')B.tally();
   if(cur==='A'){
     h='<div class="card">P의 생식세포: RRYY → <b>RY</b> 한 종류, rryy → <b>ry</b> 한 종류<br>F1의 유전자형: <b>RrYy</b> (잡종)</div>';
   }else if(cur==='B'){
@@ -1019,16 +1031,16 @@ function fit(force){
   const w=stage.clientWidth,h=stage.clientHeight; if(!w||!h)return;
   renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
   const p=window.innerHeight>window.innerWidth*1.05;
-  if(p!==portrait){portrait=p;D.portrait=p;layoutD();force=true}
+  if(p!==portrait){portrait=p;D.portrait=false;layoutD();force=true}
   if(!force){if(camera.view&&camera.view.enabled){camera.setViewOffset(w,h,camera.view.offsetX,0,w,h)}return}
   const s=SC[cur]; let hw=s.hw,hh=s.hh,dir=s.dir.clone();
-  if(cur==='D'&&portrait){hw=2.3;hh=3.9;dir.set(0,1.5,1)}
+  let tg=s.target;if(cur==='D'&&portrait){hw=4.15;dir.set(0,.5,1);tg=s.target.clone().add(new V(0,.2,0))}
   const off=(!portrait&&w>760&&!$('#info').classList.contains('collapsed'))?Math.min(390,w*.34):0;
   if(off)camera.setViewOffset(w,h,off/2,0,w,h);else camera.clearViewOffset();
   const asp=(w-off)/h;
   const tf=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
   const d=Math.max(hw/(tf*asp),hh/tf)*(portrait?1.12:1.02)+1.2;
-  camera.position.copy(s.target).addScaledVector(dir.normalize(),d); controls.target.copy(s.target); controls.update();
+  camera.position.copy(tg).addScaledVector(dir.normalize(),d); controls.target.copy(tg); controls.update();
 }
 new ResizeObserver(()=>fit(false)).observe(stage);
 
