@@ -1078,6 +1078,28 @@ D.clear=function(){killTw('D');D.tmp.children.slice().forEach(o=>D.tmp.remove(o)
   D.n={RR:0,Rr:0,rr:0};D.bins.forEach(b=>b.im.count=0);D.busy=false;D.pl.userData.set('꺼내 보세요');D.ui();renderData()};
 D.ui=function(){$$('#ctrlD [data-draw]').forEach(b=>b.disabled=D.busy)};
 
+
+/* ---------- ④ 주머니 사이 현재 비율 판 ---------- */
+(function(){
+  const cv=document.createElement('canvas');cv.width=760;cv.height=430;const tex=new THREE.CanvasTexture(cv);tex.anisotropy=4;
+  const pl=new THREE.Mesh(new THREE.PlaneGeometry(4.15,4.15*430/760),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false}));
+  pl.position.set(0,3.05,-.35);pl.renderOrder=1;D.g.add(pl);
+  pl.userData.tap=()=>say('<b>지금까지 나온 비율</b>꺼낸 횟수가 많아질수록 RR : Rr : rr은 1 : 2 : 1, 둥근 : 주름진은 3 : 1에 가까워져요.');
+  D.board=function(){
+    const g=cv.getContext('2d'),W=cv.width,H=cv.height,n=D.n,tot=n.RR+n.Rr+n.rr,rd=n.RR+n.Rr,wr=n.rr;
+    g.clearRect(0,0,W,H);rr(g,6,6,W-12,H-12,34);g.fillStyle='rgba(12,24,10,.86)';g.fill();g.lineWidth=4;g.strokeStyle='rgba(255,227,107,.55)';g.stroke();
+    g.textAlign='center';g.textBaseline='middle';
+    g.fillStyle='#cfe0c4';g.font='700 34px '+FONT;g.fillText(tot?'지금까지 '+tot+'번 꺼냈어요':'지금까지 나온 비율',W/2,52);
+    if(!tot){g.fillStyle='#9fb796';g.font='700 38px '+FONT;g.fillText('아래 버튼으로 꺼내 보세요',W/2,H/2+20);tex.needsUpdate=true;return}
+    g.fillStyle='#fff';g.font='700 46px '+FONT;g.fillText('RR '+n.RR+'  :  Rr '+n.Rr+'  :  rr '+n.rr,W/2,128);
+    g.fillStyle='#e8f2df';g.font='700 46px '+FONT;g.fillText('둥근 '+rd+'  :  주름진 '+wr,W/2,204);
+    g.fillStyle='#ffe36b';g.font='800 92px '+FONT;g.fillText(wr?(rd/wr).toFixed(1)+' : 1':'— : 0',W/2,302);
+    g.fillStyle='#9fb796';g.font='700 30px '+FONT;g.fillText('이론  둥근 : 주름진 = 3 : 1  ·  1 : 2 : 1',W/2,385);
+    tex.needsUpdate=true;
+  };
+  D.board();
+})();
+
 /* =====================================================
    화면 전환 · 설명 · 데이터
    ===================================================== */
@@ -1151,6 +1173,7 @@ function renderData(){
     }
     if($('#dTheory').checked)h+='<div style="margin-top:6px;color:#c9d8bf;font-size:12.5px">멘델의 결과: 5474 : 1850 → 2.96 : 1</div>';
     h+='</div>';
+    D.board();
     D.bins.forEach(b=>b.cnt.userData.set(D.n[b.gt]+'개'+(D.n[b.gt]>CAPN?' (일부만 표시)':'')));
   }
   el.innerHTML=h;
