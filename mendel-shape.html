@@ -168,6 +168,40 @@ ol.steps li.now{color:#ffe38a;font-weight:700}
 .chips{display:inline-flex;gap:3px}
 .chips button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--ui-2);font-weight:700;font-size:13px;padding:0}
 .chips button[aria-pressed="true"]{background:var(--leaf);color:var(--leaf-ink);border-color:var(--leaf)}
+/* F2 개수비 메인 표시 */
+.tally{position:absolute;top:14px;left:150px;right:calc(min(390px,34vw) + 16px);display:none;justify-content:center;pointer-events:none;z-index:3}
+.tally.show{display:flex}
+.tally .in{display:flex;align-items:center;gap:6px;background:rgba(10,20,8,.72);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:8px 14px;backdrop-filter:blur(4px)}
+.tally .in{pointer-events:auto}
+.tally .it{display:flex;flex-direction:column;align-items:center;min-width:64px;background:transparent;border:1px solid transparent;border-radius:12px;padding:4px 6px;color:inherit;font:inherit;cursor:pointer;transition:background .2s,border-color .2s}
+.tally .it:hover{background:rgba(255,255,255,.08)}
+.tally .it[aria-pressed=true]{background:rgba(255,227,107,.18);border-color:#ffe36b;box-shadow:0 0 14px rgba(255,227,107,.45)}
+.tally .it[aria-pressed=true] span{color:#ffe36b}
+.tally .it .tp{display:flex;align-items:center;gap:6px}
+.tally .it .ico{width:22px;height:22px}
+.tally .it b{font-size:30px;line-height:1;color:#fff;font-variant-numeric:tabular-nums;transition:transform .25s}
+.tally .it b.bump{transform:scale(1.25);color:#ffe36b}
+.tally .it span{font-size:12px;color:#cfe0c4;margin-top:3px;white-space:nowrap}
+.tally .co{font-size:26px;font-weight:700;color:#9fb796;margin:0 2px 16px}
+.tally .rt{margin-left:10px;padding-left:12px;border-left:1px solid rgba(255,255,255,.2);font-size:13px;color:#cfe0c4;line-height:1.35}
+.tally .rt b{display:block;font-size:17px;color:#ffe36b;white-space:nowrap}
+.stage:has(.info.collapsed) .tally{right:16px}
+@media (max-width:720px){
+  .tally{left:8px;right:8px;top:58px}
+  .stage:has(.tally.show) .hint{display:none}
+  .tally .in{padding:6px 8px;gap:2px;border-radius:12px}
+  .tally .it{min-width:46px;padding:3px 3px}.tally .it b{font-size:22px}.tally .it span{font-size:10.5px}.tally .it .ico{width:16px;height:16px}
+  .tally .co{font-size:18px;margin-bottom:12px}
+  .tally .rt{margin-left:4px;padding-left:6px;font-size:11px}.tally .rt b{font-size:13px}
+}
+
+.tally .grp{display:flex;align-items:center;gap:4px}
+.tally .gl{font-size:11px;color:#9fb796;margin-right:4px;line-height:1.2;text-align:center}
+.tally .grp.gt .it b{font-size:20px}.tally .grp.gt .it{min-width:46px}
+.tally .grp.gt .co{font-size:18px;margin-bottom:12px}
+.tally .sep{width:1px;align-self:stretch;background:rgba(255,255,255,.2);margin:0 8px}
+.tally .rt small{display:block;font-size:11.5px;color:#cfe0c4}
+@media (max-width:720px){.tally .grp.gt .it b{font-size:15px}.tally .grp.gt .it{min-width:30px}.tally .grp.gt .co{font-size:13px}.tally .gl{display:none}.tally .sep{margin:0 3px}}
 </style>
 </head>
 <body>
@@ -180,6 +214,7 @@ ol.steps li.now{color:#ffe38a;font-weight:700}
 <main class="stage" id="stage">
   <canvas id="gl" aria-label="완두 유전 3D 모형. 드래그하여 돌리고 두 손가락으로 확대할 수 있습니다."></canvas>
   <div class="big" id="big"></div>
+  <div class="tally" id="cTally" aria-live="polite"></div>
   <section class="info" id="info" aria-live="polite">
     <h2><span id="infoTitle"></span><button class="toggle" id="infoToggle" aria-expanded="true">접기</button></h2>
     <ul id="infoList"></ul>
@@ -914,6 +949,45 @@ C.clear=function(){killTw('C');C.tmp.children.slice().forEach(o=>C.tmp.remove(o)
   C.cells.forEach(c=>{c.filled=c.busy=false;c.q.visible=true;c.pea.visible=false;c.pea.scale.setScalar(.01);c.lab.visible=false;styleCell(c)});
   C.hl=null;renderData()};
 
+
+/* ---------- ③ 메인 화면 개수비 + 점멸 강조 ---------- */
+C.prevCnt=null;
+C.tally=function(rows,nf){
+  const el=$('#cTally'),prev=C.prevCnt;
+  const it=(r,i)=>'<button class="it" data-hl="'+r[0]+'" aria-pressed="'+(C.hl===r[0])+'" title="눌러서 '+r[1]+' 칸 빛내기"><div class="tp">'+(i>2?'<i class="'+r[3]+'"></i>':'')+'<b data-i="'+i+'">'+r[2]+'</b></div><span>'+r[1].replace(' 모양','')+'</span></button>';
+  const join=a=>a.map((x,k)=>(k?'<i class="co">:</i>':'')+x).join('');
+  el.innerHTML='<div class="in"><div class="grp gt"><span class="gl">유전<br>자형</span>'+join(rows.slice(0,3).map((r,i)=>it(r,i)))+'</div><span class="sep"></span>'+
+    '<div class="grp"><span class="gl">표현형</span>'+join(rows.slice(3).map((r,i)=>it(r,i+3)))+'</div>'+
+    '<div class="rt">'+(nf===4?'<b>3 : 1</b><small>1 : 2 : 1</small>':'<b>'+nf+' / 4</b>채운 칸')+'</div></div>';
+  const v=rows.map(r=>r[2]);
+  if(prev)v.forEach((x,i)=>{if(x!==prev[i]){const b=el.querySelector('b[data-i="'+i+'"]');b.classList.add('bump');setTimeout(()=>b.classList.remove('bump'),280)}});
+  C.prevCnt=v;
+};
+C.hlT=0;
+(function(){
+  const cv=document.createElement('canvas');cv.width=cv.height=128;const g=cv.getContext('2d');
+  const gr=g.createRadialGradient(64,64,18,64,64,64);gr.addColorStop(0,'rgba(255,240,150,1)');gr.addColorStop(.55,'rgba(255,215,70,.75)');gr.addColorStop(1,'rgba(255,200,40,0)');
+  g.fillStyle=gr;g.fillRect(0,0,128,128);const tex=new THREE.CanvasTexture(cv);
+  C.cells.forEach(c=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(3.9,3.9),new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false}));
+    m.rotation.x=-Math.PI/2;m.position.y=.12;m.renderOrder=4;m.visible=false;c.g.add(m);c.glow=m});
+})();
+const _gEm=new THREE.Color(0xffc531),_gTmp=new THREE.Color();
+C.match=c=>c.filled&&(C.hl===c.gt||(C.hl==='round'&&isRound(c.gt))||(C.hl==='wr'&&!isRound(c.gt)));
+C.glowTick=function(){
+  const t=performance.now()/1000-C.hlT;
+  const v=t<1.5?(.5+.5*Math.cos(t/.5*Math.PI*2)):(.88+.12*Math.sin(t*3));
+  C.cells.forEach(c=>{
+    const m=c.plate.material,on=!!C.hl&&C.match(c);
+    if(on){_gTmp.setHex(PLT[c.gt]);m.color.copy(_gTmp).multiplyScalar(.45+.55*v);m.emissive.copy(_gEm).multiplyScalar(.6*v);
+      c.glow.visible=true;c.glow.material.opacity=.95*v;c.glow.scale.setScalar(.9+.25*v);
+      if(!c.busy)c.pea.scale.setScalar(.8*(1+.15*v))}
+    else{c.glow.visible=false;
+      if(C.hl){m.emissive.setHex(0);m.color.setHex(c.filled?PLT[c.gt]:PLT.empty).multiplyScalar(.4);if(c.filled&&!c.busy)c.pea.scale.setScalar(.7)}
+      else if(c.hlScaled){m.emissive.setHex(0);m.color.setHex(c.filled?PLT[c.gt]:PLT.empty);if(c.filled&&!c.busy)c.pea.scale.setScalar(.8)}}
+    c.hlScaled=!!C.hl;
+  });
+};
+
 /* =====================================================
    ④ 바둑알 모의 활동
    ===================================================== */
@@ -1016,7 +1090,7 @@ const SC={
       'F1은 모두 <b>Rr</b>이고 모두 <b>둥글어요</b>. 서로 다른 형질의 순종끼리 교배하면 F1에는 한 가지 형질만 나타나요. 나타나는 R가 <b>우성</b>, 가려지는 r가 <b>열성</b> → <b>우열의 원리</b>']},
   B:{g:B.g,big:'',title:'F1(Rr)의 감수 분열 · 분리의 법칙',target:new V(0,0,0),dir:new V(0,.03,1),hw:4.5,hh:3.3,
      hint:'염색체와 세포를 직접 누르거나 끌어서 감수 분열을 진행해 보세요 (‘다음 단계 ▶’ 버튼도 돼요)',items:[]},
-  C:{g:C.g,big:'F2',title:'F1 자화 수분 → F2',target:new V(-.6,0,-.3),dir:new V(0,1.15,.8),hw:5.0,hh:4.6,
+  C:{g:C.g,big:'F2',title:'F1 자화 수분 → F2',target:new V(-.6,0,-.85),dir:new V(0,1.15,.8),hw:5.0,hh:5.25,
      hint:'빈칸을 누르고 어떤 모양이 나올지 예측해 보세요',
      items:['F1(Rr)이 만드는 생식세포는 ♀, ♂ 모두 <b>R : r = 1 : 1</b>이에요.','생식세포가 <b>무작위로</b> 만나면 조합은 4가지: RR, Rr, Rr, rr','R가 하나라도 있으면 둥글어요(우성). 주름진 것은 <b>rr</b>뿐이에요.','유전자형 <b>RR : Rr : rr = 1 : 2 : 1</b>, 표현형 <b>둥근 : 주름진 = 3 : 1</b>. 사라졌던 주름진 모양이 F2에서 다시 나타나요. r가 F1에도 <b>섞이지 않고 그대로</b> 있었다는 증거예요(분리의 법칙).']},
   D:{g:D.g,big:'모의 활동',title:'바둑알 모의 활동 (교과서 탐구)',target:new V(0,1.4,0),dir:new V(0,.04,1),hw:5.0,hh:4.3,
@@ -1045,7 +1119,7 @@ $$('#tabs button').forEach(b=>b.onclick=()=>setScene(b.dataset.sc));
 $$('[data-reset-view]').forEach(b=>b.onclick=()=>fit(true));
 
 function renderData(){
-  const el=$('#infoData');let h='';
+  const el=$('#infoData');let h='';$('#cTally').classList.toggle('show',cur==='C');
   if(cur==='A'){
     const steps=['어버이 세포 속 대립유전자 쌍 (RR, rr)','DNA 복제 (X자 염색체)','감수 1분열: 대립유전자 쌍 분리','감수 2분열: 생식세포 4개 (R / r)','수정: R + r → 수정란 Rr','F1: 모두 둥근 모양 (우성)'];
     const now=A.step===2?5:(A.step===1&&A.busy?4:A.sub-1);
@@ -1063,6 +1137,7 @@ function renderData(){
     const rows=[['RR','RR',n('RR'),'ico y'],['Rr','Rr',n('Rr'),'ico y'],['rr','rr',n('rr'),'ico y w'],['round','둥근 모양',f.filter(c=>isRound(c.gt)).length,'ico y'],['wr','주름진 모양',f.filter(c=>!isRound(c.gt)).length,'ico y w']];
     h='<div class="card"><b>채운 칸 '+f.length+' / 4</b> <span style="color:#c9d8bf;font-size:12.5px">(줄을 누르면 칸이 빛나요)</span>'+
       rows.map((r,i)=>(i===3?'<div style="margin-top:4px;color:#c9d8bf;font-size:12.5px">표현형</div>':(i===0?'<div style="color:#c9d8bf;font-size:12.5px">유전자형</div>':''))+'<button class="rowp" data-hl="'+r[0]+'" aria-pressed="'+(C.hl===r[0])+'"><i class="'+r[3]+'"></i><span class="nm">'+r[1]+'</span><span class="n">'+r[2]+'</span></button>').join('');
+    C.tally(rows,f.length);
     if(f.length===4)h+='<div class="ratio">RR : Rr : rr = 1 : 2 : 1<br>둥근 : 주름진 = 3 : 1</div>';
     h+='</div>';
   }else if(cur==='D'){
@@ -1079,7 +1154,7 @@ function renderData(){
     D.bins.forEach(b=>b.cnt.userData.set(D.n[b.gt]+'개'+(D.n[b.gt]>CAPN?' (일부만 표시)':'')));
   }
   el.innerHTML=h;
-  $$('[data-hl]').forEach(b=>b.onclick=()=>{C.hl=C.hl===b.dataset.hl?null:b.dataset.hl;C.cells.forEach(styleCell);renderData()});
+  $$('[data-hl]').forEach(b=>b.onclick=()=>{C.hl=C.hl===b.dataset.hl?null:b.dataset.hl;C.hlT=performance.now()/1000;C.cells.forEach(styleCell);renderData()});
 }
 $('#infoToggle').onclick=()=>{const c=$('#info').classList.toggle('collapsed');$('#infoToggle').textContent=c?(window.innerWidth<720?'설명·결과 보기':'펼치기'):'접기';$('#infoToggle').setAttribute('aria-expanded',!c);fit(true)};
 if(window.innerWidth<720){$('#info').classList.add('collapsed');$('#infoToggle').textContent='설명·결과 보기'}
@@ -1167,6 +1242,7 @@ function loop(now){
   runTweens(dt);
   if(cur==='B')B.apply();
   if(cur==='A')A.apply();
+  if(cur==='C')C.glowTick();
   controls.update();renderer.render(scene,camera);
   requestAnimationFrame(loop);
 }
