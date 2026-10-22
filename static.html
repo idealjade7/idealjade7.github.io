@@ -645,7 +645,7 @@ A.tick=function(t,dt){
   const P=A.tgeo.attributes.position,b=A.tbase,h=A.TH/2;
   for(let i=0;i<P.count;i++){const x=b[i*3],y=b[i*3+1],z=b[i*3+2];const bot=A.surf(x,z,t),k=(y+h)/(2*h);
     P.setXYZ(i,x+A.tx,bot+k*A.TH*(1-.15*A.c*(1-A.sep))+.012*Math.sin(x*7+z*5),z+A.tz)}
-  P.needsUpdate=true;A.tgeo.computeVertexNormals();
+  P.needsUpdate=true;A.tgeo.computeVertexNormals();A.tgeo.computeBoundingSphere();A.tgeo.computeBoundingBox();
   A.tl.position.set(A.tx-1.15,A.surf(0,0,t)+.35,A.tz);
   A.tL.position.set(A.tx,A.surf(0,0,t)+A.TH+.3,A.tz);
   A.atoms.forEach(at=>{
