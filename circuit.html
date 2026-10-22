@@ -163,7 +163,7 @@ i.ce,i.cp{display:inline-flex;align-items:center;justify-content:center;width:17
 i.ce{background:#2f86ff}i.cp{background:#ff4d5e}
 .ctrl .tip{font-size:13px;color:var(--muted);font-weight:600}
 .tabs{grid-template-columns:repeat(2,1fr)!important}
-.lensView{overflow:hidden;background:#0b1020;position:absolute;right:calc(min(390px,34vw) + 30px);bottom:46px;width:190px;height:190px;border-radius:50%;border:6px solid #2b2f3a;box-shadow:0 0 0 2px rgba(255,255,255,.25),0 10px 30px rgba(0,0,0,.5);pointer-events:none;z-index:3}
+.lensView{overflow:hidden;background:transparent;position:absolute;right:calc(min(390px,34vw) + 30px);bottom:46px;width:190px;height:190px;border-radius:50%;border:6px solid #2b2f3a;box-shadow:0 0 0 2px rgba(255,255,255,.25),0 10px 30px rgba(0,0,0,.5);pointer-events:none;z-index:3}
 .lensCv{position:absolute;inset:0;width:100%!important;height:100%!important;border-radius:50%}
 .lensView span{position:absolute;z-index:2;left:50%;bottom:10px;transform:translateX(-50%);white-space:nowrap;font-size:12.5px;font-weight:700;color:#fff;background:rgba(20,24,52,.85);padding:3px 10px;border-radius:999px}
 .lensView em{position:absolute;z-index:2;left:50%;top:10px;transform:translateX(-50%);white-space:nowrap;font-style:normal;font-size:11.5px;color:#d6defa;display:flex;gap:4px;align-items:center}
@@ -603,16 +603,23 @@ function wireMesh(curve,col,r){const g=new THREE.Group();
   const core=new THREE.Mesh(new THREE.TubeGeometry(curve,260,(r||.075)*.55,10,false),new THREE.MeshStandardMaterial({color:0xd8875a,metalness:.9,roughness:.35,transparent:true,opacity:.28,depthWrite:false}));g.add(core);
   return g}
 /* 입자(전자·원자) 묶음 */
-function instSpheres(n,r,col,emis){const m=new THREE.InstancedMesh(new THREE.SphereGeometry(r,12,8),new THREE.MeshStandardMaterial({color:col,emissive:emis||0,emissiveIntensity:emis?1:0,roughness:.4}),n);m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);return m}
+function instSpheres(n,r,col,emis){const m=new THREE.InstancedMesh(new THREE.SphereGeometry(r,12,8),new THREE.MeshStandardMaterial({color:col,emissive:emis||0,emissiveIntensity:emis?1:0,roughness:.4}),n);m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);m.frustumCulled=false;return m}
 const _o3=new THREE.Object3D();
 function setInst(m,i,p,s){_o3.position.copy(p);_o3.scale.setScalar(s||1);_o3.rotation.set(0,0,0);_o3.updateMatrix();m.setMatrixAt(i,_o3.matrix)}
-/* 돋보기 확대 화면: 둥근 창 안에 따로 그려요 */
-const INS={cam:new THREE.PerspectiveCamera(24,1,.01,50),on:false,el:null,target:new V(),from:new V(),r:null};
-function renderInset(){if(!INS.on||!INS.el)return;
-  if(!INS.r){const cv=document.createElement('canvas');cv.className='lensCv';INS.el.prepend(cv);INS.r=new THREE.WebGLRenderer({canvas:cv,antialias:true});INS.r.setPixelRatio(Math.min(2,window.devicePixelRatio||1))}
-  const w=INS.el.clientWidth,h=INS.el.clientHeight;if(w<4)return;if(INS.r.domElement.width!==Math.round(w*INS.r.getPixelRatio()))INS.r.setSize(w,h,false);
-  INS.cam.aspect=w/h;INS.cam.updateProjectionMatrix();INS.cam.position.copy(INS.from);INS.cam.lookAt(INS.target);
-  const bg=scene.background,env=scene.environment;scene.background=INSBG;scene.environment=null;INS.r.render(scene,INS.cam);scene.background=bg;scene.environment=env}
+/* 돋보기 확대 화면: 한 화면(같은 WebGL)에서 렌더 타깃으로 그린 뒤 둥근 창에 붙여요 */
+const INS={cam:new THREE.PerspectiveCamera(24,1,.01,50),on:false,el:null,target:new V(),from:new V(),rt:new THREE.WebGLRenderTarget(512,512,{samples:0}),
+  oScene:new THREE.Scene(),oCam:new THREE.OrthographicCamera(0,1,1,0,-1,1)};
+INS.disk=new THREE.Mesh(new THREE.CircleGeometry(1,72),new THREE.MeshBasicMaterial({map:INS.rt.texture,depthTest:false,depthWrite:false}));INS.oScene.add(INS.disk);
+function renderInset(){if(!INS.on||!INS.el||INS.el.style.display==='none')return;
+  const r=INS.el.getBoundingClientRect(),c=canvas.getBoundingClientRect();if(r.width<4)return;
+  const pr=renderer.getPixelRatio(),sz=Math.min(1024,Math.round(r.width*pr));if(INS.rt.width!==sz)INS.rt.setSize(sz,sz);
+  INS.cam.aspect=1;INS.cam.updateProjectionMatrix();INS.cam.position.copy(INS.from);INS.cam.lookAt(INS.target);
+  const bg=scene.background,env=scene.environment;scene.background=INSBG;scene.environment=null;
+  renderer.setRenderTarget(INS.rt);renderer.clear();renderer.render(scene,INS.cam);renderer.setRenderTarget(null);scene.background=bg;scene.environment=env;
+  const W=c.width/pr,H=c.height/pr;INS.oCam.left=0;INS.oCam.right=W;INS.oCam.top=H;INS.oCam.bottom=0;INS.oCam.updateProjectionMatrix();
+  const bw=parseFloat(getComputedStyle(INS.el).borderLeftWidth)||0;
+  INS.disk.position.set(r.left-c.left+r.width/2,H-(r.top-c.top+r.height/2),0);INS.disk.scale.setScalar(r.width/2-bw);
+  const ac=renderer.autoClear,vo=camera.view&&camera.view.enabled;renderer.autoClear=false;renderer.clearDepth();renderer.render(INS.oScene,INS.oCam);renderer.autoClear=ac}
 const INSBG=new THREE.Color(0x0b1020);
 /* 화면 누르기(탭) */
 function tapAt(e){const rc=rayAt(e);const hits=rc.intersectObjects(SC[cur].g.children,true);
