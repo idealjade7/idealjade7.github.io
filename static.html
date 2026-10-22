@@ -248,7 +248,7 @@ table.t th{color:#c3c9e8}
     <button class="tbtn" data-reset-view>시점 처음으로</button>
   </div>
   <div class="ctrl" data-for="D">
-    <span class="seg" id="dMode"><button data-m="ind" aria-pressed="true">가까이 하기</button><button data-m="chg">대전된 검전기</button></span>
+    <span class="seg" id="dMode"><button data-m="ind" aria-pressed="true">가까이 하기</button><button data-m="chgN">(−)대전된 검전기</button><button data-m="chgP">(+)대전된 검전기</button></span>
     <span class="seg" id="dRod"><button data-q="-1" aria-pressed="true">(−)대전체</button><button data-q="1">(+)대전체</button><button data-q="0">대전 안 된 막대</button></span>
     <button class="tbtn" id="dReset">처음으로</button>
     <span class="sp"></span>
@@ -879,7 +879,7 @@ function posOf(o,s,out){
   return out}
 D.gap=()=>D.contact?0:Math.max(0,D.sd*D.tx-PR-.04);
 const D_ON=1.25,D_FULL=.12;
-D.beta=function(){if(D.q===0||D.contact)return 0;const g=D.gap();return -D.q*.42*(1-sm(g,D_FULL,D_ON))*(D.mode==='chg'&&D.q>0?.3:1)};
+D.beta=function(){if(D.q===0||D.contact)return 0;const g=D.gap();return -D.q*.42*(1-sm(g,D_FULL,D_ON))};
 const _pv=new V();
 D.tick=function(dt,t){
   const g=D.gap(),sd=D.sd,tx=D.contact?sd*(PR+.04):D.tx;
@@ -888,19 +888,22 @@ D.tick=function(dt,t){
   D.rodS.forEach((s,i)=>{s.visible=i<D.rodN&&D.q!==0});
   D.rodL.position.set(tx+sd*1.3,PY+.48,0);
   D.rodL.userData.set(D.q===0?'대전되지 않은 막대':D.q<0?'(−)대전체 · 플라스틱 막대':'(+)대전체 · 유리 막대');
-  const act=D.els.filter(o=>o.on),Ne=act.length,b=D.beta(),p=Math.exp(-2.6*b);
+  const act=D.els.filter(o=>o.on),Ne=act.length,b=D.beta();let p=Math.exp(-2.6*b);
+  // 대전된 검전기에 반대 전하의 대전체: 금속박이 중성(오므라듦)이 되는 데까지만
+  if(D.extra!==0&&D.q!==0){const iL=D.iL||23,pl=Math.log(S_R)/Math.log(Math.max(.01,1-iL/Ne));
+    if(D.extra>0&&D.q>0)p=Math.min(p,pl);if(D.extra<0&&D.q<0)p=Math.max(p,pl)}
   D.pb+=((b<0?sd:-sd)*Math.min(1,Math.abs(b)/.42)-D.pb)*Math.min(1,dt*11);
   let eP=0,eB=0,eL=0,iP=0,iB=0,iL=0;
   act.forEach((o,k)=>{const tu=Math.pow((k+.5)/Ne,p);o.u+=(tu-o.u)*Math.min(1,dt*11);posOf(o,o.u,_pv);o.s.position.set(_pv.x+jit(t*1.6,o.ph,.02),_pv.y+jit(t*1.6,o.ph+1,.02),_pv.z);if(o.u<S_P)eP++;else eB++;if(o.u>=S_R)eL++});
   D.els.forEach(o=>o.s.visible=o.on);
   D.ions.forEach(o=>{posOf(o,o.sv,_pv);o.s.position.copy(_pv);if(o.sv<S_P)iP++;else iB++;if(o.sv>=S_R)iL++});
-  const nP=eP-iP,nB=eB-iB,nL=eL-iL;
+  const nP=eP-iP,nB=eB-iB,nL=eL-iL;D.iL=iL;
   const th=.06+.62*Math.tanh(Math.abs(nL)/7);D.th+=(th-D.th)*Math.min(1,dt*7);
   D.leaf[0].rotation.z=-D.th;D.leaf[1].rotation.z=D.th;
-  const tx2=n=>n===0?'중성':n>0?'(−)전하':'(+)전하';
+  const tx2=n=>Math.abs(n)<=1?'중성':n>0?'(−)전하':'(+)전하';
   D.pl.userData.set('금속판: '+tx2(nP));D.pl.position.set(-sd*(PR+.95),PY+.34,0);
-  D.ll.userData.set('금속박: '+tx2(nB));D.ll.position.set(1.05+Math.sin(D.th)*.6,-1.15,0);
-  D.nP=nP;D.nL=nB;
+  D.ll.userData.set('금속박: '+tx2(nL));D.ll.position.set(1.05+Math.sin(D.th)*.6,-1.15,0);
+  D.nP=nP;D.nL=nL;
   D.hintG.visible=!D.used;D.hintG.position.set(tx+sd*.7,PY+.25,.3);D.hintG.userData.tick(t);
   // 관찰하면 설명이 나와요
   if(g<.5&&!D.contact){D.stillT+=dt;if(D.stillT>.5)D.observe()}else D.stillT=0;
@@ -918,20 +921,23 @@ D.observe=function(){
     say(D.q<0?'<b>금속박이 벌어져요</b>(−)대전체와 금속판의 전자 사이에 <b>밀어내는 전기력</b>이 작용해 전자가 금속박 쪽으로 이동했어요. 금속판은 (+), 금속박은 <b>(−)전하</b>를 띠고, 같은 전하끼리 밀어내 금속박이 벌어져요.':'<b>금속박이 벌어져요</b>(+)대전체와 금속박의 전자 사이에 <b>끌어당기는 전기력</b>이 작용해 전자가 금속판 쪽으로 이동했어요. 금속판은 (−), 금속박은 <b>(+)전하</b>를 띠고, 같은 전하끼리 밀어내 금속박이 벌어져요.',11000);
     if(!D.fin&&D.done.has('ind-1')&&D.done.has('ind1')){D.fin=true;setTimeout(()=>celebrate('성공!','검전기의 정전기 유도를 확인했어요'),700)}
     else setTimeout(()=>{if(!D.fin&&cur==='D')say('<b>이번에는 '+(D.q<0?'(+)':'(−)')+'대전체로 해 보세요</b>',5000)},11200);
-  }else if(D.mode==='chg'){
-    const k='chg'+D.q;if(D.done.has(k))return;D.done.add(k);renderData();
-    if(D.q<0){say('<b>금속박이 더 벌어졌어요</b>(−)대전체가 전자를 금속박 쪽으로 더 밀어냈어요. 금속박을 <b>오므라들게</b> 하는 물체를 찾아보세요.',7000);return}
+  }else{
+    const k=D.mode+D.q;if(D.done.has(k))return;D.done.add(k);renderData();
+    const neg=D.mode==='chgN';
     if(D.q===0){say('<b>변화가 없어요</b>대전되지 않은 막대는 금속박에 영향을 주지 않아요.',5000);return}
-    say('<b>금속박이 오므라들었어요 → (+)전하를 띤 물체</b>(+)대전체가 금속박의 <b>전자를 금속판 쪽으로 끌어당겨서</b> 금속박의 (−)전하가 줄어들었어요. 그래서 금속박을 오므라들게 한 물체는 <b>(+)전하</b>를 띤 거예요.',11000);
-    if(!D.fin2){D.fin2=true;setTimeout(()=>celebrate('성공!','금속박이 오므라들게 한 물체는 (+)전하예요'),700)}
+    const same=(neg&&D.q<0)||(!neg&&D.q>0);
+    if(neg)say(same?'<b>금속박이 더 벌어져요</b>(−)대전체가 금속판의 전자를 <b>금속박 쪽으로 더 밀어내서</b> 금속박의 (−)전하가 많아졌어요.':'<b>금속박이 오므라들어요</b>(+)대전체가 금속박의 전자를 <b>금속판 쪽으로 끌어당겨서</b> 금속박의 (−)전하가 줄어들었어요.',10000);
+    else say(same?'<b>금속박이 더 벌어져요</b>(+)대전체가 금속박의 전자를 <b>금속판 쪽으로 끌어당겨서</b> 금속박의 (+)전하가 많아졌어요.':'<b>금속박이 오므라들어요</b>(−)대전체가 금속판의 전자를 <b>금속박 쪽으로 밀어내서</b> 금속박의 (+)전하가 줄어들었어요.',10000);
+    if(!D.fin2&&D.done.has(D.mode+'-1')&&D.done.has(D.mode+'1')){D.fin2=true;setTimeout(()=>celebrate('성공!','같은 전하는 더 벌어지고, 다른 전하는 오므라들어요'),700)}
   }
 };
 D.setExtra=function(n){D.extra=n;D.els.forEach((o,i)=>{const was=o.on;o.on=i>=20-n;if(o.on&&!was)o.u=.02})};
 D.setQ=function(q){D.q=q;segSet('#dRod','q',String(q));D.rodN=q===0?0:8;D.rodS.forEach(s=>{s.material=q<0?MAT_E:MAT_P});D.rod.userData.set(q);D.tx=2.6;D.sd=1;D.contact=false;D.stillT=0;renderData()};
 D.setMode=function(m){D.mode=m;segSet('#dMode','m',m);D.contact=false;D.touched=false;D.warned=false;D.fly.clear();killTw('D');
-  D.setExtra(m==='chg'?10:0);D.setQ(m==='chg'?1:-1);D.done.delete('ind-1');D.done.delete('ind1');D.done.delete('ind0');D.done.delete('chg-1');D.done.delete('chg1');D.done.delete('chg0');D.fin=D.fin2=false;
+  D.setExtra(m==='chgN'?10:m==='chgP'?-10:0);D.setQ(-1);D.done.clear();D.fin=D.fin2=false;
   if(m==='ind')say('<b>가까이 하기 (정전기 유도)</b>막대를 끌어 금속판에 <b>닿지 않게</b> 가까이 하고, 전자가 어디로 이동하는지 보세요.',6500);
-  if(m==='chg')say('<b>(−)전하로 대전된 검전기</b>금속박이 벌어져 있어요. 어떤 물체를 가까이 하면 금속박이 <b>오므라들까요</b>?',8000);
+  if(m==='chgN')say('<b>(−)전하로 대전된 검전기</b>금속박이 벌어져 있어요. (−)대전체와 (+)대전체를 각각 가까이 하며 금속박의 변화를 보세요.',8000);
+  if(m==='chgP')say('<b>(+)전하로 대전된 검전기</b>금속박이 벌어져 있어요. (−)대전체와 (+)대전체를 각각 가까이 하며 금속박의 변화를 보세요.',8000);
   renderData()};
 D.reset=function(){D.setMode(D.mode)};
 function ctrlD(){}
@@ -985,9 +991,9 @@ function renderData(){
       '<div class="card"><b>'+(C.q<0?'(−)':'(+)')+'대전체</b> · 깡통 속 전자 '+NC+'개<br>'+(Math.abs(n)<2?'전자가 고르게 퍼져 있어요(전기적으로 중성).':'대전체와 가까운 쪽: <b>'+(n>0?'(+)':'(−)')+'전하</b> · 먼 쪽: <b>'+(n>0?'(−)':'(+)')+'전하</b>')+
       '<div style="font-size:12.5px;margin-top:4px">'+chk(C.done.has('-'))+'(−)대전체 '+chk(C.done.has('+'))+'(+)대전체</div></div>';
   }else if(cur==='D'){
-    const tx=n=>n===0?'중성':n>0?'(−)':'(+)';
+    const tx=n=>Math.abs(n)<=1?'중성':n>0?'(−)':'(+)';
     const mi=D.mode==='ind'?'<b>해 보기</b> · (−)·(+)대전체를 각각 금속판 옆에 가까이 하기 ('+['ind-1','ind1'].filter(k=>D.done.has(k)).length+'/2) '+(D.fin?'✔':''):
-      '<b>스스로 하기</b> · 금속박을 오므라들게 하는 물체 찾기 ('+['chg-1','chg1'].filter(k=>D.done.has(k)).length+'/2) '+(D.fin2?'✔':'');
+      '<b>해 보기</b> · '+(D.mode==='chgN'?'(−)':'(+)')+'대전된 검전기에 (−)·(+)대전체를 각각 가까이 하기 ('+[D.mode+'-1',D.mode+'1'].filter(k=>D.done.has(k)).length+'/2) '+(D.fin2?'✔':'');
     h='<div class="card mission">'+mi+'</div>'+
       '<div class="card"><table class="t"><tr><th></th><th>띠는 전하</th></tr><tr><td>금속판</td><td><b>'+tx(D.nP||0)+'</b></td></tr><tr><td>금속박</td><td><b>'+tx(D.nL||0)+'</b></td></tr>'+
       '<tr><td>검전기 전체</td><td>'+(D.extra===0?'중성 (전자 수 = (+)전하 수)':D.extra>0?'(−)전하 (전자 '+D.extra+'개 많음)':'(+)전하 (전자 '+(-D.extra)+'개 적음)')+'</td></tr></table>'+
