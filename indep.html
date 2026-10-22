@@ -268,6 +268,7 @@ table.t th{font-weight:500;color:#c9d8bf}
     <button class="tbtn" id="bHomo" aria-pressed="true">상동 염색체 표시</button>
     <button class="tbtn" id="bFlip">색 유전자 쌍 뒤집기</button>
     <button class="tbtn" id="bRand">무작위 배열</button>
+    <button class="tbtn go" id="bRep">DNA 복제 ▶</button>
     <button class="tbtn go" id="bRun">감수 분열 ▶</button>
     <button class="tbtn" id="bBack">다시 배열하기</button>
     <button class="tbtn" id="bFast">빠르게 20번</button>
@@ -623,11 +624,12 @@ B.apply=function(){
   B.parts.forEach(p=>{
     const c=p.c, side=sideOf(c), pairX=c.gene==='R'?-.55:.55;
     const z=(1-side*side)*.8*(c.o===0?1:-1);
-    const x=pairX*lerp(1,.62,m1)+(p.s?1:-1)*(.085+m2*1.0);
+    const x=pairX*lerp(1,.62,m1)+(p.s?1:-1)*(.085*sm(B.rep,.15,.85)+m2*1.0);
+    p.mat.emissiveIntensity=.08+.5*Math.sin(Math.PI*clamp(B.rep,0,1))*(B.rep<1?1:0);p.g.scale.x=p.s?Math.max(.01,sm(B.rep,0,.25)):1;
     const y=side*lerp(.52,1.6,m1);
     p.g.position.set(x,y,z);
     p.l.position.set((p.s?1:-1)*.2,-c.len*.18,0);
-    p.l.visible=true;
+    p.l.visible=p.s===0||B.rep>.7;
   });
   B.cell.material.uniforms.uOp.value=1-sm(m,.3,.45); B.cell.scale.set(1,1+.25*m1,1); B.cell.visible=m<.46;
   B.d.forEach(d=>{d.material.uniforms.uOp.value=sm(m,.3,.45)*(1-sm(m,.8,.95));d.visible=m>.29&&m<.96});
@@ -654,7 +656,8 @@ B.random=function(){
     say('<b>무작위로 배열했어요</b>두 쌍의 상동 염색체는 서로 상관없이 배열돼요. 이번에는 '+topType()+'와 '+botType()+' 조합이에요.')});
 };
 B.run=function(){
-  if(B.busy||B.m>0)return; B.busy=true;ctrlB(); hideSay();
+  if(B.busy||B.m>0)return;
+  if(B.rep<1){B.replicate(()=>B.run());return} B.busy=true;ctrlB(); hideSay();
   const t=topType(),b=botType();B.last=null;renderData();
   B.ql.forEach((l,i)=>l.userData.set(B.q[i].userData.sy>0?t:b));
   tween(0,1,3.4,v=>B.m=v,()=>{B.m=1;B.busy=false;B.count[t]=(B.count[t]||0)+2;B.count[b]=(B.count[b]||0)+2;B.last=[t,b];B.made.add(t);B.made.add(b);ctrlB();renderData();B.check();
@@ -667,7 +670,7 @@ B.fast=function(){
 };
 function ctrlB(){
   $('#bFlip').disabled=$('#bRand').disabled=B.busy||B.m>0;
-  $('#bRun').disabled=B.busy||B.m>0; $('#bBack').disabled=B.busy||B.m===0;
+  $('#bRun').disabled=B.busy||B.m>0;$('#bRep').disabled=B.busy||B.m>0;$('#bRep').textContent=B.rep>=1?'복제 전으로':'DNA 복제 ▶';$('#bRep').classList.toggle('go',B.rep<1); $('#bBack').disabled=B.busy||B.m===0;
 }
 $('#bFlip').onclick=()=>B.flip('Y');$('#bRand').onclick=B.random;$('#bRun').onclick=B.run;$('#bBack').onclick=B.back;$('#bFast').onclick=B.fast;
 $('#bClear').onclick=()=>{B.count={};renderData()};
@@ -676,7 +679,7 @@ B.setGt=function(gt){
   if(B.busy)return;B.gt=gt;B.al={R:[gt[0],gt[1]],Y:[gt[2],gt[3]]};
   B.m=0;B.count={};B.made.clear();B.last=null;
   B.parts.forEach(p=>p.l.userData.set(B.al[p.c.gene][p.c.o]));
-  B.title.userData.set((gt==='RrYy'?'F1 (RrYy)':gt)+'의 세포');
+  B.rep=0;B.repTitle();
   ctrlB();renderData();
   const ty=B.types();
   say('<b>'+gt+'인 개체의 세포</b>'+(gt==='RrYy'?'모양과 색깔 모두 잡종이에요.':ty.length===1?'두 형질 모두 같은 대립유전자를 가진 <b>순종</b>이에요.':'한 형질은 잡종, 다른 형질은 순종이라 <b>잡종</b>이에요.')+' 감수 분열로 어떤 생식세포가 만들어지는지 확인해 보세요.',6500);
@@ -692,6 +695,21 @@ B.tally=function(){
   if(nMade>B.prevMade&&B.prevMade>=0)el.querySelectorAll('.gm.new').forEach(g=>{g.classList.add('pop');setTimeout(()=>g.classList.remove('pop'),700)});
   B.prevMade=nMade;
 };
+
+/* ---- 감수 분열 전 간기: DNA 복제(한 가닥 → 두 가닥) ---- */
+B.rep=0;
+B.repTitle=function(){const gt=B.gt==='RrYy'?'F1 (RrYy)':B.gt;B.title.userData.set(gt+'의 세포 · '+(B.rep<1?'DNA 복제 전 (염색체 한 가닥)':'DNA 복제 후 (염색 분체 두 가닥)'))};
+B.replicate=function(after){
+  if(B.busy)return;
+  if(B.rep>=1){if(after)after();else say('<b>이미 복제되었어요</b>염색체마다 똑같은 <b>염색 분체 2개</b>가 붙어 있어요. ‘감수 분열 ▶’을 눌러 보세요.');return}
+  B.busy=true;ctrlB();hideSay();
+  tween(0,1,2.2,v=>{B.rep=v},()=>{B.rep=1;B.busy=false;B.repTitle();ctrlB();
+    say('<b>DNA 복제 완료</b>간기에 DNA가 복제되어 염색체 하나가 <b>똑같은 염색 분체 2개</b>로 이루어졌어요. 두 염색 분체에는 <b>같은 대립유전자</b>(R과 R, r과 r…)가 들어 있어요.',after?3200:7000);
+    if(after)setTimeout(after,1300)});
+};
+B.unrep=function(){if(B.busy||B.m>0)return;B.rep=0;B.repTitle();ctrlB();say('<b>복제 전 상태로 돌아왔어요</b>지금은 염색체가 한 가닥이에요. ‘DNA 복제 ▶’를 눌러 두 가닥이 되는 과정을 보세요.')};
+$('#bRep').onclick=()=>B.rep>=1?B.unrep():B.replicate();
+B.repTitle();
 $('#bGt').onchange=()=>B.setGt($('#bGt').value);
 B.check=function(){
   const ty=B.types();
@@ -949,9 +967,10 @@ const SC={
       '완두의 모양은 R(둥근)과 r(주름진), 색은 Y(황색)과 y(녹색)라는 <b>대립유전자</b>가 정해요. 한 형질에 대립유전자 2개를 가져요.',
       '생식세포에는 한 쌍의 대립유전자 중 <b>하나씩만</b> 들어가요. RRYY → RY, rryy → ry',
       'F1(잡종 1대)은 모두 <b>RrYy</b>이고 모두 <b>둥글고 황색</b>이에요. 둥근 모양과 황색이 <b>우성</b>, 주름진 모양과 녹색이 <b>열성</b>이에요.']},
-  B:{g:B.g,big:'생식세포',title:'F1이 생식세포를 만들 때',target:new V(0,0,0),dir:new V(0,.05,1),hw:2.8,hh:3.1,
-     hint:'염색체를 누르면 배열이 바뀌어요. ‘감수 분열 ▶’로 생식세포를 만들어 보세요',
-     items:['F1(RrYy)의 모양 유전자(R, r)와 색 유전자(Y, y)는 <b>서로 다른 상동 염색체 쌍</b>에 있어요.',
+  B:{g:B.g,big:'생식세포',title:'F1이 생식세포를 만들 때',target:new V(0,.42,0),dir:new V(0,.05,1),hw:2.8,hh:3.55,
+     hint:'‘DNA 복제 ▶’로 염색체가 두 가닥이 되는 것을 보고, ‘감수 분열 ▶’로 생식세포를 만들어 보세요',
+     items:['감수 분열이 시작되기 전 <b>간기</b>에 <b>DNA가 복제</b>되어 한 가닥이던 염색체가 똑같은 <b>염색 분체 2개</b>로 이루어져요. ‘DNA 복제 ▶’로 확인해 보세요.',
+      'F1(RrYy)의 모양 유전자(R, r)와 색 유전자(Y, y)는 <b>서로 다른 상동 염색체 쌍</b>에 있어요.',
       '감수 분열 때 상동 염색체가 나뉘면서 R과 r, Y와 y가 서로 다른 생식세포로 들어가요(<b>분리의 법칙</b>).',
       '두 쌍은 서로 영향을 주지 않고 <b>따로따로</b> 나뉘어요. 배열에 따라 (RY, ry) 또는 (Ry, rY)가 만들어져요.',
       '그래서 생식세포 <b>RY : Ry : rY : ry = 1 : 1 : 1 : 1</b>이에요(<b>독립의 법칙</b>).',
