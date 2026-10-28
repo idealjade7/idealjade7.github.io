@@ -151,7 +151,12 @@
       refresh() { db.goOffline(); db.goOnline(); },
       async init(opts = {}) {
         if (opts.anonymous) {
-          if (!auth.currentUser) await auth.signInAnonymously();
+          // 저장된 로그인부터 복원한 뒤, 아무 계정도 없을 때만 익명 로그인
+          // (같은 브라우저의 진행자 구글 로그인을 익명 계정으로 덮어쓰지 않도록)
+          const restored = await new Promise((resolve) => {
+            const off = auth.onAuthStateChanged((u) => { off(); resolve(u); });
+          });
+          if (!restored) await auth.signInAnonymously();
           return { uid: auth.currentUser.uid };
         }
         return { uid: null };
