@@ -68,6 +68,13 @@
     if (chan) chan.onmessage = fire;
     window.addEventListener("storage", (e) => e.key === KEY && fire());
 
+    // 데모 연결 상태: 브라우저의 온라인/오프라인을 따름 (리허설에서 비행기 모드로 확인 가능)
+    let connected = navigator.onLine !== false;
+    const connCbs = new Set();
+    const setConn = (v) => { connected = v; connCbs.forEach((cb) => cb(v)); };
+    window.addEventListener("online", () => setConn(true));
+    window.addEventListener("offline", () => setConn(false));
+
     return {
       mode: "demo",
       init: async () => ({ uid }),
@@ -88,7 +95,11 @@
           )
         ),
       remove: async (path) => mutate((t) => setIn(t, path, null)),
+      onConnection(cb) { connCbs.add(cb); cb(connected); return () => connCbs.delete(cb); },
+      get connected() { return connected; },
+      refresh() { listeners.forEach((l) => (l.last = undefined)); fire(); setTimeout(() => setConn(navigator.onLine !== false), 300); },
       async vote(cid) {
+        if (!connected) throw new Error("offline");
         const t = load();
         const st = t.state || {};
         if (st.phase !== "open" || st.currentId !== cid)
@@ -124,8 +135,20 @@
       !!u.email &&
       u.email.toLowerCase() === String(CFG.adminEmail || "").toLowerCase();
 
+    // 서버와 실제로 연결돼 있는지 (.info/connected)
+    let connected = false;
+    const connCbs = new Set();
+    db.ref(".info/connected").on("value", (s) => {
+      connected = s.val() === true;
+      connCbs.forEach((cb) => cb(connected));
+    });
+
     return {
       mode: "firebase",
+      onConnection(cb) { connCbs.add(cb); cb(connected); return () => connCbs.delete(cb); },
+      get connected() { return connected; },
+      // 다른 앱에 갔다 돌아왔을 때: 연결을 새로 맺어 최신 상태를 다시 받음
+      refresh() { db.goOffline(); db.goOnline(); },
       async init(opts = {}) {
         if (opts.anonymous) {
           if (!auth.currentUser) await auth.signInAnonymously();
@@ -150,14 +173,36 @@
       set: (p, v) => ref(p).set(v),
       update: (p, o) => ref(p).update(o),
       remove: (p) => ref(p).remove(),
+      // 결과: 성공이면 그대로 끝, 실패면 이유를 담은 오류
+      //   offline = 연결이 끊긴 상태 / already = 이미 투표함 / closed = 그 무대 투표가 끝남 / error = 그 밖의 실패
       async vote(cid) {
-        const uid = auth.currentUser.uid;
+        const uid = auth.currentUser && auth.currentUser.uid;
+        if (!uid || !connected) throw new Error("offline"); // 끊긴 상태에서는 표를 쌓아 두지 않음
+        const mine = ref(`votes/${cid}/${uid}`);
         try {
-          await ref(`votes/${cid}/${uid}`).set(Date.now());
+          await mine.set(Date.now());
+          return;
+        } catch (e) {}
+        // 서버가 거절함 → 서버의 지금 상태로 이유를 다시 확인
+        let snapMine, snapState;
+        try {
+          [snapMine, snapState] = await Promise.all([mine.get(), ref("state").get()]);
         } catch (e) {
-          const snap = await ref(`votes/${cid}/${uid}`).get().catch(() => null);
-          throw new Error(snap && snap.exists() ? "already" : "closed");
+          throw new Error("offline");
         }
+        if (snapMine.exists()) throw new Error("already");
+        const st = snapState.val() || {};
+        if (st.phase === "open" && st.currentId === cid) {
+          // 아직 이 무대 투표 중 → 한 번 더 보냄
+          try {
+            await mine.set(Date.now());
+            return;
+          } catch (e) {
+            const again = await mine.get().catch(() => null);
+            throw new Error(again && again.exists() ? "already" : "error");
+          }
+        }
+        throw new Error("closed");
       },
       // 접속 중인 동안만 presence 에 남고, 연결이 끊기면 서버가 자동으로 지움
       join() {

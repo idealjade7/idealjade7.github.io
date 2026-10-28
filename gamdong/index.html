@@ -60,6 +60,13 @@
   .demo-badge { left: auto; right: 12px; bottom: auto; top: max(12px, env(safe-area-inset-top)); font-family: var(--px); background: var(--ink); color: var(--gold); border-radius: 0; border: 0; }
   .spark { position: fixed; pointer-events: none; z-index: 5; font-family: var(--px); font-weight: 700; font-size: 22px; color: var(--gold); text-shadow: 3px 3px 0 var(--ink); animation: up .9s steps(6) forwards; }
   .bit { position: fixed; pointer-events: none; z-index: 5; width: 10px; height: 10px; animation: fly .8s steps(6) forwards; }
+  .heart-btn:disabled { cursor: default; animation: none; }
+  .heart-btn.off { filter: grayscale(1); opacity: .65; }
+  .heart-btn.sending { transform: translateY(-6px); }
+  .net-bar { position: fixed; left: 0; right: 0; top: 0; z-index: 30; padding: calc(env(safe-area-inset-top) + 9px) 12px 9px; font-size: 13px; text-align: center;
+    background: var(--ink); color: var(--gold); transform: translateY(-110%); transition: transform .25s steps(3); }
+  .net-bar.show { transform: none; }
+  .net-bar.ok { background: var(--grass-2); color: #fff; }
   @keyframes up { to { transform: translateY(-120px); opacity: 0; } }
   @keyframes fly { to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
 </style>
@@ -70,6 +77,7 @@
   <div class="cloud" style="top:26vh;animation-duration:52s;animation-delay:-30s"><i></i><i></i></div>
 </div>
 <div class="ground"></div>
+<div class="net-bar" id="netBar" role="status" aria-live="polite"></div>
 <div class="wrap">
   <header>
     <div class="event" id="eventTitle">감동 투표</div>
@@ -113,6 +121,49 @@
 
   let state = {}, contestants = {}, myVote = null, unsubVote = null, voteFor = null, busy = false, errMsg = "";
 
+  const MSG = {
+    offline: "연결이 끊겨 있어요. 다시 연결되면 눌러 주세요.",
+    closed: "이번 무대 투표는 이미 마감됐어요.",
+    error: "전송하지 못했어요. 한 번 더 눌러 주세요."
+  };
+
+  // ---------- 연결 상태: 끊기면 하트 블록을 잠그고 위쪽에 안내 띠 표시
+  let online = !!GD.connected, lostTimer = null, okTimer = null, barShown = false;
+  const bar = document.getElementById("netBar");
+  function showBar(text, ok) {
+    clearTimeout(okTimer);
+    bar.textContent = text;
+    bar.classList.toggle("ok", !!ok);
+    bar.classList.add("show");
+    barShown = !ok;
+    if (ok) okTimer = setTimeout(() => bar.classList.remove("show"), 1600);
+  }
+  function setOnline(v, immediate, text) {
+    clearTimeout(lostTimer);
+    if (v) {
+      const was = online;
+      online = true;
+      if (barShown) showBar("다시 연결됐어요!", true);
+      if (!was && errMsg === MSG.offline) errMsg = "";
+      if (!was) render();
+      return;
+    }
+    if (online || immediate) { online = false; render(); }
+    // 처음 접속할 때의 짧은 연결 시간은 안내하지 않음
+    lostTimer = setTimeout(() => { if (!online) showBar(text || "연결이 끊겼어요 · 다시 연결하는 중…"); }, immediate ? 0 : 1500);
+  }
+  GD.onConnection((v) => setOnline(v));
+
+  // ---------- 다른 앱(카메라·카톡 등)에 갔다 돌아오면 연결을 새로 맺어 최신 화면을 받음
+  let hiddenAt = 0;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    if (hiddenAt && Date.now() - hiddenAt > 3000) { setOnline(false, true, "최신 화면을 불러오는 중…"); GD.refresh(); }
+    hiddenAt = 0;
+  });
+  window.addEventListener("pageshow", (e) => { if (e.persisted) { setOnline(false, true, "최신 화면을 불러오는 중…"); GD.refresh(); } });
+
+
   GD.on("config/title", (t) => {
     document.getElementById("eventTitle").textContent = t || "감동 투표";
     document.title = (t || "감동 투표") + " · 관객 투표";
@@ -154,9 +205,14 @@
       return;
     }
     if (state.phase === "open") {
+      const cls = busy ? "sending" : online ? "" : "off";
+      const label = busy ? "보내는 중…" : online ? "감동!" : "연결 중…";
+      const hint = online || busy
+        ? "노래에 감동했다면 하트 블록을 눌러 주세요.<br>한 번 누르면 취소할 수 없어요."
+        : "연결되면 하트 블록이 다시 열려요.<br>화면을 닫지 말고 잠깐만 기다려 주세요.";
       view.innerHTML = `${head(c)}
-        <button class="heart-btn" id="voteBtn" aria-label="감동 받았어요">${HEART}<b>감동!</b></button>
-        <p class="hint">노래에 감동했다면 하트 블록을 눌러 주세요.<br>한 번 누르면 취소할 수 없어요.</p>
+        <button class="heart-btn ${cls}" id="voteBtn" aria-label="감동 받았어요" ${busy || !online ? "disabled" : ""}>${HEART}<b>${label}</b></button>
+        <p class="hint">${hint}</p>
         <p class="err">${esc(errMsg)}</p>`;
       document.getElementById("voteBtn").onclick = doVote;
       return;
@@ -166,18 +222,23 @@
   }
 
   async function doVote(ev) {
-    if (busy) return;
+    if (busy || !online) return;
     busy = true;
+    errMsg = "";
     const r = ev.currentTarget.getBoundingClientRect();
-    burst(r.left + r.width / 2, r.top + r.height / 2);
-    if (navigator.vibrate) navigator.vibrate(60);
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    if (navigator.vibrate) navigator.vibrate(40);
+    render();
     try {
       await GD.vote(state.currentId);
       myVote = myVote || Date.now();
-      errMsg = "";
+      burst(cx, cy);                                   // 서버에 들어간 뒤에만 "+1 감동!"
+      if (navigator.vibrate) navigator.vibrate([0, 60]);
     } catch (e) {
-      errMsg = e.message === "already" ? "" : "투표가 마감되었거나 연결이 불안정해요.";
-      if (e.message === "already") myVote = myVote || 1;
+      const why = e.message;
+      if (why === "already") myVote = myVote || 1;
+      else errMsg = MSG[why] || MSG.error;
+      if (why === "offline") setOnline(false, true);
     }
     busy = false;
     render();
