@@ -215,7 +215,7 @@
       const cls = busy ? "sending" : online ? "" : "off";
       const label = busy ? "보내는 중…" : online ? "감동!" : "연결 중…";
       const hint = online || busy
-        ? "노래에 감동했다면 하트 블록을 눌러 주세요.<br>한 번 누르면 취소할 수 없어요."
+        ? "무대에 감동했다면 하트 블록을 눌러 주세요.<br>한 번 누르면 취소할 수 없어요."
         : "연결되면 하트 블록이 다시 열려요.<br>화면을 닫지 말고 잠깐만 기다려 주세요.";
       view.innerHTML = `${head(c)}
         <button class="heart-btn ${cls}" id="voteBtn" aria-label="감동 받았어요" ${busy || !online ? "disabled" : ""}>${HEART}<b>${label}</b></button>
