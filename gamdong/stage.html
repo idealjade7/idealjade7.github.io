@@ -140,7 +140,7 @@
 <div class="ground"></div>
 <div class="stage">
   <div class="top">
-    <div class="event"><span id="eventTitle">감동 투표</span><small>SONG BATTLE</small></div>
+    <div class="event"><span id="eventTitle">감동 투표</span><small>TALENT SHOW</small></div>
     <div class="qr" id="qrBox">
       <div class="code" id="qr"></div>
       <div><div class="t1">휴대폰으로 투표 참여</div><div class="t2" id="qrUrl"></div></div>
@@ -162,9 +162,9 @@
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-database-compat.js"></script>
-<script src="js/config.js?v=20261029"></script>
-<script src="js/store.js?v=20261029"></script>
-<script src="js/ranking.js?v=20261029"></script>
+<script src="js/config.js?v=20261030"></script>
+<script src="js/store.js?v=20261030"></script>
+<script src="js/ranking.js?v=20261030"></script>
 <script>
 (async function () {
   const center = document.getElementById("center");
@@ -423,7 +423,7 @@
 
     if (isFinal()) return renderFinal();
     if (!c || !state.phase) {
-      center.innerHTML = `<div class="fade"><div class="label">SONG BATTLE</div>
+      center.innerHTML = `<div class="fade"><div class="label">TALENT SHOW</div>
         <div class="big-name" style="font-size:9vh;margin-top:2.4vh">${esc(config.title || "감동 투표")}</div>
         <div class="caption blink" style="margin-top:3vh;color:var(--gold)">▶ QR코드를 찍고 입장하세요!</div>
         <div class="big-qr" id="bigQr"></div></div>`;
