@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>무대 화면</title>
 <link rel="stylesheet" href="css/common.css">
+<link rel="preload" href="fonts/pixel-lite.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/pixel-lite-bold.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+  /* 가벼운 픽셀 글꼴(약 85KB): 자주 쓰는 한글·영문만 담음. 없는 글자가 나오면 아래 원래 Galmuri11을 그 글자에만 자동으로 받아 씀 */
+  @font-face { font-family: "PixelLite"; src: url("fonts/pixel-lite.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "PixelLite"; src: url("fonts/pixel-lite-bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+</style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
 <style>
   :root {
@@ -12,7 +19,7 @@
     --grass: #5bd34a; --grass-2: #2f9a2a; --dirt: #c7783a; --dirt-2: #8a4a1c;
     --block: #ffcf3a; --block-2: #c97d00; --heart: #ff4f8b; --heart-2: #b8205a;
     --ink: #1b1f3b; --white: #ffffff; --gold: #ffe14d;
-    --px: "Galmuri11", "Galmuri9", monospace;
+    --px: "PixelLite", "Galmuri11", "Galmuri9", monospace;
   }
   html, body { overflow: hidden; }
   body { background: var(--sky); color: var(--white); font-family: var(--px); cursor: default; -webkit-font-smoothing: none; }
@@ -155,9 +162,9 @@
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-database-compat.js"></script>
-<script src="js/config.js?v=20261028b"></script>
-<script src="js/store.js?v=20261028b"></script>
-<script src="js/ranking.js?v=20261028b"></script>
+<script src="js/config.js?v=20261029"></script>
+<script src="js/store.js?v=20261029"></script>
+<script src="js/ranking.js?v=20261029"></script>
 <script>
 (async function () {
   const center = document.getElementById("center");

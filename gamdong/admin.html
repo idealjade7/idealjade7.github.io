@@ -174,9 +174,9 @@
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-database-compat.js"></script>
-<script src="js/config.js?v=20261028b"></script>
-<script src="js/store.js?v=20261028b"></script>
-<script src="js/ranking.js?v=20261028b"></script>
+<script src="js/config.js?v=20261029"></script>
+<script src="js/store.js?v=20261029"></script>
+<script src="js/ranking.js?v=20261029"></script>
 <script>
 (async function () {
   const $ = (id) => document.getElementById(id);
@@ -212,15 +212,18 @@
   function start() {
     let state = {}, contestants = {}, config = {}, presence = 0, live = 0, unsubLive = null, liveFor = null;
 
+    // 접속·투표가 몰릴 때 진행 패널을 매번 다시 그리지 않고 0.15초에 한 번만 그림 (숫자는 즉시 반영)
+    let ctlTimer = null;
+    const scheduleControl = () => { if (!ctlTimer) ctlTimer = setTimeout(() => { ctlTimer = null; renderControl(); }, 150); };
     GD.on("config", (c) => { config = c || {}; fillSettings(); renderList(); renderControl(); });
-    GD.on("presence", (p) => { presence = p ? Object.keys(p).length : 0; $("presN").textContent = presence; renderControl(); });
+    GD.on("presence", (p) => { presence = p ? Object.keys(p).length : 0; $("presN").textContent = presence; $("liveSub").textContent = `지금 접속 중 ${presence}대 · 표 수는 진행자 화면에만 보입니다`; scheduleControl(); });
     GD.on("contestants", (c) => { contestants = c || {}; renderList(); renderControl(); });
     GD.on("state", (s) => {
       state = s || {};
       if (state.currentId !== liveFor) {
         if (unsubLive) unsubLive();
         liveFor = state.currentId; live = 0;
-        if (liveFor) unsubLive = GD.on(`votes/${liveFor}`, (v) => { live = v ? Object.keys(v).length : 0; $("liveN").textContent = live; renderControl(); });
+        if (liveFor) unsubLive = GD.on(`votes/${liveFor}`, (v) => { live = v ? Object.keys(v).length : 0; $("liveN").textContent = live; scheduleControl(); });
       }
       renderList(); renderControl();
     });

@@ -6,10 +6,17 @@
 <meta name="theme-color" content="#0a0b17">
 <title>감동 투표</title>
 <link rel="stylesheet" href="css/common.css">
+<link rel="preload" href="fonts/pixel-lite.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/pixel-lite-bold.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+  /* 가벼운 픽셀 글꼴(약 85KB): 자주 쓰는 한글·영문만 담음. 없는 글자가 나오면 아래 원래 Galmuri11을 그 글자에만 자동으로 받아 씀 */
+  @font-face { font-family: "PixelLite"; src: url("fonts/pixel-lite.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "PixelLite"; src: url("fonts/pixel-lite-bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+</style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
 <style>
   :root { --sky: #6ec6ff; --sky-2: #8fd5ff; --grass: #5bd34a; --grass-2: #2f9a2a; --dirt: #c7783a; --dirt-2: #8a4a1c;
-    --block: #ffcf3a; --block-2: #c97d00; --heart: #ff4f8b; --ink: #1b1f3b; --gold: #ffe14d; --px: "Galmuri11", "Galmuri9", monospace; }
+    --block: #ffcf3a; --block-2: #c97d00; --heart: #ff4f8b; --ink: #1b1f3b; --gold: #ffe14d; --px: "PixelLite", "Galmuri11", "Galmuri9", monospace; }
   body { min-height: 100dvh; overflow-x: hidden; background: var(--sky); color: #fff; font-family: var(--px); -webkit-font-smoothing: none; }
   .spotlight { position: fixed; inset: 0; z-index: 0; background: linear-gradient(var(--sky-2) 0 16%, var(--sky) 16%); }
   .cloud { position: absolute; width: 120px; height: 40px; animation: drift linear infinite; }
@@ -95,8 +102,8 @@
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.14.1/firebase-database-compat.js"></script>
-<script src="js/config.js?v=20261028b"></script>
-<script src="js/store.js?v=20261028b"></script>
+<script src="js/config.js?v=20261029"></script>
+<script src="js/store.js?v=20261029"></script>
 <script>
 (async function () {
   const view = document.getElementById("view");
