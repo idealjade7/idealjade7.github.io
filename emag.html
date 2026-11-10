@@ -511,9 +511,9 @@ function segSet(sel,key,val){$$(sel+' button').forEach(b=>b.setAttribute('aria-p
 function line(a,b,col,op){const g=new THREE.BufferGeometry().setFromPoints([a,b]);const l=new THREE.Line(g,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:op===undefined?1:op,depthWrite:false}));l.userData.set=(p,q)=>{const at=g.attributes.position;at.setXYZ(0,p.x,p.y,p.z);at.setXYZ(1,q.x,q.y,q.z);at.needsUpdate=true;g.computeBoundingSphere()};return l}
 const LAB=cnv(512,512,(g,W,H)=>{const gr=g.createRadialGradient(W/2,H*.4,0,W/2,H*.45,W*.75);gr.addColorStop(0,'#1d2740');gr.addColorStop(1,'#070a14');g.fillStyle=gr;g.fillRect(0,0,W,H)});
 scene.background=LAB;
-function arrow(col){const g=new THREE.Group();const m=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.95,depthTest:false});
-  const sh=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,1,12),m);const hd=new THREE.Mesh(new THREE.ConeGeometry(.075,.34,20),m);sh.renderOrder=hd.renderOrder=11;g.add(sh,hd);
-  g.userData.set=(from,dir,len)=>{g.visible=len>.05;if(!g.visible)return;const d=dir.clone().normalize();g.position.copy(from);g.quaternion.setFromUnitVectors(new V(0,1,0),d);const L=Math.max(.05,len-.34);sh.scale.y=L;sh.position.y=L/2;hd.position.y=L+.17};return g}
+function arrow(col,k){k=k||1;const g=new THREE.Group();const m=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.95,depthTest:false});
+  const sh=new THREE.Mesh(new THREE.CylinderGeometry(.02*k,.02*k,1,12),m);const HL=.34*(.75+.25*k);const hd=new THREE.Mesh(new THREE.ConeGeometry(.075*k,HL,20),m);sh.renderOrder=hd.renderOrder=11;g.add(sh,hd);
+  g.userData.set=(from,dir,len)=>{g.visible=len>.05;if(!g.visible)return;const d=dir.clone().normalize();g.position.copy(from);g.quaternion.setFromUnitVectors(new V(0,1,0),d);const L=Math.max(.05,len-HL);sh.scale.y=L;sh.position.y=L/2;hd.position.y=L+HL/2};return g}
 /* 문지른 막대(플라스틱) */
 const rnd=Math.random;
 function jit(t,ph,a){return a*(Math.sin(t*2.3+ph)+Math.sin(t*3.7+ph*1.7)*.6)}
@@ -693,7 +693,7 @@ function dialDrag(sc,P,onChange){const C0=new V(),ex=new V(),ey=new V(),ez=new V
   get:()=>{P.knob.getWorldPosition(C0);return C0.clone()},start:()=>{P.a0=null;hideSay();P.spin(true)},
   set:p=>{const raw=p.clone().sub(_off),a=ang(raw);if(d.length()<.03)return;if(P.a0==null){P.a0=a;return}
     let da=a-P.a0;da=((da+Math.PI*3)%(Math.PI*2))-Math.PI;P.a0=a;
-    const ni=clamp(P.I-da*3/4.4,.5,3);if(Math.abs(ni-P.I)<1e-4)return;P.I=ni;P.upd();onChange&&onChange()},
+    const ni=clamp(P.I-da*3/4.4,.1,3);if(Math.abs(ni-P.I)<1e-4)return;P.I=ni;P.upd();onChange&&onChange()},
   end:()=>{P.I=Math.round(P.I*10)/10;P.upd();P.spin(false);onChange&&onChange(true)}})}
 /* 나침반 */
 const COMPF=cnv(256,256,(g,W)=>{g.fillStyle='#f6f2e7';g.beginPath();g.arc(128,128,124,0,7);g.fill();g.strokeStyle='#333';g.lineWidth=3;
@@ -760,12 +760,19 @@ function handMesh(){const g=new THREE.Group(),H=new THREE.Group();g.add(H);
   H.traverse(o=>{if(o.isMesh)o.castShadow=true});
   // 손 위의 이름표
   const lp={bg:'rgba(18,24,44,.86)',size:.1};
-  g.userData.lab={f:label('네 손가락: 자기장',Object.assign({fg:'#7cc0ff'},lp)),t:label('엄지: 전류',Object.assign({fg:'#ffc04d'},lp)),p:label('손바닥: 힘',Object.assign({fg:'#ffe14d'},lp))};
+  g.userData.lab={f:label('네 손가락: 자기장',Object.assign({fg:'#7cc0ff'},lp)),t:label('엄지: 전류',Object.assign({fg:'#6ff0a0'},lp)),p:label('손바닥: 힘',Object.assign({fg:'#ffe14d'},lp))};
   g.userData.lab.f.position.set(0,.68,0);g.userData.lab.t.position.set(.56,-.05,0);g.userData.lab.p.position.set(0,0,.28);H.add(g.userData.lab.f,g.userData.lab.t,g.userData.lab.p);
   g.userData.orient=(I,Bd,F)=>{const m=new THREE.Matrix4().makeBasis(I.clone().normalize(),Bd.clone().normalize(),F.clone().normalize());g.quaternion.setFromRotationMatrix(m)};
   return g}
+/* 도선을 따라 흐르는 전류(초록 빛 알갱이). sign>0 이면 곡선의 앞 방향으로 흘러요 */
+const FLOWTEX=cnv(64,64,(g,W)=>{const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(235,255,240,1)');gr.addColorStop(.28,'rgba(90,240,140,1)');gr.addColorStop(.55,'rgba(40,210,110,.55)');gr.addColorStop(1,'rgba(40,210,110,0)');g.fillStyle=gr;g.fillRect(0,0,W,W)});
+function currentFlow(curve,n,parent,size){const P=new Float32Array(n*3),g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P,3));
+  const m=new THREE.PointsMaterial({map:FLOWTEX,color:0xffffff,size:size||.13,sizeAttenuation:true,transparent:true,depthWrite:false,depthTest:false,opacity:0});
+  const pts=new THREE.Points(g,m);pts.frustumCulled=false;pts.renderOrder=7;parent.add(pts);const L=curve.getLength();let u0=0;
+  return {pts,update(dt,speed,sign,alpha){m.opacity+=((alpha||0)-m.opacity)*Math.min(1,dt*8);pts.visible=m.opacity>.01;if(!pts.visible)return;
+    u0=(u0+dt*speed*sign/L+1)%1;for(let i=0;i<n;i++){const q=curve.getPointAt((u0+i/n)%1);P[i*3]=q.x;P[i*3+1]=q.y;P[i*3+2]=q.z}g.attributes.position.needsUpdate=true}}}
 /* 큰 화살표 + 이름표 */
-function bigArrow(col,txt){const a=arrow(col);const l=label(txt,{bg:'rgba(18,24,44,.84)',fg:'#'+new THREE.Color(col).getHexString(),size:.16});const g=new THREE.Group();g.add(a,l);
+function bigArrow(col,txt,k){const a=arrow(col,k);const l=label(txt,{bg:'rgba(18,24,44,.84)',fg:'#'+new THREE.Color(col).getHexString(),size:.16});const g=new THREE.Group();g.add(a,l);
   g.userData.set=(from,dir,len)=>{a.userData.set(from,dir,len);const d=dir.clone().normalize();l.position.copy(from).addScaledVector(d,len+.18);l.visible=len>.05};return g}
 
 /* =====================================================
@@ -790,7 +797,7 @@ const CY=.78,CR=.45,CLN=2.2,NT=11;
   A.cg.add(wireMesh(wirePath([[-1.1,CY+CR,0],[-1.3,.5,-.2],[-1.6,.06,-.7],[-2.5,.06,-.9],[-2.5,.2,-.93]]),0xe5484d,.035));
   A.cg.add(wireMesh(wirePath([[1.1,CY+CR*Math.cos(NT*Math.PI*2),0],[1.3,.5,-.3],[1.2,.06,-1.0],[-1.8,.06,-1.05],[-2.18,.2,-.93]]),0x30343d,.035));
   // 코일 위 전류 방향 화살표
-  A.ca=new THREE.InstancedMesh(new THREE.ConeGeometry(.045,.12,14),new THREE.MeshBasicMaterial({color:0xffb020,depthTest:false}),NT*2);A.ca.renderOrder=9;A.cg.add(A.ca);
+  A.ca=new THREE.InstancedMesh(new THREE.ConeGeometry(.045,.12,14),new THREE.MeshBasicMaterial({color:0x2fe07a,depthTest:false}),NT*2);A.ca.renderOrder=9;A.cg.add(A.ca);
   A.nL=label('N극',{bg:'rgba(216,50,46,.92)',fg:'#fff',size:.2});A.sL=label('S극',{bg:'rgba(42,100,214,.92)',fg:'#fff',size:.2});A.cg.add(A.nL,A.sL);
   // 비오-사바르 계산용 조각
   A.seg=[];for(let i=0;i<hp.length-1;i+=2){const a=hp[i],b=hp[Math.min(hp.length-1,i+2)];A.seg.push({m:a.clone().add(b).multiplyScalar(.5),d:b.clone().sub(a)})}
@@ -799,6 +806,11 @@ const CY=.78,CR=.45,CLN=2.2,NT=11;
   // 나침반
   A.comps=[[-1.85,0,0],[1.85,0,0],[-.7,0,1.05],[.7,0,1.05],[-.7,0,-1.05],[.7,0,-1.05],[-1.6,0,.75],[1.6,0,.75],[-1.6,0,-.75],[1.6,0,-.75]].map(p=>{const c=compassMesh(1.05);c.position.set(p[0],0,p[2]);A.cg.add(c);return c});
   A.big=compassMesh(1.5);A.big.position.set(2.7,0,1.45);A.cg.add(A.big);
+  // 북쪽 표시(지구 자기장의 방향)
+  {const ng=new THREE.Group();ng.position.set(3.2,.012,-1.55);A.cg.add(ng);const m=new THREE.MeshBasicMaterial({color:0xe9eef8,transparent:true,opacity:.9});
+    const sh=new THREE.Mesh(new THREE.PlaneGeometry(.05,.55),m);sh.rotation.x=-Math.PI/2;sh.position.z=.1;ng.add(sh);
+    const s=new THREE.Shape();s.moveTo(0,.2);s.lineTo(.12,-.05);s.lineTo(-.12,-.05);s.closePath();const hd=new THREE.Mesh(new THREE.ShapeGeometry(s),m);hd.rotation.x=-Math.PI/2;hd.position.z=-.2;ng.add(hd);
+    const nl=label('북 (지구 자기장)',{bg:'rgba(18,24,44,.84)',fg:'#e9eef8',size:.14});nl.position.set(0,.12,-.5);ng.add(nl)}
   A.bigL=label('끌어서 옮길 수 있는 나침반',LP(.15));A.cg.add(A.bigL);
   A.hintG=dragHint('전원 버튼을 눌러 전류를 흘려요');A.g.add(A.hintG);
   // ----- 전자석 기중기 -----
@@ -828,13 +840,16 @@ A.flip=function(){A.P.dir*=-1;A.P.upd();if(A.mode==='crane'){say('<b>전류의 �
 A.check=function(){if(!A.fin&&A.did.on&&A.did.rev&&A.did.str){A.fin=true;setTimeout(()=>celebrate('성공!','코일 주위의 자기장은 전류의 방향과 세기에 따라 달라져요'),700)}};
 dialDrag('A',A.P,end=>{if(end&&A.mode==='coil'&&A.P.on){if(A.P.I>=2.5&&!A.did.str){A.did.str=true;say('<b>전류의 세기가 커졌어요</b>전류의 세기가 <b>클수록</b> 코일 주위의 자기장이 세져서 멀리 있는 나침반 바늘도 크게 움직여요.',8000);A.check()}}
   if(A.mode==='crane'&&end)say('<b>전류 세기 '+A.P.I.toFixed(1)+' A</b>전류가 셀수록 전자석의 자기장이 세져서 철을 더 많이 붙일 수 있어요.',5000);renderData()});
-const _B=new V(),_p=new V(),_q1=new V(),EARTH=new V(0,0,-.05);
+const _B=new V(),_p=new V(),_q1=new V(),EARTH=new V(0,0,-1);// 지구 자기장: 북쪽(−z). 세기 1을 기준으로 삼아요
 A.tick=function(dt,t){
   if(A.mode==='coil'){
     const k=A.P.on?A.P.I*A.P.dir:0;
     A.comps.concat([A.big]).forEach(c=>{_p.copy(c.position);_p.y=CY;
+      // 나침반 바늘 = 코일의 자기장(방향: 가장 가까운 자기력선) + 지구 자기장(북쪽)
+      // 코일 자기장의 세기는 전류에 비례하고, 코일에서 멀수록 빠르게 약해져요
       if(k===0){_B.copy(EARTH)}else{let bd=1e9,bu=0,bl=null;A.lines.forEach(L=>{for(let i=0;i<120;i++){const u=i/120;L.cv.getPointAt(u,_q1);const d=_q1.distanceToSquared(_p);if(d<bd){bd=d;bu=u;bl=L}}});
-        bl.cv.getTangentAt(bu,_B);const st=Math.abs(k)*1.2/(.4+Math.sqrt(bd));_B.multiplyScalar(Math.sign(k)*st).add(EARTH)}
+        const dx=Math.max(0,Math.abs(_p.x)-CLN/2),rho=Math.max(.6,Math.hypot(dx,_p.z));
+        bl.cv.getTangentAt(bu,_B);const st=Math.abs(k)*1.6*Math.pow(.75/rho,2);_B.multiplyScalar(Math.sign(k)*st).add(EARTH);c.userData.bc=st}
       c.userData.step(_B,dt)});
     A.fl.visible=A.P.on&&$('#aF').checked;A.lines.forEach(L=>{L.m.material.opacity=.25+.2*A.P.I});
     if(A.fl.visible&&A.fdir!==Math.sign(k)){A.fdir=Math.sign(k);A.setFieldDir(A.fdir)}
@@ -844,6 +859,7 @@ A.tick=function(dt,t){
     const bc=A.Bat(new V(0,CY,0),new V()).x*A.P.dir;A.nL.visible=A.sL.visible=A.P.on;
     A.nL.position.set(bc>0?CLN/2+.5:-CLN/2-.5,CY+.3,0);A.sL.position.set(bc>0?-CLN/2-.5:CLN/2+.5,CY+.3,0);
     A.bigL.position.copy(A.big.position).add(new V(0,.45,0));A.bigL.visible=!A.bigMoved;
+    if(A.P.on&&A.bigMoved&&!A.toldE&&(A.big.userData.bc||0)<.5){A.toldE=true;say('<b>멀리 있는 나침반은 거의 북쪽을 가리켜요</b>나침반 바늘은 <b>코일의 자기장</b>과 <b>지구 자기장</b>이 합쳐진 방향을 가리켜요. 코일에서 멀거나 전류가 약하면 코일의 자기장이 약해서 <b>지구 자기장(북쪽)</b>의 영향이 더 커요. 전류를 세게 해 보세요.',10000)}
     A.hintG.visible=!A.used;A.hintG.position.set(-3.25,.55,-.85);A.hintG.userData.tick(t);
   }else A.craneTick(dt,t);
 };
@@ -928,6 +944,7 @@ const PIVY=2.05,SWL=1.4,GAPY=.65,HALF=.5;
   B.sw=new THREE.Group();B.sw.position.set(0,PIVY,0);B.g.add(B.sw);
   const sp=[[-HALF-.3,0],[-HALF,-.15],[-HALF,-SWL],[HALF,-SWL],[HALF,-.15],[HALF+.3,0]].map(p=>new V(p[0],p[1],0));
   const cp=new THREE.CurvePath();for(let i=0;i<sp.length-1;i++)cp.add(new THREE.LineCurve3(sp[i],sp[i+1]));
+  B.flow=currentFlow(cp,26,B.sw,.21);
   B.sw.add(new THREE.Mesh(new THREE.TubeGeometry(cp,120,.035,10,false),COPPER));
   [-1,1].forEach(s=>{const h=new THREE.Mesh(new THREE.TorusGeometry(.05,.015,8,16),COPPER);h.position.set(s*(HALF+.3),0,0);h.rotation.y=Math.PI/2;B.sw.add(h)});
   B.swHit=new THREE.Mesh(new THREE.BoxGeometry(1.2,.3,.3),hitMat);B.swHit.position.y=-SWL;B.sw.add(B.swHit);
@@ -935,7 +952,7 @@ const PIVY=2.05,SWL=1.4,GAPY=.65,HALF=.5;
   B.g.add(wireMesh(wirePath([[-.95,PIVY,0],[-1.3,1.2,-.2],[-1.7,.06,-.6],[-2.2,.06,-.8],[-2.2,.2,-.78]]),0xe5484d,.03));
   B.g.add(wireMesh(wirePath([[.95,PIVY,0],[1.3,1.2,-.4],[1.1,.06,-1.0],[-1.7,.06,-1.0],[-1.88,.2,-.78]]),0x30343d,.03));
   // 화살표
-  B.aB=bigArrow(0x5aa9ff,'자기장');B.aI=bigArrow(0xffb020,'전류');B.aF=bigArrow(0xffe14d,'힘');B.g.add(B.aB,B.aI,B.aF);
+  B.aB=bigArrow(0x5aa9ff,'자기장');B.aI=bigArrow(0x2fe07a,'전류');B.aF=bigArrow(0xffe14d,'힘',1.5);B.g.add(B.aB,B.aI,B.aF);
   B.hand=handMesh();B.hand.scale.setScalar(.85);B.g.add(B.hand);
   B.hintG=dragHint('전원 버튼을 눌러 전류를 흘려요');B.g.add(B.hintG);
 })();
@@ -952,7 +969,7 @@ B.tick=function(dt,t){
   // F = I L × B : 전류 +x, 자기장 ±y → 힘 ±z
   const Fz=I*(bd)*1.0;// x̂ × (bd ŷ) = bd ẑ
   const g=9.8/SWL*.6;B.w+=(-g*Math.sin(B.phi)+Fz*.9*Math.cos(B.phi)-B.w*1.6)*dt;B.phi+=B.w*dt;B.phi=clamp(B.phi,-.7,.7);
-  B.sw.rotation.x=-B.phi;
+  B.sw.rotation.x=-B.phi;B.flow.update(dt,.5+.35*B.P.I,B.P.dir,on?1:0);
   const bp=new V(0,PIVY-SWL*Math.cos(B.phi),SWL*Math.sin(B.phi));
   const show=on&&$('#bA').checked;
   const Bv=new V(0,bd,0),Iv=new V(Math.sign(I)||1,0,0),Fv=new V(0,0,Math.sign(Fz)||1);
@@ -988,6 +1005,7 @@ const MY=.95,CRr=.55,CLz=1.3;
   C.rot=new THREE.Group();C.rot.position.set(0,MY,0);C.mg.add(C.rot);
   const rp=[[CRr,0,-CLz/2],[CRr,0,CLz/2],[-CRr,0,CLz/2],[-CRr,0,-CLz/2],[CRr,0,-CLz/2]];
   for(let k=0;k<3;k++){const o=(k-1)*.04;const cp=new THREE.CurvePath();for(let i=0;i<4;i++)cp.add(new THREE.LineCurve3(new V(rp[i][0]*(1+o),o,rp[i][2]*(1+o*.5)),new V(rp[i+1][0]*(1+o),o,rp[i+1][2]*(1+o*.5))));C.rot.add(new THREE.Mesh(new THREE.TubeGeometry(cp,80,.03,8,false),ENAMEL))}
+  {const fp=new THREE.CurvePath();for(let i=0;i<4;i++)fp.add(new THREE.LineCurve3(new V(rp[i][0]*1.07,0,rp[i][2]*1.03),new V(rp[i+1][0]*1.07,0,rp[i+1][2]*1.03)));C.flow=currentFlow(fp,30,C.rot,.21)}
   const ax=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,2.6,16),STEEL);ax.rotation.x=Math.PI/2;C.rot.add(ax);
   [0,1].forEach(h=>{const c=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.22,24,1,false,h*Math.PI+.12,Math.PI-.24),COPPER);c.rotation.x=Math.PI/2;c.position.z=CLz/2+.35;C.rot.add(c)});
   // 브러시
@@ -998,7 +1016,7 @@ const MY=.95,CRr=.55,CLz=1.3;
   C.mg.add(wireMesh(wirePath([[-.29,.14,CLz/2+.35],[-.9,.1,1.05],[-1.8,.08,1.15],[-2.05,.2,1.42]]),0xe5484d,.03));
   C.mg.add(wireMesh(wirePath([[.29,.14,CLz/2+.35],[.5,.1,1.2],[-1.2,.08,1.45],[-1.75,.2,1.55]]),0x30343d,.03));
   // 화살표
-  C.fA=bigArrow(0xffe14d,'힘');C.fB=bigArrow(0xffe14d,'힘');C.iA=bigArrow(0xffb020,'전류');C.iB=bigArrow(0xffb020,'전류');C.bA=bigArrow(0x5aa9ff,'자기장');C.mg.add(C.fA,C.fB,C.iA,C.iB,C.bA);
+  C.fA=bigArrow(0xffe14d,'힘',1.6);C.fB=bigArrow(0xffe14d,'힘',1.6);C.iA=bigArrow(0x2fe07a,'전류');C.iB=bigArrow(0x2fe07a,'전류');C.bA=bigArrow(0x5aa9ff,'자기장');C.mg.add(C.fA,C.fB,C.iA,C.iB,C.bA);
   C.dirL=label('',{bg:'rgba(18,24,44,.88)',fg:'#ffe08a',size:.2});C.dirL.position.set(0,MY+1.25,0);C.mg.add(C.dirL);
   C.hintG=dragHint('전원 버튼을 눌러 전류를 흘려요');C.g.add(C.hintG);
   // ---------- 간이 전동기 ----------
@@ -1020,8 +1038,10 @@ C.tick=function(dt,t){
   // 코일이 세로로 설 때 정류자의 틈에서 전류가 잠깐 끊겨요 → 화살표가 줄었다가 반대로 다시 자라요
   const k=THREE.MathUtils.smoothstep(Math.abs(Math.cos(C.th)),.04,.3);
   [C.fA,C.fB,C.iA,C.iB].forEach(a=>a.visible=show&&k>.02);
+  // 코일 변 A(로컬 +x 쪽)를 따라가는 방향 = 그 변의 전류 방향(+z면 앞으로)
+  C.flow.update(dt,(.5+.35*C.P.I)*k,iz*(pA.x<0?1:-1),on?k:0);
   if(show){[[pA,C.fA,C.iA],[pB,C.fB,C.iB]].forEach(([p,fa,ia])=>{const sd=p.x<0?1:-1,cz=iz*sd,ox=p.x<0?-1:1;
-      fa.userData.set(p.clone().add(new V(.05*ox,0,.3)),new V(0,cz*bx,0),.55*k);ia.userData.set(p.clone().add(new V(.12*ox,0,-.45*cz*k)),new V(0,0,cz),.7*k)})}
+      fa.userData.set(p.clone().add(new V(.06*ox,0,.5)),new V(0,cz*bx,0),.85*k);ia.userData.set(p.clone().add(new V(.12*ox,0,-.45*cz*k)),new V(0,0,cz),.7*k)})}
   C.bA.visible=$('#cA').checked;C.bA.userData.set(new V(-.6*bx,MY-.75,.85),new V(bx,0,0),1.2);
   C.lN.position.set(C.mflip?1.05:-1.05,MY+.7,.4);C.lS.position.set(C.mflip?-1.05:1.05,MY+.7,.4);
   C.dirL.visible=Math.abs(C.w)>.3;C.dirL.userData.set(C.w<0?'↻ 시계 방향으로 회전':'↺ 시계 반대 방향으로 회전');
@@ -1049,6 +1069,7 @@ C.buildSimple=function(){const S=C.sg;
     const lead=(x0,x1,m,r)=>{const c=new THREE.Mesh(new THREE.CylinderGeometry(r,r,Math.abs(x1-x0),12),m);c.rotation.z=Math.PI/2;c.position.x=(x0+x1)/2;C.scoil.add(c);return c};
     lead(-CR-.04,-.92,ENAMEL,.009);lead(CR+.04,.5,ENAMEL,.009);lead(.5,.92,COPPER,.0088);
     // 반만 벗긴 쪽: 코일 기준 +y 쪽 반만 구리가 드러나 있어요
+    {const sp=[];for(let i=0;i<=64;i++){const t=i/64*Math.PI*2;sp.push(new V(Math.cos(t)*(CR+.035),Math.sin(t)*(CR+.035),.02))}C.sflow=currentFlow(new THREE.CatmullRomCurve3(sp,true),16,C.scoil,.13)}
     const half=new THREE.Mesh(new THREE.CylinderGeometry(.0096,.0096,.42,12,1,false,0,Math.PI),COPPER);half.rotation.z=Math.PI/2;half.position.x=-.71;C.scoil.add(half)}
   C.scHit=new THREE.Mesh(new THREE.SphereGeometry(.45,12,8),hitMat);C.scoil.add(C.scHit);C.scHit.userData.tap=()=>C.spin();
   const cl=label('에나멜선 코일 (눌러서 살짝 돌려요)',LP(.14));cl.position.set(0,1.95,0);S.add(cl);
@@ -1066,7 +1087,7 @@ C.simpleTick=function(dt,t){
   // 반만 벗긴 쪽의 구리가 받침 고리(아래쪽)에 닿는 것은 cosθ<0 인 반 바퀴뿐 → 그때만 전류가 흘러 늘 같은 쪽으로 밀어요
   const ph=C.sth,touch=Math.cos(ph)<0&&!C.bturn;
   const tau=touch?-C.smag*C.sbat*2.2*Math.cos(ph):0;C.sw+=(tau*(Math.abs(C.sw)>.2||touch?1:0)-C.sw*.35)*dt;C.sth+=C.sw*dt;C.scoil.rotation.x=C.sth;
-  C.sCur.userData.set(touch?'⚡ 전류가 흘러요 (힘을 받아요)':'전류가 흐르지 않아요 (관성으로 돌아요)');
+  C.sflow.update(dt,.7,C.sbat,touch?1:0);C.sCur.userData.set(touch?'⚡ 전류가 흘러요 (힘을 받아요)':'전류가 흐르지 않아요 (관성으로 돌아요)');
   if(Math.abs(C.sw)>4&&!C.sfin){C.sfin=true;say('<b>간이 전동기가 돌아가요</b>에나멜선의 한쪽을 <b>반만 벗겨서</b> 반 바퀴마다 전류가 흘렀다 끊겼다 해요. 그래서 코일이 계속 <b>같은 방향</b>으로 힘을 받아 회전해요. 자석이나 전지를 뒤집으면 회전 방향이 바뀌어요.',10000);setTimeout(()=>celebrate('성공!','간이 전동기가 회전해요'),600);renderData()}
   C.hintG.visible=!C.sUsed;C.hintG.position.set(.6,1.6,.4);C.hintG.userData.tick(t);
 };
@@ -1081,7 +1102,7 @@ C.reset=function(){if(C.sbat<0){C.sbat=1;C.sBat.rotation.y=0}C.P.on=false;C.P.di
 const SC={
   A:{g:A.g,big:'코일과 자기장',title:'코일에 전류가 흐르면 어떻게 될까?',target:new V(0,.4,.1),dir:new V(0,1,.18),hw:3.9,hh:2.3,p:{target:new V(0,.4,.1),hw:3.5,hh:2.6},
      hint:'전원 장치의 빨간 버튼을 눌러 전류를 흘리고, 방향 레버와 세기 손잡이도 바꿔 보세요',
-     items:['자석끼리 서로 밀어내거나 끌어당기는 힘을 <b>자기력</b>, 자기력이 미치는 공간을 <b>자기장</b>이라고 해요. 자기장의 방향은 나침반 바늘의 <b>N극이 가리키는 방향</b>이에요.','코일에 전류가 흐르면 코일 주위에 <b>자기장</b>이 생겨요. 그 모습은 <b>막대자석 주위의 자기장</b>과 비슷해요.','코일에 흐르는 <b>전류의 방향</b>이 바뀌면 자기장의 방향이 <b>반대</b>가 되고, <b>전류의 세기가 클수록</b> 자기장이 세져요.','<b>전자석</b>은 코일에 전류가 흐를 때만 자석이 되는 장치로, 전류로 자기장의 방향이나 세기를 조절할 수 있어요. 자기 부상 열차, MRI 등에 이용돼요.']},
+     items:['자석끼리 서로 밀어내거나 끌어당기는 힘을 <b>자기력</b>, 자기력이 미치는 공간을 <b>자기장</b>이라고 해요. 자기장의 방향은 나침반 바늘의 <b>N극이 가리키는 방향</b>이에요.','코일에 전류가 흐르면 코일 주위에 <b>자기장</b>이 생겨요. 그 모습은 <b>막대자석 주위의 자기장</b>과 비슷해요.','코일에 흐르는 <b>전류의 방향</b>이 바뀌면 자기장의 방향이 <b>반대</b>가 되고, <b>전류의 세기가 클수록</b> 자기장이 세져요.','나침반 바늘은 <b>코일의 자기장</b>과 <b>지구 자기장</b>(북쪽)이 합쳐진 방향을 가리켜요. 전류가 약하거나 코일에서 멀수록 지구 자기장의 영향이 커서 바늘이 <b>북쪽</b>에 가까워져요. 코일 양 끝의 나침반은 처음에 코일과 수직(북쪽)이었다가 전류가 셀수록 더 크게 돌아가요.','<b>전자석</b>은 코일에 전류가 흐를 때만 자석이 되는 장치로, 전류로 자기장의 방향이나 세기를 조절할 수 있어요. 자기 부상 열차, MRI 등에 이용돼요.']},
   B:{g:B.g,big:'전기 그네',title:'자기장 안에 놓인 코일에 전류가 흐르면?',target:new V(-.2,1.0,0),dir:new V(.45,.55,1),hw:2.9,hh:1.6,p:{target:new V(-.3,1.0,0),hw:2.7,hh:2.3},
      hint:'전원을 켜고, 전류의 방향(레버)이나 자석(누르기)을 바꿔 그네가 움직이는 방향을 보세요',
      items:['자기장 안에 놓인 코일에 전류가 흐르면 코일이 <b>힘을 받아</b> 움직여요.','코일이 받는 힘의 방향은 <b>전류와 자기장의 방향에 모두 수직</b>이에요. 전류나 자기장의 방향이 바뀌면 힘의 방향도 바뀌어요.','힘의 크기는 <b>전류의 세기</b>와 <b>자기장의 세기</b>가 클수록 커요.','<b>오른손</b>의 네 손가락을 자기장 방향, 엄지를 전류 방향으로 하면 <b>손바닥이 향하는 방향</b>이 힘의 방향이에요.']},
