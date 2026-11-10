@@ -286,6 +286,7 @@ table.t th{color:#c3c9e8}
     <button class="tbtn go" id="aStep">한 달 뒤 ▶</button>
     <button class="tbtn" id="aPlay">▶ 1년 동안 공전</button>
     <button class="tbtn" id="aReset">처음으로</button>
+    <button class="tbtn" id="aFollow">🎥 지구 따라가기</button>
     <span class="sp"></span>
     <button class="tbtn" data-reset-view>시점 처음으로</button>
   </div>
@@ -894,7 +895,7 @@ addDrag({sc:'A',hit:()=>[SP.hit],normal:()=>new V(0,1,0),get:()=>SP.earth.positi
 A.tick=function(dt,t){
   if(A.play){A.setDay(A.day+dt*15)}
   SP.spin.rotation.y+=dt*.5;SP.cloud.rotation.y+=dt*.01;SP.rays.material.rotation=t*.02;
-  SP.hintG.visible=!A.used;SP.hintG.position.copy(SP.earth.position).add(new V(0,-.6,1.6));SP.hintG.userData.tick(t);
+  SP.hintG.visible=!A.used&&!A.follow;SP.hintG.position.copy(SP.earth.position).add(new V(0,-.6,1.6));SP.hintG.userData.tick(t);
   // 작은 화면: 시선을 태양에 고정
   SP.lc=SP.ls;// 태양을 늘 가운데에 두고 별자리가 움직여 보이게
   SP.ICAM.position.copy(SP.earth.position);lonVec(SP.lc,_q);SP.ICAM.up.set(0,1,0);SP.ICAM.lookAt(_q.add(SP.earth.position));
@@ -1025,6 +1026,7 @@ const SC={
 let cur='A';
 function showInfo(){const s=SC[cur];$('#big').textContent=s.big;$('#infoTitle').textContent=s.title;$('#infoList').innerHTML=s.items.map(t=>'<li>'+t+'</li>').join('');renderData()}
 function setScene(k){
+  if(k!=='A'&&A.follow)A.setFollow(false);
   cur=k;closePredict();hideSay();killTw('Ad');killTw('Bd');killTw('Cd');A.play=B.play=C.play=false;
   $('#aPlay').textContent='▶ 1년 동안 공전';$('#bPlay').textContent='▶ 1년 동안 보기';$('#cPlay').textContent='▶ 매일 같은 시각에 보기';
   SP.g.visible=k==='A';SKY.g.visible=k!=='A';B.g.visible=k==='B';C.g.visible=k==='C';
@@ -1040,7 +1042,7 @@ function setScene(k){
   showInfo();fit(true);
 }
 $$('#tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.sc!==cur)setScene(b.dataset.sc)});
-$$('[data-reset-view]').forEach(b=>b.onclick=()=>fit(true,true));
+$$('[data-reset-view]').forEach(b=>b.onclick=()=>{if(A.follow){A.setFollow(false);return}fit(true,true)});
 function chk(on){return '<span style="display:inline-block;width:1.3em;color:'+(on?'#9be36a':'#8a90b0')+'">'+(on?'✔':'○')+'</span>'}
 function renderData(){
   const el=$('#infoData');let h='';
@@ -1097,6 +1099,19 @@ canvas.addEventListener('pointerup',e=>{if(down&&down.mv){if(cur==='B'){const c=
 $('#aStep').onclick=()=>A.step();
 $('#aPlay').onclick=()=>{killTw('Ad');if(!A.play&&A.prog>=364.5){A.prog=0;A.day=0;A.l0=sunLon(0);A.setDay(0,true);renderData()}A.play=!A.play;A.used=true;hideSay();$('#aPlay').textContent=A.play?'❚❚ 멈추기':'▶ 1년 동안 공전'};
 $('#aReset').onclick=()=>{A.reset();hideSay()};
+/* 지구 따라가기: 지구 바로 뒤(태양 반대쪽) 조금 위에서 지구와 함께 공전하며 태양 쪽을 봐요 */
+A.follow=false;const FCP=new V(),FCT=new V(),_fo=new V();
+A.setFollow=function(on){A.follow=on;$('#aFollow').classList.toggle('on',on);$('#aFollow').textContent=on?'🎥 전체 보기':'🎥 지구 따라가기';controls.enabled=!on;
+  if(on){A.fk=0;FCP.copy(camera.position);FCT.copy(controls.target);say('<b>지구를 따라가며 보기</b>지구와 함께 공전하면서 태양 쪽을 바라봐요. 지구를 끌거나 「1년 동안 공전」을 누르면, 태양 뒤의 별자리가 <b>오른쪽(서쪽)으로 흘러가고</b> 태양은 별자리 사이를 <b>왼쪽(동쪽)으로</b> 옮겨 가는 것처럼 보여요.',9000)}
+  else{SP.earthL.visible=SP.dirG.visible=true;SP.months.forEach((l,i)=>l.visible=!portrait||i%3===0);SP.dirG.children[2].visible=!portrait;controls.target.copy(FCT);fit(true,true)}};
+$('#aFollow').onclick=()=>A.setFollow(!A.follow);
+A.followCam=function(dt){const e=SP.earth.position;_fo.copy(e).normalize();
+  // 지구 뒤 조금 오른쪽 위에서: 지구는 앞쪽 아래에 작게, 태양과 그 뒤 별자리는 가운데에
+  const side=new V(-_fo.z,0,_fo.x);const far=portrait?7.5:4.6;const pos=_fo.clone().multiplyScalar(e.length()+far).addScaledVector(side,portrait?0:-.7).add(new V(0,portrait?2.6:1.7,0)),tgt=_fo.clone().multiplyScalar(-RZ*.5).add(new V(0,portrait?-1.2:.9,0));
+  // 가까이 있어 너무 크게 보이는 이름표는 숨겨요
+  SP.earthL.visible=SP.dirG.visible=false;SP.months.forEach(l=>l.visible=false);SP.hintG.visible=false;
+  A.fk=Math.min(1,(A.fk||0)+dt*.9);const k=A.fk<1?Math.min(1,dt*2.5):1;// 처음엔 부드럽게 날아가고, 그다음엔 지구에 딱 붙어 따라가요
+  FCP.lerp(pos,A.fk<1?k:1);FCT.lerp(tgt,A.fk<1?k:1);if(A.fk>=1){FCP.copy(pos);FCT.copy(tgt)}camera.position.copy(FCP);camera.lookAt(FCT)};
 $$('#bSeas button').forEach(b=>b.onclick=()=>B.go(+b.dataset.d));
 $('#bStep').onclick=()=>B.step();
 $('#bPlay').onclick=()=>{killTw('Bd');B.play=!B.play;B.prog=0;hideSay();$('#bPlay').textContent=B.play?'❚❚ 멈추기':'▶ 1년 동안 보기';if(!B.play){B.setDay(Math.round(B.day));renderData()}};
@@ -1128,7 +1143,7 @@ function loop(now){
   runTweens(dt);SKYT.value=SUNT.value=t;
   if(cur==='A')A.tick(dt,t);else if(cur==='B')B.tick(dt);else C.tick(dt);
   rdT+=dt;if(rdT>.3&&(tweens.length||(cur==='A'&&(A.play||dragging))||(cur==='B'&&B.play))){rdT=0;renderData()}
-  if(cur==='A')controls.update();else G.look(dt);
+  if(cur==='A'){if(A.follow)A.followCam(dt);else controls.update()}else G.look(dt);
   renderer.render(scene,camera);renderView();
   requestAnimationFrame(loop);
 }
