@@ -961,7 +961,7 @@ const goB=h=>{killTw('Bt');const l0=SKY.lst,l1=Math.min(SKY.t0+24,l0+h);tweenOwn
 $('#b1').onclick=()=>goB(1);$('#b2').onclick=()=>goB(2);$('#b24').onclick=()=>goB(24-(SKY.lst-SKY.t0));
 $('#bReset').onclick=()=>{killTw('Bt');SKY.setLST(SKY.t0);B.update();renderData();hideSay()};$('#bTrail').onchange=()=>{SKY.trailOn=$('#bTrail').checked;SKY.update()};
 $$('#cView button').forEach(b=>b.onclick=()=>C.setView(b.dataset.v));
-$('#cPlay').onclick=()=>{C.play=!C.play;$('#cPlay').textContent=C.play?'❚❚ 멈추기':'▶ 시간 흐르기'};$('#cTrail').onchange=()=>{SKY.trailOn=$('#cTrail').checked;SKY.update()};
+$('#cPlay').onclick=()=>{if(!C.play&&SKY.lst>=SKY.t0+11.95){$('#cT').value=0;SKY.setLST(SKY.t0);hideSay()}C.play=!C.play;$('#cPlay').textContent=C.play?'❚❚ 멈추기':'▶ 시간 흐르기'};$('#cTrail').onchange=()=>{SKY.trailOn=$('#cTrail').checked;SKY.update()};
 $('#cT').oninput=()=>{SKY.setLST(SKY.t0+$('#cT').value/10);renderData()};
 $('#cReset').onclick=()=>{C.play=false;$('#cT').value=0;$('#cPlay').textContent='▶ 시간 흐르기';SKY.setLST(SKY.t0);renderData();hideSay()};
 /* ---------- 루프 ---------- */

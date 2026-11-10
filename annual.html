@@ -854,7 +854,8 @@ SP.setTrail=function(l0,deg){const P=SP.trail.geometry.attributes.position,n=Mat
 /* ---------- ① 태양의 연주 운동 ---------- */
 const A={g:SP.g,day:0,prog:0,fin:false,used:false,play:false,l0:sunLon(0)};
 A.setDay=function(t,quiet){const d=t-A.day;A.day=t;if(d>0)A.prog+=d;SP.place(t,'A');SP.setTrail(A.l0,Math.min(360,A.prog*.9856));$('#chip').textContent=dateTxt(t);if(!quiet)A.check()};
-A.check=function(){if(!A.fin&&A.prog>=364.5){A.fin=true;A.play=false;$('#aPlay').textContent='▶ 1년 동안 공전';renderData();
+A.check=function(){if(A.fin&&A.play&&A.prog>=364.5){A.play=false;$('#aPlay').textContent='▶ 1년 동안 공전';renderData()}
+  if(!A.fin&&A.prog>=364.5){A.fin=true;A.play=false;$('#aPlay').textContent='▶ 1년 동안 공전';renderData();
   say('<b>지구가 태양 둘레를 한 바퀴 돌았어요</b>그동안 태양은 별자리 사이를 <b>서 → 동</b>으로 움직여 <b>황도</b>를 따라 한 바퀴 돌고 처음 자리로 돌아왔어요. 태양이 실제로 움직인 것이 아니라 <b>지구가 공전</b>해서 나타나는 <b>겉보기 운동</b>이에요.',12000);
   setTimeout(()=>celebrate('성공!','태양은 1년에 한 바퀴씩 연주 운동을 해요'),700)}};
 A.tell=function(){const k=SP.hot,o=dateOf(A.day);say('<b>'+dateTxt(A.day)+' · 태양은 '+CONS[k].n+' 방향</b>지구에서 태양을 보면 태양이 <b>'+CONS[k].n+'</b> 앞에 있는 것처럼 보여요. 이 별자리는 태양과 함께 뜨고 지므로 이 무렵에는 볼 수 없어요.',8000)};
@@ -1057,7 +1058,7 @@ canvas.addEventListener('pointerup',e=>{if(down&&down.mv){if(cur==='B'){const c=
   if(cur==='C'){const k=[0,15,30].find(k=>Math.abs(C.off-k)<2);if(k!==undefined)C.go(k)}}down=null});
 /* ---------- 버튼 ---------- */
 $('#aStep').onclick=()=>A.step();
-$('#aPlay').onclick=()=>{killTw('Ad');A.play=!A.play;A.used=true;hideSay();$('#aPlay').textContent=A.play?'❚❚ 멈추기':'▶ 1년 동안 공전'};
+$('#aPlay').onclick=()=>{killTw('Ad');if(!A.play&&A.prog>=364.5){A.prog=0;A.day=0;A.l0=sunLon(0);A.setDay(0,true);renderData()}A.play=!A.play;A.used=true;hideSay();$('#aPlay').textContent=A.play?'❚❚ 멈추기':'▶ 1년 동안 공전'};
 $('#aReset').onclick=()=>{A.reset();hideSay()};
 $$('#bSeas button').forEach(b=>b.onclick=()=>B.go(+b.dataset.d));
 $('#bStep').onclick=()=>B.step();
