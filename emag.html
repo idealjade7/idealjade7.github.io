@@ -859,7 +859,7 @@ A.tick=function(dt,t){
     A.fl.visible=A.P.on&&$('#aF').checked;A.lines.forEach(L=>{L.m.material.opacity=.25+.2*A.P.I});
     if(A.fl.visible&&A.fdir!==Math.sign(k)){A.fdir=Math.sign(k);A.setFieldDir(A.fdir)}
     // 코일 위 전류 화살표
-    A.ca.visible=A.P.on;if(A.P.on){for(let i=0;i<NT*2;i++){const j=Math.floor((((i+.25+((t*.8)%1))/(NT*2))%1)*(A.helix.length-2)),a=A.helix[j],b=A.helix[j+1];const tg=b.clone().sub(a).normalize().multiplyScalar(A.P.dir);
+    A.ca.visible=A.P.on;if(A.P.on){A.cph=((A.cph||0)+dt*(.5+.3*A.P.I)*A.P.dir)%1;if(A.cph<0)A.cph+=1;for(let i=0;i<NT*2;i++){const j=Math.floor((((i+.25+A.cph)/(NT*2))%1)*(A.helix.length-2)),a=A.helix[j],b=A.helix[j+1];const tg=b.clone().sub(a).normalize().multiplyScalar(A.P.dir);
       _o3.position.copy(a).addScaledVector(a.clone().setX(0).sub(new V(0,CY,0)).normalize(),.07);_o3.position.x=a.x;_o3.quaternion.setFromUnitVectors(new V(0,1,0),tg);_o3.scale.setScalar(1);_o3.updateMatrix();A.ca.setMatrixAt(i,_o3.matrix)}A.ca.instanceMatrix.needsUpdate=true}
     const bc=A.Bat(new V(0,CY,0),new V()).x*A.P.dir;A.nL.visible=A.sL.visible=A.P.on;
     A.nL.position.set(bc>0?CLN/2+.5:-CLN/2-.5,CY+.3,0);A.sL.position.set(bc>0?-CLN/2-.5:CLN/2+.5,CY+.3,0);
