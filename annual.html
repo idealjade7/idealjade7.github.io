@@ -180,6 +180,15 @@ i.ce{background:#2f86ff}i.cp{background:#ff4d5e}
 .info small{color:var(--muted);font-size:12px}
 @media (min-width:721px){.stage[data-sc="A"] .toast{left:calc(min(300px,26vw) + 30px);max-width:400px}}
 .view.sq span{font-size:11.5px}
+.cal{display:none;position:absolute;left:16px;bottom:18px;z-index:3;align-items:center;gap:12px;background:rgba(10,14,34,.78);border:1px solid rgba(255,227,138,.4);border-radius:16px;padding:10px 14px;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.stage[data-sc="C"] .cal{display:flex}.stage[data-sc="C"] .chip{display:none}
+.cal .clk{width:74px;height:74px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.cal .page{width:66px;border-radius:8px;overflow:hidden;background:#fff;text-align:center;box-shadow:0 3px 8px rgba(0,0,0,.45);transform-origin:50% 0;perspective:300px}
+.cal .page b{display:block;background:#d8433a;color:#fff;font-size:14px;padding:3px 0}.cal .page strong{display:block;color:#1c1c24;font-size:32px;line-height:44px;font-weight:900}
+.cal .page.flip{animation:flip .26s ease-out}@keyframes flip{0%{transform:rotateX(-80deg);opacity:.3}100%{transform:none;opacity:1}}
+.cal .cap{color:#dfe6ff;font-size:13px;line-height:1.45}.cal .cap b{color:#ffe08a}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:2}.flash.on{animation:fl .3s ease-out}@keyframes fl{0%{opacity:var(--fo,.2)}100%{opacity:0}}
+@media (max-width:720px){.cal{bottom:96px;left:10px;padding:7px 10px;gap:8px}.cal .clk{width:50px;height:50px}.cal .page{width:48px}.cal .page b{font-size:11px}.cal .page strong{font-size:22px;line-height:30px}.cal .cap{font-size:11px}}
 .stage:not([data-sc="A"]) .big{font-size:clamp(20px,2.6vw,30px)!important}
 .compass{width:min(340px,52vw)!important}
 @media (min-width:721px){.stage:not([data-sc="A"]) .compass{margin-left:80px}}
@@ -235,6 +244,17 @@ table.t th{color:#c3c9e8}
   <div class="big" id="big"></div>
   <div class="compass" id="compass" aria-hidden="true"><div class="strip"></div><i></i></div>
   <div class="chip" id="chip"></div>
+  <div class="cal" id="cal" aria-hidden="true">
+    <svg viewBox="0 0 100 100" class="clk"><defs><radialGradient id="cg" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#fffdf5"/><stop offset="1" stop-color="#e6dcc4"/></radialGradient></defs>
+      <circle cx="50" cy="50" r="46" fill="url(#cg)" stroke="#3a2e1a" stroke-width="5"/>
+      <g stroke="#3a2e1a" stroke-linecap="round"><line x1="50" y1="9" x2="50" y2="17" stroke-width="3.2" transform="rotate(0 50 50)"/><line x1="50" y1="11" x2="50" y2="15" stroke-width="1.8" transform="rotate(30 50 50)"/><line x1="50" y1="11" x2="50" y2="15" stroke-width="1.8" transform="rotate(60 50 50)"/><line x1="50" y1="9" x2="50" y2="17" stroke-width="3.2" transform="rotate(90 50 50)"/><line x1="50" y1="11" x2="50" y2="15" stroke-width="1.8" transform="rotate(120 50 50)"/><line x1="50" y1="11" x2="50" y2="15" stroke-width="1.8" transform="rotate(150 50 50)"/><line x1="50" y1="9" x2="50" y2="17" stroke-width="3.2" transform="rotate(180 50 50)"/><line x1="50" y1="11" x2="50" y2="15" stroke-width="1.8" transform="rotate(210 50 50)"/><line x1="50" y1="11" x2="50" y2="15" stroke-width="1.8" transform="rotate(240 50 50)"/><line x1="50" y1="9" x2="50" y2="17" stroke-width="3.2" transform="rotate(270 50 50)"/><line x1="50" y1="11" x2="50" y2="15" stroke-width="1.8" transform="rotate(300 50 50)"/><line x1="50" y1="11" x2="50" y2="15" stroke-width="1.8" transform="rotate(330 50 50)"/></g>
+      <line x1="50" y1="50" x2="50" y2="25" stroke="#1d1a14" stroke-width="5" stroke-linecap="round" transform="rotate(240 50 50)"/>
+      <line x1="50" y1="50" x2="50" y2="15" stroke="#1d1a14" stroke-width="3.2" stroke-linecap="round"/>
+      <circle cx="50" cy="50" r="4" fill="#c0392b"/></svg>
+    <div class="page" id="calPage"><b id="calM">4월</b><strong id="calD">1</strong></div>
+    <span class="cap">매일 <b>오후 8시</b><br>시각은 그대로, 날짜만 바뀌어요</span>
+  </div>
+  <div class="flash" id="flash"></div>
   <div class="view" id="view" aria-hidden="true"><span id="viewCap"></span><em class="ew l">← 동</em><em class="ew r">서 →</em></div>
   <section class="info" id="info" aria-live="polite">
     <h2><span id="infoTitle"></span><button class="toggle" id="infoToggle" aria-expanded="true">접기</button></h2>
@@ -961,18 +981,28 @@ C.shot=function(off){if(C.shots[off])return;const L=lstDC(C.d0+off,C.clock),c=CO
   horVec(c.s[0][0],c.s[0][1],L,_a);const l=label(dateTxt(C.d0+off),{bg:'rgba(18,24,44,.86)',fg:col[1],size:.72});l.position.copy(_a).multiplyScalar(HR*.95).add(new V(0,1.5,0));g.add(l);
   // 앞 관측과 사이의 이동(가운데 별이 지나간 길)
   if(off>0){const s=c.s[3],L0=lstDC(C.d0+off-15,C.clock),ap=[];let dl=L-L0;if(dl<0)dl+=24;for(let i=0;i<=20;i++){horVec(s[0],s[1],L0+dl*i/20,_a);ap.push(_a.clone().multiplyScalar(HR*.965))}
-    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ap),new THREE.LineBasicMaterial({color:0xffd24a,transparent:true,opacity:.95,depthWrite:false})));
     const hd=new THREE.Mesh(new THREE.ConeGeometry(.16,.5,12),new THREE.MeshBasicMaterial({color:0xffd24a,depthTest:false}));hd.position.copy(ap[20]);hd.quaternion.setFromUnitVectors(new V(0,1,0),ap[20].clone().sub(ap[18]).normalize());g.add(hd);
     const al=label('15일 동안 약 15°',{bg:'rgba(255,210,74,.95)',fg:'#2a2000',size:.62});al.position.copy(ap[10]).add(new V(-1.2,-1.5,-3.6));g.add(al)}
   C.g.add(g);C.shots[off]=g;renderData();
   if(off===15)say('<b>4월 16일 · 15일 뒤</b>같은 시각인데 오리온자리가 <b>서쪽으로 약 15°</b> 옮겨 갔어요. 별자리는 하루에 약 <b>1°</b>씩 동 → 서로 이동해요.',9000);
   if(off===30){say('<b>5월 1일 · 30일 뒤</b>오리온자리가 서쪽 지평선에 더 가까워졌어요. 별자리가 태양 쪽(서쪽)으로 다가간 것은, 별자리를 기준으로 보면 <b>태양이 서 → 동</b>으로 움직인 것과 같아요. 지구가 <b>공전</b>하기 때문에 나타나는 현상이에요.',12000);
     if(!C.fin){C.fin=true;setTimeout(()=>celebrate('성공!','같은 시각의 별자리는 하루에 약 1°씩 서쪽으로 이동해요'),900)}}};
-C.setOff=function(o){const p=C.off;C.off=clamp(o,0,30);SKY.set(C.d0+C.off,C.clock);$('#chip').textContent=dateTxt(C.d0+C.off)+' · 오후 8시';$('#cT').value=Math.round(C.off);
-  [15,30].forEach(k=>{if(p<k&&C.off>=k-.01||Math.abs(C.off-k)<.25)C.shot(k)})};
-C.go=function(to){if(C.play)return;killTw('Cd');C.used=true;tweenOwn('Cd',C.off,to,2.4,v=>C.setOff(v),()=>renderData())};
-C.reset=function(){killTw('Cd');C.play=false;$('#cPlay').textContent='▶ 매일 같은 시각에 보기';[15,30].forEach(k=>{if(C.shots[k]){C.g.remove(C.shots[k]);delete C.shots[k]}});C.fin=false;C.setOff(0);renderData();hideSay()};
-C.tick=function(dt){if(C.play){C.setOff(C.off+dt*4);if(C.off>=30){C.play=false;$('#cPlay').textContent='▶ 매일 같은 시각에 보기'}renderData()}};
+/* 하루에 한 장씩: 매일 오후 8시 가운데 별(삼태성 가운데)의 자리를 점으로 남겨요 */
+C.dots=[];(function(){const s=CONS.orion.s[3];for(let i=0;i<=30;i++){horVec(s[0],s[1],lstDC(C.d0+i,C.clock),_a);
+  const d=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex('rgba(255,236,150,1)','rgba(255,200,60,0)'),transparent:true,depthWrite:false,depthTest:false,blending:THREE.AdditiveBlending}));
+  d.scale.setScalar(i%15?.34:.5);d.position.copy(_a).multiplyScalar(HR*.96);d.renderOrder=8;d.visible=false;C.g.add(d);C.dots.push(d)}})();
+C.snap=function(drag){const f=$('#flash');f.classList.remove('on');void f.offsetWidth;f.style.setProperty('--fo',drag?.08:.22);f.classList.add('on');
+  const pg=$('#calPage');pg.classList.remove('flip');void pg.offsetWidth;pg.classList.add('flip')};
+C.setOff=function(o,force,drag){const p=C.off,n=clamp(Math.round(o),0,30);if(n===p&&!force)return;C.off=n;SKY.set(C.d0+n,C.clock);
+  const dt=dateOf(C.d0+n);$('#calM').textContent=dt.m+'월';$('#calD').textContent=dt.d;$('#cT').value=n;
+  C.dots.forEach((d,i)=>d.visible=i<=n);if(n!==p)C.snap(drag);
+  [15,30].forEach(k=>{if(p<k&&n>=k||n===k)C.shot(k)})};
+C.go=function(to){if(C.play)return;C.used=true;C.target=to;C.acc=0};
+C.reset=function(){C.target=null;C.play=false;$('#cPlay').textContent='▶ 매일 같은 시각에 보기';[15,30].forEach(k=>{if(C.shots[k]){C.g.remove(C.shots[k]);delete C.shots[k]}});C.fin=false;C.setOff(0,true);renderData();hideSay()};
+C.acc=0;C.target=null;
+C.tick=function(dt){const goal=C.play?30:C.target;if(goal==null)return;C.acc+=dt*(C.play?3.5:6);
+  while(C.acc>=1&&C.off!==goal){C.acc-=1;C.setOff(C.off+(goal>C.off?1:-1));renderData()}
+  if(C.off===goal){C.target=null;C.acc=0;if(C.play){C.play=false;$('#cPlay').textContent='▶ 매일 같은 시각에 보기'}renderData()}};
 
 /* =====================================================
    화면 전환 · 설명 · 데이터
@@ -984,7 +1014,7 @@ const SC={
   B:{g:B.g,big:'계절별 별자리',title:'계절마다 한밤중에 보이는 별자리가 다른 까닭은?',hint:'하늘을 서쪽(오른쪽)으로 끌거나 아래 버튼으로 날짜를 바꿔 보세요',
      items:['한밤중에는 지구에서 볼 때 <b>태양의 반대쪽</b>에 있는 별자리가 남쪽 하늘에 보여요.','<b>태양과 같은 방향</b>에 있는 별자리는 태양과 함께 뜨고 지기 때문에 볼 수 없어요.','지구가 <b>공전</b>하면서 태양의 반대쪽에 놓이는 별자리가 달라지므로, <b>계절마다</b> 한밤중에 보이는 별자리가 달라져요.','오른쪽 아래 그림에서 <b>하늘색 화살표</b>는 한밤중에 우리가 보는 방향이고, <b>노란 점선</b>은 태양이 보이는 방향이에요.']},
   C:{g:C.g,big:'15일마다 관측',title:'매일 같은 시각에 본 별자리는 어떻게 달라질까?',hint:'하늘을 끌거나 「15일 뒤 관측」을 눌러 보세요',
-     items:['해가 진 뒤 <b>같은 시각</b>(오후 8시)에 서쪽 하늘을 15일 간격으로 관측해요.','별자리는 하루에 약 <b>1°</b>씩 <b>동 → 서</b>로 이동해서, 15일 뒤에는 약 15° 서쪽에 있어요.','별자리가 해가 진 쪽으로 다가가는 것은, 별자리를 기준으로 보면 <b>태양이 서 → 동</b>으로 이동하는 것과 같아요.','이처럼 별자리의 위치가 날마다 달라지는 것도 <b>지구의 공전</b> 때문이에요.']}
+     items:['해가 진 뒤 <b>같은 시각</b>(오후 8시)에 서쪽 하늘을 관측해요. 왼쪽 아래 <b>시계는 오후 8시에 멈춰 있고, 달력만</b> 하루씩 넘어가요.','매일 밤 찍은 사진처럼 오리온자리 가운데 별의 자리가 <b>노란 점</b>으로 하나씩 남아요. 점 사이 간격이 약 <b>1°</b>예요. 이어진 선으로 그려지는 일주 운동과 달리 하루에 한 번씩 끊어서 보는 거예요.','별자리는 하루에 약 <b>1°</b>씩 <b>동 → 서</b>로 이동해서, 15일 뒤에는 약 15° 서쪽에 있어요.','별자리가 해가 진 쪽으로 다가가는 것은, 별자리를 기준으로 보면 <b>태양이 서 → 동</b>으로 이동하는 것과 같아요.','이처럼 별자리의 위치가 날마다 달라지는 것도 <b>지구의 공전</b> 때문이에요.']}
 };
 let cur='A';
 function showInfo(){const s=SC[cur];$('#big').textContent=s.big;$('#infoTitle').textContent=s.title;$('#infoList').innerHTML=s.items.map(t=>'<li>'+t+'</li>').join('');renderData()}
@@ -1000,7 +1030,7 @@ function setScene(k){
   scene.background=k==='A'?SPACEBG:NIGHTBG;controls.enabled=k==='A';
   if(k==='A'){SP.starG.position.set(0,0,0);SP.earth.scale.setScalar(1);A.setDay(A.day,true)}
   if(k==='B'){G.taz=Math.PI;G.tel=40*D2R;SKY.eclOn=$('#bEcl').checked;B.setDay(B.day)}
-  if(k==='C'){G.taz=258*D2R;G.tel=24*D2R;SKY.eclOn=false;SKY.hot='orion';SKY.paint();C.setOff(C.off);C.shot(0)}
+  if(k==='C'){G.taz=258*D2R;G.tel=24*D2R;SKY.eclOn=false;SKY.hot='orion';SKY.paint();C.setOff(C.off,true);C.shot(0)}
   showInfo();fit(true);
 }
 $$('#tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.sc!==cur)setScene(b.dataset.sc)});
@@ -1053,7 +1083,7 @@ canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,b:B.day,
   if(cur!=='A'){canvas.setPointerCapture&&canvas.setPointerCapture(e.pointerId)}});
 canvas.addEventListener('pointermove',e=>{if(!down||dragging||cur==='A')return;const dx=(e.clientX-down.x)/canvas.clientWidth;if(Math.abs(e.clientX-down.x)<6&&!down.mv)return;down.mv=true;
   if(cur==='B'&&!B.play){killTw('Bd');B.used=true;B.setDay(down.b+dx*120);renderData()}
-  if(cur==='C'&&!C.play){killTw('Cd');C.used=true;C.setOff(down.c+dx*60);renderData()}});
+  if(cur==='C'&&!C.play){C.target=null;C.used=true;C.setOff(down.c+dx*60,false,true);renderData()}});
 canvas.addEventListener('pointerup',e=>{if(down&&down.mv){if(cur==='B'){const c=((B.day%365)+365)%365;const s=SEAS.find(s=>Math.abs(c-s[0])<4);if(s)B.go(s[0],.5);else B.tell()}
   if(cur==='C'){const k=[0,15,30].find(k=>Math.abs(C.off-k)<2);if(k!==undefined)C.go(k)}}down=null});
 /* ---------- 버튼 ---------- */
@@ -1065,9 +1095,9 @@ $('#bStep').onclick=()=>B.step();
 $('#bPlay').onclick=()=>{killTw('Bd');B.play=!B.play;B.prog=0;hideSay();$('#bPlay').textContent=B.play?'❚❚ 멈추기':'▶ 1년 동안 보기';if(!B.play){B.setDay(Math.round(B.day));renderData()}};
 $('#bEcl').onchange=()=>{SKY.eclOn=$('#bEcl').checked;SKY.set(SKY.d,SKY.c)};
 $('#bReset').onclick=()=>B.reset();
-$('#c15').onclick=()=>{if(C.off>=29.9)return say('5월 1일까지 관측했어요. 「처음으로」를 누르면 다시 할 수 있어요.',4000);C.go(C.off<14.9?15:30)};
-$('#cPlay').onclick=()=>{killTw('Cd');if(!C.play&&C.off>=29.9)C.setOff(0);C.play=!C.play;hideSay();$('#cPlay').textContent=C.play?'❚❚ 멈추기':'▶ 매일 같은 시각에 보기'};
-$('#cT').oninput=()=>{if(C.play)return;killTw('Cd');C.setOff(+$('#cT').value);renderData()};
+$('#c15').onclick=()=>{if(C.off>=30)return say('5월 1일까지 관측했어요. 「처음으로」를 누르면 다시 할 수 있어요.',4000);C.go(C.off<14.9?15:30)};
+$('#cPlay').onclick=()=>{C.target=null;C.acc=0;if(!C.play&&C.off>=30)C.setOff(0);C.play=!C.play;hideSay();$('#cPlay').textContent=C.play?'❚❚ 멈추기':'▶ 매일 같은 시각에 보기'};
+$('#cT').oninput=()=>{if(C.play)return;C.target=null;C.setOff(+$('#cT').value,false,true);renderData()};
 $('#cReset').onclick=()=>C.reset();
 /* ---------- 작은 화면(같은 WebGL에서 렌더 타깃으로) ---------- */
 const VIEW={rt:new THREE.WebGLRenderTarget(512,512),oScene:new THREE.Scene(),oCam:new THREE.OrthographicCamera(0,1,1,0,-1,1),el:null};
