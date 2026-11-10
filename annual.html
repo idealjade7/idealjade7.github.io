@@ -180,6 +180,9 @@ i.ce{background:#2f86ff}i.cp{background:#ff4d5e}
 .info small{color:var(--muted);font-size:12px}
 @media (min-width:721px){.stage[data-sc="A"] .toast{left:calc(min(300px,26vw) + 30px);max-width:400px}}
 .view.sq span{font-size:11.5px}
+.mt{font-size:13px;font-weight:700;color:#c3c9e8;margin-bottom:6px}.mt small{font-weight:400;font-size:11.5px}
+.mg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.mg span{font-size:12.5px;text-align:center;padding:4px 2px;border-radius:7px;background:rgba(255,255,255,.05);color:#dfe6ff;line-height:1.3}
+.mg span b{display:block;font-size:11px;color:#9fb0d8;font-weight:600}.mg span.on{background:rgba(255,210,74,.92);color:#2a2000;font-weight:800}.mg span.on b{color:#5a4300}
 .cal{display:none;position:absolute;left:16px;bottom:18px;z-index:3;align-items:center;gap:12px;background:rgba(10,14,34,.78);border:1px solid rgba(255,227,138,.4);border-radius:16px;padding:10px 14px;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .stage[data-sc="C"] .cal{display:flex}.stage[data-sc="C"] .chip{display:none}
 .cal .clk{width:74px;height:74px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
@@ -788,8 +791,11 @@ const SPACEBG=cnv(16,256,(g,W,H)=>{const gr=g.createLinearGradient(0,0,0,H);gr.a
   SP.names={};SP.mapN={};
   ZK.forEach(k=>{const c=CONS[k],m=new V();let lo=1;c.s.forEach(s=>{m.add(eclVec(s[0],s[1],a));lo=Math.min(lo,a.y)});m.normalize();c.dir=m.clone();c.lon=((Math.atan2(-m.z,m.x)/D2R)+360)%360;
     const h=new V(m.x,0,m.z).normalize();
-    const mk=(o,hot)=>{const l=label(c.n,o);l.position.copy(m).multiplyScalar(RZ);l.position.y=lo*RZ-.75;l.layers.set(5);l.visible=!hot;SP.starG.add(l);return l};
+    const mk=(o,hot,ly,tx)=>{const l=label(tx||c.n,o);l.position.copy(m).multiplyScalar(RZ);l.position.y=lo*RZ-.75;l.layers.set(ly||1);l.visible=!hot;SP.starG.add(l);return l};
     SP.names[k]={n:mk({fg:'#c9d8ff',stroke:'rgba(0,0,0,.75)',size:.78},0),h:mk({bg:'rgba(255,210,74,.96)',fg:'#2a2000',size:.86},1)};
+    {const ms=[];for(let mo=0;mo<12;mo++)if(zodOf(sunLon(MD[mo]))===k)ms.push(mo+1);
+     if(ms.length){const t=label(ms.join('·')+'월',{bg:'rgba(255,210,74,.2)',fg:'#ffe08a',size:.6});t.position.copy(m).multiplyScalar(RZ);t.position.y=lo*RZ-1.55;t.layers.set(1);SP.starG.add(t)}c.mon=ms.join('·')+'월'}
+    {const N=SP.names[k],tx=c.n+' · '+(c.mon||'');N.n2=mk({fg:'#c9d8ff',stroke:'rgba(0,0,0,.75)',size:.8},0,2,tx);N.h2=mk({bg:'rgba(255,210,74,.96)',fg:'#2a2000',size:.88},1,2,tx);N.n2.position.y+=.5;N.h2.position.y+=.5}
     const short=c.n.replace('자리','');
     const mm=(o,hot)=>{const l=label(short,o);l.position.copy(h).multiplyScalar(RZ+3.1);l.position.y=3;l.layers.set(3);l.visible=!hot;SP.g.add(l);return l};
     SP.mapN[k]={n:mm({fg:'#c9d8ff',stroke:'rgba(0,0,0,.75)',size:1.75},0),h:mm({bg:'rgba(120,220,255,.96)',fg:'#04202c',size:1.9},1),s:mm({bg:'rgba(255,210,74,.96)',fg:'#2a2000',size:1.9},1)}});
@@ -863,7 +869,7 @@ SP.place=function(t,mode){const ls=sunLon(t);SP.day=t;SP.ls=ls;
   SP.earthL.position.copy(SP.earth.position).add(new V(0,1.4,0));
   const zs=zodOf(ls),zn=zodOf(ls+180);
   if(SP.hot!==zs||SP.hotN!==zn||SP.mode!==mode){SP.hot=zs;SP.hotN=zn;SP.mode=mode;
-    ZK.forEach(k=>{const hot=mode==='A'&&k===zs;SP.names[k].n.visible=!hot;SP.names[k].h.visible=hot;SP.mapN[k].h.visible=k===zn;SP.mapN[k].s.visible=k===zs;SP.mapN[k].n.visible=k!==zn&&k!==zs});
+    ZK.forEach(k=>{const hot=mode==='A'&&k===zs;SP.names[k].n.visible=SP.names[k].n2.visible=!hot;SP.names[k].h.visible=SP.names[k].h2.visible=hot;SP.mapN[k].h.visible=k===zn;SP.mapN[k].s.visible=k===zs;SP.mapN[k].n.visible=k!==zn&&k!==zs});
     SP.cl.userData.paint(k=>mode==='A'?(k===zs?CGOLD:CBLUE):(k===zn?[.47,.86,1]:k===zs?CGOLD:CBLUE))}
   // 한밤중 화살표
   const e=SP.earth.position,d=_p,L=RZ-RO-3.0;SP.night.position.copy(e).addScaledVector(d,2.4);SP.night.quaternion.setFromUnitVectors(new V(0,1,0),d);SP.nSh.scale.y=L-1.3;SP.nSh.position.y=(L-1.3)/2;SP.nHd.position.y=L-.65;
@@ -1040,7 +1046,8 @@ function renderData(){
   const el=$('#infoData');let h='';
   if(cur==='A'){const deg=Math.min(360,A.prog*.9856);
     h='<div class="card mission"><b>해 보기</b> · 지구를 태양 둘레로 한 바퀴 공전시키기 ('+Math.round(deg)+'°/360°) '+(A.fin?'✔':'')+'</div>'+
-      '<div class="card"><table class="t"><tr><th>날짜</th><td><b>'+dateTxt(A.day)+'</b></td></tr><tr><th>태양이 지나는 별자리</th><td><b>'+CONS[zodOf(sunLon(A.day))].n+'</b></td></tr><tr><th>지구의 공전</th><td>서 → 동 (1년에 한 바퀴)</td></tr><tr><th>태양의 연주 운동</th><td>서 → 동 (하루에 약 1°)</td></tr></table></div>';
+      '<div class="card"><table class="t"><tr><th>날짜</th><td><b>'+dateTxt(A.day)+'</b></td></tr><tr><th>태양이 지나는 별자리</th><td><b>'+CONS[zodOf(sunLon(A.day))].n+'</b></td></tr><tr><th>지구의 공전</th><td>서 → 동 (1년에 한 바퀴)</td></tr><tr><th>태양의 연주 운동</th><td>서 → 동 (하루에 약 1°)</td></tr></table></div>'+
+      '<div class="card"><div class="mt">달마다 태양이 지나는 별자리 <small>(매달 1일)</small></div><div class="mg">'+Array.from({length:12},(_,i)=>{const k=zodOf(sunLon(MD[i]));return '<span'+(dateOf(A.day).m===i+1?' class="on"':'')+'><b>'+(i+1)+'월</b>'+CONS[k].n.replace('자리','')+'</span>'}).join('')+'</div></div>';
   }else if(cur==='B'){const ls=sunLon(B.day+MID);
     h='<div class="card mission"><b>해 보기</b> · 네 계절의 한밤중 별자리 알아보기 ('+B.seen.size+'/4) '+(B.fin?'✔':'')+'<br>'+SEAS.map(s=>chk(B.seen.has(s[1]))+s[1]+'월').join(' ')+'</div>'+
       '<div class="card"><table class="t"><tr><th>날짜</th><td><b>'+dateTxt(B.day)+'</b> 한밤중</td></tr><tr><th>한밤중 남쪽 하늘</th><td><b style="color:#8fdcff">'+CONS[zodOf(ls+180)].n+'</b></td></tr><tr><th>태양이 있는 쪽</th><td><b style="color:#ffd76a">'+CONS[zodOf(ls)].n+'</b> (볼 수 없음)</td></tr></table></div>';
