@@ -774,7 +774,7 @@ function renderView(){if(cur!=='A'||!VIEW.el)return;const r=VIEW.el.getBoundingC
   const tw=Math.round(w*pr),th=Math.round(h*pr);if(VIEW.rt.width!==tw||VIEW.rt.height!==th)VIEW.rt.setSize(tw,th);
   A.ICAM.aspect=w/h;A.ICAM.updateProjectionMatrix();const bg=scene.background,env=scene.environment;scene.background=VIEWBG;scene.environment=null;
   renderer.setRenderTarget(VIEW.rt);renderer.clear();renderer.render(scene,A.ICAM);renderer.setRenderTarget(null);scene.background=bg;scene.environment=env;
-  const W=c.width/pr,H=c.height/pr;Object.assign(VIEW.oCam,{left:0,right:W,top:H,bottom:0});VIEW.oCam.updateProjectionMatrix();
+  const W=c.width,H=c.height;Object.assign(VIEW.oCam,{left:0,right:W,top:H,bottom:0});VIEW.oCam.updateProjectionMatrix();
   VIEW.quad.position.set(r.left-c.left+r.width/2,H-(r.top-c.top+r.height/2),0);VIEW.quad.scale.set(w,h,1);
   const ac=renderer.autoClear;renderer.autoClear=false;renderer.clearDepth();renderer.render(VIEW.oScene,VIEW.oCam);renderer.autoClear=ac}
 

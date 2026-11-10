@@ -1080,7 +1080,7 @@ function renderView(){if(cur==='C'||!VIEW.el)return;const r=VIEW.el.getBoundingC
   else{cam=SP.MCAM;const R=RZ+(w<230?8.2:6.6);cam.left=-R*w/h;cam.right=R*w/h;cam.top=R;cam.bottom=-R;cam.updateProjectionMatrix();SP.g.visible=true;SKY.g.visible=false;SP.earth.scale.setScalar(2.6)}
   renderer.setRenderTarget(VIEW.rt);renderer.clear();renderer.render(scene,cam);renderer.setRenderTarget(null);scene.background=bg;
   if(cur==='A'){SP.starG.position.set(0,0,0)}else{SP.g.visible=false;SKY.g.visible=true;SP.earth.scale.setScalar(1)}
-  const W=c.width/pr,H=c.height/pr;Object.assign(VIEW.oCam,{left:0,right:W,top:H,bottom:0});VIEW.oCam.updateProjectionMatrix();
+  const W=c.width,H=c.height;Object.assign(VIEW.oCam,{left:0,right:W,top:H,bottom:0});VIEW.oCam.updateProjectionMatrix();
   VIEW.quad.position.set(r.left-c.left+r.width/2,H-(r.top-c.top+r.height/2),0);VIEW.quad.scale.set(w,h,1);
   const ac=renderer.autoClear;renderer.autoClear=false;renderer.clearDepth();renderer.render(VIEW.oScene,VIEW.oCam);renderer.autoClear=ac}
 /* ---------- 루프 ---------- */

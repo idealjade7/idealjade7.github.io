@@ -616,7 +616,7 @@ function renderInset(){if(!INS.on||!INS.el||INS.el.style.display==='none')return
   INS.cam.aspect=1;INS.cam.updateProjectionMatrix();INS.cam.position.copy(INS.from);INS.cam.lookAt(INS.target);
   const bg=scene.background,env=scene.environment;scene.background=INSBG;scene.environment=null;
   renderer.setRenderTarget(INS.rt);renderer.clear();renderer.render(scene,INS.cam);renderer.setRenderTarget(null);scene.background=bg;scene.environment=env;
-  const W=c.width/pr,H=c.height/pr;INS.oCam.left=0;INS.oCam.right=W;INS.oCam.top=H;INS.oCam.bottom=0;INS.oCam.updateProjectionMatrix();
+  const W=c.width,H=c.height;INS.oCam.left=0;INS.oCam.right=W;INS.oCam.top=H;INS.oCam.bottom=0;INS.oCam.updateProjectionMatrix();
   const bw=parseFloat(getComputedStyle(INS.el).borderLeftWidth)||0;
   INS.disk.position.set(r.left-c.left+r.width/2,H-(r.top-c.top+r.height/2),0);INS.disk.scale.setScalar(r.width/2-bw);
   const ac=renderer.autoClear,vo=camera.view&&camera.view.enabled;renderer.autoClear=false;renderer.clearDepth();renderer.render(INS.oScene,INS.oCam);renderer.autoClear=ac}
