@@ -234,6 +234,7 @@ table.t th{color:#c3c9e8}
 @keyframes celOut{to{opacity:0;transform:translate(-50%,-50%) scale(.92)}}
 @media (prefers-reduced-motion:reduce){#celebrate::before{animation:none;opacity:0}.cel-card{animation:celOut .5s ease-in 2.8s forwards;transform:translate(-50%,-50%);opacity:1}}
 </style>
+<style>html.embed .top{display:none}</style><script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add('embed')</script>
 </head>
 <body>
 <header class="top">
@@ -1152,7 +1153,7 @@ controls.maxDistance=110;controls.minDistance=4;
 {let h='';const N={0:'북',90:'동',180:'남',270:'서'};for(let a=-360;a<=720;a+=15){const n=N[((a%360)+360)%360];h+=n?'<b style="left:'+a*2+'px">'+n+'</b>':'<s class="'+(a%45?'':'m')+'" style="left:'+a*2+'px"></s>'}$('#compass .strip').innerHTML=h}
 SP.mw.visible=SKY.mw.visible=false;// 은하수는 보이지 않게
 SKY.set(B.day,MID);
-setScene('A');
+setScene((/[?&]sc=([ABC])/.exec(location.search)||[])[1]||'A');// 주소에 ?sc=B 처럼 쓰면 그 탭에서 시작
 window.__app={A,B,C,SP,SKY,G,SC,setScene,camera,controls,sunLon,lstAt,zodOf,dateTxt};
 requestAnimationFrame(loop);
 

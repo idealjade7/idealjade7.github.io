@@ -1,0 +1,265 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive, noimageindex"><meta name="googlebot" content="noindex, nofollow">
+<title>지구 공전과 별자리 변화 · 수업 PPT</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>:root{--bg:#060914;--ink:#eef2ff;--mut:#9aa6c8;--line:rgba(160,180,255,.18);--card:rgba(22,30,58,.72);--y:#ffd24a;--b:#6fb7ff;--g:#43e08a;--p:#c59bff;--r:#ff7a7a;--font:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden;-webkit-tap-highlight-color:transparent}
+#wrap{position:fixed;inset:0 0 52px 0;display:flex;align-items:center;justify-content:center}
+#deck{position:relative;width:1600px;height:900px;transform-origin:50% 50%;flex:none}
+.sl{position:absolute;inset:0;overflow:hidden;border-radius:18px;background:radial-gradient(ellipse at 70% 0%,#18244e 0%,#0b1128 55%,#070a18 100%);opacity:0;visibility:hidden;transition:opacity .45s ease,transform .45s ease;transform:translateX(30px)}
+.sl.on{opacity:1;visibility:visible;transform:none}.sl.past{transform:translateX(-30px)}
+.sl::before{content:'';position:absolute;inset:0;background-image:radial-gradient(1px 1px at 12% 22%,#fff8,transparent),radial-gradient(1px 1px at 33% 71%,#fff6,transparent),radial-gradient(1.5px 1.5px at 58% 14%,#fff9,transparent),radial-gradient(1px 1px at 81% 63%,#fff7,transparent),radial-gradient(1px 1px at 91% 31%,#fff5,transparent),radial-gradient(1px 1px at 7% 88%,#fff6,transparent),radial-gradient(1.5px 1.5px at 46% 92%,#fff5,transparent);pointer-events:none}
+/* 머리글 */
+.hd{position:absolute;left:64px;right:64px;top:42px;display:flex;align-items:center;gap:16px;z-index:2}
+.tag{flex:none;font-size:22px;font-weight:800;padding:6px 18px;border-radius:999px;background:var(--y);color:#2a2000;letter-spacing:-.02em}
+.tag.b{background:var(--b);color:#04203a}.tag.g{background:var(--g);color:#032412}.tag.p{background:var(--p);color:#22073f}.tag.w{background:#e9eef8;color:#121a33}
+.hd h2{margin:0;font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1.2}
+.pg{margin-left:auto;flex:none;font-size:18px;color:var(--mut);border:1px solid var(--line);padding:4px 14px;border-radius:999px}
+.bd{position:absolute;left:64px;right:64px;top:128px;bottom:52px}
+/* 글 */
+.lead{font-size:38px;font-weight:700;line-height:1.55;letter-spacing:-.03em;margin:0}
+.txt{font-size:32px;line-height:1.6;letter-spacing:-.02em;margin:0}
+.txt b,.lead b{color:var(--y)}
+.small{font-size:24px;color:var(--mut)}
+ul.pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:22px}
+ul.pts li{position:relative;padding-left:52px;font-size:31px;line-height:1.5;letter-spacing:-.02em}
+ul.pts li::before{content:attr(data-n);position:absolute;left:0;top:4px;width:38px;height:38px;border-radius:50%;background:rgba(111,183,255,.18);border:2px solid var(--b);color:var(--b);font-size:21px;font-weight:800;display:flex;align-items:center;justify-content:center}
+ul.pts li b{color:var(--y)}ul.pts li em{font-style:normal;color:var(--b);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px 34px;backdrop-filter:blur(6px)}
+.row{display:flex;gap:40px;align-items:center;height:100%}
+.col{flex:1;min-width:0}
+.fig{display:flex;flex-direction:column;align-items:center;gap:12px}
+.fig img{max-width:100%;max-height:100%;border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.45);display:block}
+.fig figcaption{font-size:20px;color:var(--mut)}
+.num{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:var(--y);color:#2a2000;font-weight:900;font-size:24px;margin-right:12px;flex:none;vertical-align:middle}
+.step{display:flex;align-items:flex-start;gap:4px;font-size:32px;line-height:1.5;letter-spacing:-.02em;margin:0 0 24px}
+/* 정답 가리기 */
+.ans{position:relative;margin-top:26px;border-radius:20px;padding:24px 32px;font-size:30px;line-height:1.6;background:rgba(255,210,74,.1);border:2px solid rgba(255,210,74,.55);color:#fff3c4;cursor:pointer;transition:background .3s}
+.ans::before{content:'정답';position:absolute;left:24px;top:-17px;font-size:18px;font-weight:800;background:var(--y);color:#2a2000;padding:2px 12px;border-radius:999px}
+.ans.ex::before{content:'예시 답안'}
+.ans>div{transition:opacity .35s,filter .35s}
+.ans.hid{background:rgba(255,255,255,.04);border:2px dashed rgba(200,210,255,.35)}
+.ans.hid>div{opacity:0;filter:blur(8px)}
+.ans.hid::after{content:'눌러서 확인';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--mut);font-weight:700}
+.bl{display:inline-block;min-width:3.2em;text-align:center;border-bottom:3px solid var(--y);margin:0 .2em;padding:0 .3em;color:var(--y);font-weight:800;cursor:pointer;transition:color .3s;line-height:1.25}
+.bl.hid{color:transparent}
+.sw{position:relative;cursor:pointer;display:inline-block;max-width:100%}.sw img{display:block;width:100%;border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.45)}.sw img+img{position:absolute;left:0;top:0;transition:opacity .45s;opacity:1}.sw.hid img+img{opacity:0}
+/* 표지 */
+.cover{display:flex;flex-direction:column;justify-content:center;padding:0 120px;height:100%;position:relative;z-index:1}
+.cover .unit{font-size:28px;color:var(--b);font-weight:700;letter-spacing:.04em}
+.cover .no{font-size:120px;font-weight:900;line-height:1;color:var(--y);margin:18px 0 6px}
+.cover h1{font-size:92px;line-height:1.15;margin:0;font-weight:900;letter-spacing:-.04em}
+.cover .sub{margin-top:28px;font-size:28px;color:var(--mut)}
+.coverbg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.55;mask-image:linear-gradient(90deg,transparent 0%,#000 55%);-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 55%)}
+.mascot{position:absolute;filter:drop-shadow(0 16px 30px rgba(0,0,0,.4))}
+/* 장 표지 */
+.sec{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;position:relative;z-index:1}
+.sec .tag{font-size:28px;padding:8px 26px}
+.sec h1{font-size:80px;font-weight:900;letter-spacing:-.04em;margin:30px 0 10px;line-height:1.2}
+.sec p{font-size:30px;color:var(--mut);margin:10px 0 0}
+.meta{display:flex;gap:26px;margin-top:46px;flex-wrap:wrap;justify-content:center}
+.meta .card{font-size:27px;padding:18px 30px;text-align:left}
+.meta .card b{color:var(--b);margin-right:14px}
+/* 영상 */
+.vid{position:absolute;left:64px;right:64px;top:128px;bottom:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.vid video{max-width:100%;max-height:100%;border-radius:16px;background:#000;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.vtabs{display:flex;gap:10px}.vtabs button{font:inherit;font-size:22px;font-weight:700;padding:8px 22px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.vtabs button.on{background:var(--b);color:#04203a;border-color:var(--b)}
+/* 3D 앱 */
+.app{position:absolute;left:32px;right:32px;top:116px;bottom:24px;border-radius:18px;overflow:hidden;border:2px solid rgba(111,183,255,.5);box-shadow:0 0 0 6px rgba(111,183,255,.08),0 24px 60px rgba(0,0,0,.5);background:#0b1128}
+.app iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.app .ld{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--mut)}
+.tag.app3{background:linear-gradient(90deg,#6fb7ff,#c59bff);color:#0b0f24}
+.open{margin-left:12px;font:inherit;font-size:18px;font-weight:700;padding:6px 16px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);cursor:pointer;text-decoration:none}
+/* 표 */
+table.tb{border-collapse:separate;border-spacing:0;font-size:28px;width:100%;border-radius:18px;overflow:hidden;border:1px solid var(--line)}
+.tb th,.tb td{padding:16px 20px;text-align:center;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.tb th{background:rgba(111,183,255,.16);color:#cfe6ff;font-weight:800}
+.tb td{background:rgba(255,255,255,.03)}
+.tb tr:last-child td{border-bottom:0}.tb td:last-child,.tb th:last-child{border-right:0}
+.tb td.cell{cursor:pointer;color:var(--y);font-weight:800}
+.tb td.cell.hid{color:transparent;background:rgba(255,255,255,.07)}
+/* 말풍선 */
+.bub{position:relative;background:#f4f7ff;color:#14203f;border-radius:22px;padding:18px 24px;font-size:24px;line-height:1.5;font-weight:600;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.bub::after{content:'';position:absolute;left:-14px;top:30px;border:10px solid transparent;border-right:16px solid #f4f7ff;border-left:0}
+/* 바닥 막대 */
+#bar{position:fixed;left:0;right:0;bottom:0;height:52px;display:flex;align-items:center;gap:10px;padding:0 14px;background:#0a0f22;border-top:1px solid var(--line);z-index:10}
+#bar button{font:inherit;font-size:15px;font-weight:700;height:36px;min-width:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);cursor:pointer}
+#bar button:hover{background:rgba(255,255,255,.12)}
+#prog{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;cursor:pointer}#prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--b),var(--y));transition:width .4s}
+#cnt{font-size:15px;color:var(--mut);min-width:64px;text-align:center;font-variant-numeric:tabular-nums}
+#ttl{font-size:14px;color:var(--mut);max-width:30vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.credit{position:absolute;right:30px;bottom:14px;font-size:15px;color:rgba(200,210,240,.45);z-index:3}
+/* 한눈에 보기 */
+#grid{position:fixed;inset:0 0 52px 0;background:rgba(5,8,18,.96);z-index:9;overflow:auto;padding:24px;display:none;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;align-content:start}
+#grid.on{display:grid}
+#grid button{font:inherit;text-align:left;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:12px 14px;cursor:pointer;font-size:15px;line-height:1.4;min-height:78px}
+#grid button small{display:block;color:var(--mut);font-size:12px;margin-bottom:4px}
+#grid button.cur{border-color:var(--y);box-shadow:0 0 0 2px var(--y) inset}
+#grid button.app3{border-color:rgba(111,183,255,.6)}
+@media (max-width:720px){#ttl{display:none}#bar{gap:6px;padding:0 8px}#bar button{padding:0 8px;font-size:13px}}
+.bl.hid{position:relative}.bl.hid::before{content:attr(data-h);position:absolute;left:0;right:0;text-align:center;color:var(--mut);font-weight:600}
+.dirs{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;margin-top:30px}
+.dirs .card{padding:18px;text-align:center}.dirs h4{margin:0 0 10px;font-size:26px;color:var(--b)}
+.dirs svg{width:100%;height:220px;display:block;background:linear-gradient(#0d1a3f,#1b2b5c);border-radius:14px}
+.dirs .hid svg .ar{opacity:0}.dirs .card.hid{cursor:pointer;position:relative}.dirs .card.hid::after{content:'눌러서 확인';position:absolute;left:0;right:0;bottom:24px;font-size:20px;color:var(--mut)}
+.dirs .ar{transition:opacity .4s}
+.next{display:flex;align-items:center;justify-content:center;height:100%;gap:60px;position:relative;z-index:1}
+.next h1{font-size:64px;line-height:1.3;margin:12px 0 0;font-weight:900;letter-spacing:-.03em}.next h1 b{color:var(--y)}
+
+.bd.mid{display:flex;flex-direction:column;justify-content:center}
+.dirs svg{height:300px}
+.step{font-size:34px}.ans{font-size:32px}
+
+/* 단계 메뉴 */
+#stages{display:flex;gap:4px;flex:none}
+#stages button{min-width:0!important;padding:0 10px!important;font-size:14px!important;color:var(--mut)!important}
+#stages button.on{background:var(--y)!important;color:#2a2000!important;border-color:var(--y)!important}
+#stages button.app3.on{background:linear-gradient(90deg,#6fb7ff,#c59bff)!important;color:#0b0f24!important}
+@media (max-width:1100px){#stages{display:none}}
+/* 판서 */
+#ink{position:absolute;inset:0;width:1600px;height:900px;z-index:20;pointer-events:none;touch-action:none}
+body.pen #ink{pointer-events:auto;cursor:crosshair}
+#pal{position:fixed;left:50%;bottom:62px;transform:translateX(-50%);display:none;gap:8px;align-items:center;padding:8px 12px;border-radius:16px;background:#0f1530;border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.5);z-index:12}
+body.pen #pal{display:flex}
+#pal button{font:inherit;font-size:14px;font-weight:700;height:36px;min-width:36px;border-radius:10px;border:2px solid transparent;background:rgba(255,255,255,.06);color:var(--ink);cursor:pointer;padding:0 10px}
+#pal button.dot{width:36px;padding:0;border-radius:50%;border:2px solid rgba(255,255,255,.25)}
+#pal button.on{border-color:var(--y)}
+#bPen.on{background:var(--y)!important;color:#2a2000!important}
+/* 확인 문제 */
+.qz{margin-top:22px}
+.qz .opts{display:flex;flex-wrap:wrap;gap:16px}
+.qo{font:inherit;font-size:30px;font-weight:700;padding:14px 34px;border-radius:18px;border:2px solid rgba(160,180,255,.35);background:rgba(255,255,255,.05);color:var(--ink);cursor:pointer;transition:background .2s,border-color .2s,transform .15s}
+.qo:hover:not(:disabled){background:rgba(111,183,255,.16);border-color:var(--b);transform:translateY(-2px)}
+.qo.ok{background:rgba(67,224,138,.22);border-color:var(--g);color:#c8ffde}
+.qo.ok::before{content:'✔ '}
+.qo.no{border-color:var(--r);color:#ff9d9d;animation:shake .4s}
+.qo:disabled:not(.ok){opacity:.45;cursor:default}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.qex{margin-top:18px;font-size:28px;line-height:1.6;color:#fff3c4;padding:18px 26px;border-radius:16px;background:rgba(255,210,74,.1);border:2px solid rgba(255,210,74,.5);display:none}
+.qex.on{display:block;animation:fadeup .4s}
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}}
+:root{--display:var(--font)}
+/* 여백 정리: 글을 조금 키워요 */
+.step{font-size:36px}.ans{font-size:32px}.txt{font-size:34px}ul.pts li{font-size:33px}
+#celebrate{position:fixed;inset:0;z-index:8;pointer-events:none;display:none}
+#celebrate.show{display:block}
+#celebrate canvas{position:absolute;inset:0;width:100%;height:100%}
+#celebrate::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(255,244,190,.75),rgba(255,244,190,.18) 45%,rgba(255,244,190,0) 75%);animation:celFlash 1.3s ease-out forwards}
+.cel-card{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.5);opacity:0;background:#fff;color:#1b2a17;border-radius:20px;padding:14px 28px 16px;text-align:center;box-shadow:0 14px 44px rgba(0,0,0,.45),0 0 0 4px #ffe38a,0 0 40px 10px rgba(255,227,138,.55);animation:celPop .55s cubic-bezier(.2,1.6,.4,1) forwards,celOut .5s ease-in 2.8s forwards;max-width:calc(100% - 32px)}
+.cel-t{font-family:var(--display);font-size:clamp(36px,6.5vw,58px);color:#e09a00;line-height:1.1;letter-spacing:.02em}
+.cel-s{font-size:15px;font-weight:700;margin-top:4px}
+@keyframes celFlash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+@keyframes celPop{to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@keyframes celOut{to{opacity:0;transform:translate(-50%,-50%) scale(.92)}}
+@media (prefers-reduced-motion:reduce){#celebrate::before{animation:none;opacity:0}.cel-card{animation:celOut .5s ease-in 2.8s forwards;transform:translate(-50%,-50%);opacity:1}}
+
+/* 복제 방지 · 저작권 안내 */
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+img,video{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
+.cnote{position:absolute;left:30px;bottom:14px;right:260px;font-size:13px;color:rgba(200,210,240,.5);z-index:3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media print{body{display:none}}
+</style></head><body>
+<div id="wrap"><div id="deck">
+<section class="sl" data-t="지구 공전과 별자리 변화" data-k="표지" ><div class="coverbg" style="background-image:url(a2/i27.jpg)"></div><div class="cover"><div class="unit">Ⅶ. 태양계 · 2. 지구와 달의 운동</div><div class="no">02</div><h1>지구 공전과<br>별자리 변화</h1><div class="sub">중학교 1학년 과학 · 교과서 248~251쪽</div></div><img class="mascot" src="a2/i13.webp" style="left:60px;bottom:40px;width:220px" alt=""><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="학습 목표" data-k="학습 목표" ><div class="hd"><span class="tag g">학습 목표</span><h2>이 단원에서 나는</h2><span class="pg">교과서 248~249쪽</span></div><div class="bd mid" style=""><div class="row"><div class="col"><div class="card" style="font-size:44px;font-weight:800;line-height:1.5;padding:50px 56px">지구 공전에 의한<br><span style="color:var(--y)">별자리 변화</span>를 설명할 수 있다.</div></div><div class="col" style="flex:.6"><figure class="fig" style="margin:0;"><img src="a2/i31.jpg" alt="" loading="lazy" style=""></figure></div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="소단원 영상" data-k="도입" ><div class="hd"><span class="tag b">도입</span><h2>소단원 영상</h2><span class="pg">교과서 248~249쪽</span></div><div class="vid"><div class="vtabs"><button>소단원 도입 애니메이션</button><button>소단원 개념 영상</button></div><video src="v/d2_media1.mp4" controls controlslist="nodownload noplaybackrate" disablepictureinpicture preload="metadata" playsinline poster=a2/i15.jpg></video><video src="v/d2_media2.mp4" controls controlslist="nodownload noplaybackrate" disablepictureinpicture preload="metadata" playsinline poster=a2/i16.jpg></video></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="해 보기 · 태양과 별자리의 위치 변화 관찰하기" data-k="해 보기" ><div class="sec"><span class="tag">해 보기</span><h1>태양과 별자리의<br>위치 변화 관찰하기</h1><p>교과서 248~249쪽</p><div class="meta"><div class="card"><b>준비물</b>투명 용지(또는 투명 필름), 유성펜(3색)</div><div class="card" style="color:#ffb4b4"><b style="color:var(--r)">안전</b>종이나 필름의 날카로운 면에 손을 베이지 않도록 조심해요.</div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="과정 1" data-k="해 보기" ><div class="hd"><span class="tag ">해 보기</span><h2>태양과 별자리의 위치 변화 관찰하기 · 과정</h2><span class="pg">교과서 248~249쪽</span></div><div class="bd mid" style=""><p class="step"><span class="num">1</span><span>그림 (가)~(다)는 8월에 해가 진 직후 서쪽 하늘을 15일 간격으로 관측한 것이다.<br>투명 종이를 각각 대고 유성펜으로 별자리와 태양의 위치를 표시한다.</span></p><div class="row" style="height:auto;gap:24px;margin-top:10px"><div class="col"><figure class="fig" style="margin:0;"><img src="a2/i22.jpg" alt="" loading="lazy" style=""></figure></div><div class="col"><figure class="fig" style="margin:0;"><img src="a2/i23.jpg" alt="" loading="lazy" style=""></figure></div><div class="col"><figure class="fig" style="margin:0;"><img src="a2/i24.jpg" alt="" loading="lazy" style=""></figure></div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="과정 2 · 정리" data-k="해 보기" ><div class="hd"><span class="tag ">해 보기</span><h2>과정 2 · 정리</h2><span class="pg">교과서 248~249쪽</span></div><div class="bd mid" style=""><p class="step"><span class="num">2</span><span>시간 순서대로 투명 종이를 겹쳐 보며 태양과 별자리의 위치 변화를 관찰한다.</span></p><div class="row" style="height:auto;align-items:flex-start;gap:36px"><div class="col"><p class="txt">❶ 태양이 하나가 되도록 겹쳐 볼 때 별자리는 어느 방향으로 움직이는가?</p><div class="ans hid"><div>별자리는 태양을 기준으로 <b>동쪽에서 서쪽</b>으로 움직인다.</div></div><p class="txt" style="margin-top:30px">❷ 별자리가 하나가 되도록 겹쳐 볼 때 태양은 어느 방향으로 움직이는가?</p><div class="ans hid"><div>태양은 별자리를 기준으로 <b>서쪽에서 동쪽</b>으로 움직인다.</div></div></div><div class="col" style="flex:.9"><div class="sw hid"><img src="a2/i30.jpg" alt="" style="filter:blur(18px) brightness(.5)"><img src="a2/i30.jpg" alt=""></div><p class="small" style="text-align:center">눌러서 겹친 모습 보기</p></div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="15일마다 관측" data-k="3D 실험실" ><div class="hd"><span class="tag app3">3D 실험실</span><h2>15일마다 관측</h2><span class=small style=margin-left:8px>같은 시각, 날짜만 바꿔 서쪽 하늘 비교하기</span><a class="open" href="../annual.html?sc=C" target="_blank" rel="noopener">새 창으로 열기 ↗</a></div><div class="app" data-src="../annual.html?sc=C&embed=1" data-title="15일마다 관측"><div class="ld">3D 실험실을 불러오는 중…</div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="학습 자료 영상" data-k="학습 자료" ><div class="hd"><span class="tag b">학습 자료</span><h2>학습 자료 영상</h2><span class="pg">교과서 248~249쪽</span></div><div class="vid"><div class="vtabs"><button>태양을 기준으로 한 별자리의 위치 변화</button><button>별자리를 기준으로 한 태양의 위치 변화</button><button>지구의 공전과 태양의 연주 운동</button></div><video src="v/d2_media3.mp4" controls controlslist="nodownload noplaybackrate" disablepictureinpicture preload="metadata" playsinline poster=a2/i27.jpg></video><video src="v/d2_media4.mp4" controls controlslist="nodownload noplaybackrate" disablepictureinpicture preload="metadata" playsinline poster=a2/i28.jpg></video><video src="v/d2_media5.mp4" controls controlslist="nodownload noplaybackrate" disablepictureinpicture preload="metadata" playsinline poster=a2/i29.jpg></video></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="지구의 공전" data-k="개념" ><div class="hd"><span class="tag p">개념</span><h2>지구의 공전과 태양·별자리의 위치 변화</h2><span class="pg">교과서 248~249쪽</span></div><div class="bd mid" style=""><div class="row"><div class="col"><ul class="pts"><li data-n="1"><b>지구의 공전</b>: 지구가 태양 주위를 1년에 한 바퀴씩 <em>서에서 동</em>으로 회전하는 운동</li><li data-n="2"><b>공전으로 나타나는 현상</b>: 계절의 변화, 계절별 별자리의 변화</li><li data-n="3"><b>태양을 기준으로</b> 보면 별자리는 <em>동 → 서</em>로, <b>별자리를 기준으로</b> 보면 태양은 <em>서 → 동</em>으로 이동한다.</li></ul></div><div class="col" style="flex:1"><figure class="fig" style="margin:0;"><img src="a2/i31.jpg" alt="지구의 공전" loading="lazy" style="max-height:330px"><figcaption>지구의 공전</figcaption></figure><div style="height:18px"></div><figure class="fig" style="margin:0;"><img src="a2/i30.jpg" alt="태양이 진 직후 서쪽 하늘, 15일 간격" loading="lazy" style="max-height:200px"><figcaption>태양이 진 직후 서쪽 하늘, 15일 간격</figcaption></figure></div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="태양의 연주 운동" data-k="개념" ><div class="hd"><span class="tag p">개념</span><h2>지구의 공전과 태양의 연주 운동</h2><span class="pg">교과서 248~249쪽</span></div><div class="bd mid" style=""><div class="row"><div class="col"><ul class="pts"><li data-n="1"><b>우주에서 보면</b>: 지구의 공전 방향과 태양의 연주 운동 방향이 모두 <em>시계 반대 방향</em></li><li data-n="2"><b>지구에서 보면</b>: 지구가 공전하기 때문에 태양이 별자리 사이를 <em>서 → 동</em>으로 이동하는 것처럼 보인다.</li></ul><table class="tb" style="margin-top:34px"><tr><th>구분</th><th>방향</th><th>속도</th><th>원인</th></tr><tr><td>태양의 연주 운동</td><td class="cell hid">서 → 동</td><td class="cell hid">약 1°/일</td><td class="cell hid">지구의 공전</td></tr><tr><td>별자리의 이동<br><small style="font-size:20px">(같은 시각에 관측)</small></td><td class="cell hid">동 → 서</td><td class="cell hid">약 1°/일</td><td class="cell hid">지구의 공전</td></tr></table></div><div class="col" style="flex:.75"><figure class="fig" style="margin:0;"><img src="a2/i32.jpg" alt="지구의 공전과 태양의 연주 운동" loading="lazy" style=""><figcaption>지구의 공전과 태양의 연주 운동</figcaption></figure></div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="태양의 연주 운동" data-k="3D 실험실" ><div class="hd"><span class="tag app3">3D 실험실</span><h2>태양의 연주 운동</h2><span class=small style=margin-left:8px>지구를 공전시키며 태양 뒤의 별자리 바꾸기</span><a class="open" href="../annual.html?sc=A" target="_blank" rel="noopener">새 창으로 열기 ↗</a></div><div class="app" data-src="../annual.html?sc=A&embed=1" data-title="태양의 연주 운동"><div class="ld">3D 실험실을 불러오는 중…</div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="탐구 · 모형으로 태양의 연주 운동 관찰하기" data-k="탐구" ><div class="sec"><span class="tag g">탐구</span><h1>모형으로 태양의<br>연주 운동 관찰하기</h1><p>교과서 250~251쪽</p><div class="meta"><div class="card"><b>목표</b>모형을 이용하여 지구 공전에 의한 태양의 연주 운동을 설명할 수 있다.</div><div class="card" style="font-size:24px"><b>준비물</b>바탕 판, 별자리 띠, 관찰자 모형, 받침 기둥, 위치 붙임딱지(부록),<br>지름 2 cm 빨간 스타이로폼 공, 풀</div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="탐구 영상" data-k="탐구" ><div class="hd"><span class="tag g">탐구</span><h2>탐구 영상</h2><span class="pg">교과서 250~251쪽</span></div><div class="vid"><div class="vtabs"><button>탐구 과정 동영상</button><button>탐구 정리 동영상</button></div><video src="v/d2_media6.mp4" controls controlslist="nodownload noplaybackrate" disablepictureinpicture preload="metadata" playsinline poster=a2/i34.jpg></video><video src="v/d2_media7.mp4" controls controlslist="nodownload noplaybackrate" disablepictureinpicture preload="metadata" playsinline poster=a2/i35.jpg></video></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="탐구 과정 1~3" data-k="탐구" ><div class="hd"><span class="tag g">탐구</span><h2>모형으로 태양의 연주 운동 관찰하기 · 과정</h2><span class="pg">교과서 250~251쪽</span></div><div class="bd mid" style=""><div class="row" style="align-items:flex-start;gap:30px;height:auto"><div class="col"><p class="step" style="font-size:28px;min-height:170px"><span class="num">1</span><span>별자리 띠를 고리 모양으로 이어 붙인 뒤, 바탕 판에서 접어 세운 부분 안쪽에 놓는다.</span></p><figure class="fig" style="margin:0;"><img src="a2/i38.webp" alt="" loading="lazy" style="height:400px;width:100%;object-fit:contain;background:#fff"></figure></div><div class="col"><p class="step" style="font-size:28px;min-height:170px"><span class="num">2</span><span>태양 모형(스타이로폼 공)을 받침 기둥 위에 올려 바탕 판 가운데에 놓고, 관측자 모형을 3월 위치에 놓는다.</span></p><figure class="fig" style="margin:0;"><img src="a2/i41.jpg" alt="" loading="lazy" style="height:400px;width:100%;object-fit:contain;background:#fff"></figure></div><div class="col"><p class="step" style="font-size:28px;min-height:170px"><span class="num">3</span><span>3월 관측자 위치에서 태양 쪽 별자리와 태양 반대쪽 별자리에 3월 붙임딱지를 붙인다.</span></p><figure class="fig" style="margin:0;"><img src="a2/i42.webp" alt="" loading="lazy" style="height:400px;width:100%;object-fit:contain;background:#fff"></figure></div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="탐구 과정 4" data-k="탐구" ><div class="hd"><span class="tag g">탐구</span><h2>과정 4 · 6월, 9월, 12월의 별자리도 기록하기</h2><span class="pg">교과서 250~251쪽</span></div><div class="bd mid" style=""><div class="row"><div class="col" style="flex:1.4"><table class="tb"><tr><th>관측자 위치</th><th>3월</th><th>6월</th><th>9월</th><th>12월</th></tr><tr><th>태양 쪽 별자리</th><td>물병자리</td><td class="cell hid">황소자리</td><td class="cell hid">사자자리</td><td class="cell hid">전갈자리</td></tr><tr><th>태양 반대쪽 별자리</th><td>사자자리</td><td class="cell hid">전갈자리</td><td class="cell hid">물병자리</td><td class="cell hid">황소자리</td></tr></table><p class="small" style="margin-top:20px">빈칸을 누르면 답이 나타나요.</p></div><div class="col" style="flex:.6"><figure class="fig" style="margin:0;"><img src="a2/i43.jpg" alt="" loading="lazy" style=""></figure></div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="탐구 정리 1·2" data-k="탐구" ><div class="hd"><span class="tag g">탐구</span><h2>정리</h2><span class="pg">교과서 250~251쪽</span></div><div class="bd mid" style=""><p class="step"><span class="num">1</span><span>약 1년 동안 태양은 별자리를 기준으로 어느 방향으로 움직이는가? 지구의 공전 방향과 비교하여 설명해 보자.</span></p><div class="ans hid ex"><div>지구는 태양 주위를 <b>서쪽에서 동쪽</b>으로 공전하고, 이에 따라 태양은 별자리를 기준으로 <b>서쪽에서 동쪽</b>으로 움직인다.</div></div><p class="step" style="margin-top:40px"><span class="num">2</span><span>토의 | 8월, 10월 한밤중에 남쪽 하늘에서 어느 별자리를 볼 수 있을지 토의해 보자.</span></p><div class="ans hid ex"><div>태양 쪽 별자리는 태양과 함께 뜨고 지므로 볼 수 없고, 태양 반대쪽 별자리는 한밤중에 남쪽 하늘에서 볼 수 있다. 따라서 8월에는 <b>염소자리</b>, 10월에는 <b>물고기자리</b>를 볼 수 있을 것이다.</div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="탐구 정리 3" data-k="탐구" ><div class="hd"><span class="tag g">탐구</span><h2>정리 · 협력적 소통</h2><span class="pg">교과서 250~251쪽</span></div><div class="bd mid" style=""><p class="step"><span class="num">3</span><span>계절에 따라 태양의 위치와 별자리가 달라지는 까닭을 모둠원에게 설명해 보자.</span></p><div class="ans hid ex"><div>지구가 공전하면서 천구에서 태양이 위치하는 별자리가 달라진다. 이에 따라 태양 반대쪽 별자리도 바뀌므로, 계절에 따라 밤하늘에서 볼 수 있는 별자리가 달라진다.</div></div><div class="card" style="margin-top:44px;font-size:28px;line-height:1.6"><b style="color:var(--b)">더 체험해 보기</b> &nbsp;가상 실험실에서 지구 공전과 별자리를 체험해 보고, 계절에 따라 태양 위치와 별자리가 달라지는 까닭을 설명하는 자료를 만들어 발표해 보자.</div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="계절별 별자리" data-k="3D 실험실" ><div class="hd"><span class="tag app3">3D 실험실</span><h2>계절별 별자리</h2><span class=small style=margin-left:8px>날짜를 바꾸며 한밤중 남쪽 하늘 살펴보기</span><a class="open" href="../annual.html?sc=B" target="_blank" rel="noopener">새 창으로 열기 ↗</a></div><div class="app" data-src="../annual.html?sc=B&embed=1" data-title="계절별 별자리"><div class="ld">3D 실험실을 불러오는 중…</div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="확인 질문" data-k="Q" ><div class="hd"><span class="tag b">Q</span><h2>12월에 태양 쪽에 있는 별자리와 한밤중에 보이는 별자리는?</h2><span class="pg">교과서 250~251쪽</span></div><div class="bd mid" style=""><div class="row"><div class="col" style="flex:1.2"><p class="txt">12월에 <b>태양 쪽</b>에 있는 별자리는?</p><div class="qz hid" data-a="1"><div class="opts"><button class="qo">황소자리</button><button class="qo">전갈자리</button><button class="qo">사자자리</button></div></div><p class="txt" style="margin-top:28px">12월 <b>한밤중</b>에 남쪽 하늘에서 보이는 별자리는?</p><div class="qz hid" data-a="0"><div class="opts"><button class="qo">황소자리</button><button class="qo">전갈자리</button><button class="qo">물병자리</button></div><div class="qex">태양 쪽 별자리는 태양과 함께 떠서 볼 수 없고, 태양 반대쪽 별자리가 한밤중 남쪽 하늘에 보여요.</div></div><div class="bub" style="margin:30px 0 0 20px;display:inline-block">힌트: 9월에 태양 쪽에 있는 별자리는 사자자리,<br>9월 한밤중에 보이는 별자리는 물병자리예요.</div></div><div class="col" style="flex:.9"><figure class="fig" style="margin:0;"><img src="a2/i45.webp" alt="" loading="lazy" style=""></figure></div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="태양의 연주 운동과 황도 12궁" data-k="학습 자료" ><div class="hd"><span class="tag b">학습 자료</span><h2>태양의 연주 운동과 황도 12궁</h2><span class="pg">교과서 250~251쪽</span></div><div class="vid"><video src="v/d2_media8.mp4" controls controlslist="nodownload noplaybackrate" disablepictureinpicture preload="metadata" playsinline poster=a2/i48.jpg></video></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="황도와 황도 12궁" data-k="개념" ><div class="hd"><span class="tag p">개념</span><h2>황도와 황도 12궁</h2><span class="pg">교과서 250~251쪽</span></div><div class="bd mid" style=""><div class="row"><div class="col"><ul class="pts"><li data-n="1"><b>황도</b>: 태양이 연주 운동하면서 천구상에서 별자리 사이를 지나가는 길</li><li data-n="2"><b>황도 12궁</b>: 황도 부근에 있는 12개의 대표적인 별자리</li></ul><div class="bub" style="margin:40px 0 0 30px;display:inline-block">황도는 지구의 공전 궤도를 넓혀<br>천구와 만나는 큰 원이기도 해요.</div></div><div class="col" style="flex:1.1"><figure class="fig" style="margin:0;"><img src="a2/i49.jpg" alt="태양 쪽 별자리와 한밤중 남쪽 하늘의 별자리" loading="lazy" style=""><figcaption>태양 쪽 별자리와 한밤중 남쪽 하늘의 별자리</figcaption></figure></div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="계절에 따른 별자리 변화" data-k="개념" ><div class="hd"><span class="tag p">개념</span><h2>계절에 따른 별자리 변화</h2><span class="pg">교과서 250~251쪽</span></div><div class="bd mid" style=""><div class="row"><div class="col"><ul class="pts"><li data-n="1"><b>태양 쪽 별자리</b>: 지구에서 태양 쪽으로 그은 선이 황도와 만나는 곳의 별자리 <em>예</em> 4월 태양은 물고기자리에 있다.</li><li data-n="2"><b>한밤중 남쪽 하늘의 별자리</b>: 태양 반대쪽의 별자리 <em>예</em> 4월 한밤중 남쪽 하늘에는 처녀자리가 있다.</li><li data-n="3">지구가 공전하여 태양이 보이는 위치가 달라지면서, 밤하늘에서 볼 수 있는 별자리도 달라진다.</li></ul></div><div class="col" style="flex:.9"><figure class="fig" style="margin:0;"><img src="a2/i51.jpg" alt="" loading="lazy" style=""></figure></div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="스스로 확인하기 1·2" data-k="스스로 확인하기" ><div class="hd"><span class="tag b">스스로 확인하기</span><h2></h2><span class="pg">교과서 250~251쪽</span></div><div class="bd mid" style=""><p class="step"><span class="num">1</span><span>태양은 별자리를 배경으로 1년에 한 바퀴씩 ( 동, 서 )쪽에서 ( 동, 서 )쪽으로 이동하는 것처럼 보인다.</span></p><div class="qz hid" data-a="1"><div class="opts"><button class="qo">동쪽 → 서쪽</button><button class="qo">서쪽 → 동쪽</button></div><div class="qex">지구가 서 → 동으로 공전하므로 태양은 별자리 사이를 <b>서쪽에서 동쪽</b>으로 이동하는 것처럼 보여요.</div></div><p class="step" style="margin-top:46px"><span class="num">2</span><span>지구에서 관측할 때 별자리가 1년을 주기로 변하는 까닭은 무엇인가?</span></p><div class="qz hid" data-a="1"><div class="opts"><button class="qo">지구의 자전</button><button class="qo">지구의 공전</button><button class="qo">별자리가 움직여서</button></div><div class="qex">지구가 1년에 한 바퀴 <b>공전</b>하기 때문에 태양 반대쪽에 오는 별자리가 1년을 주기로 바뀌어요.</div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="스스로 확인하기 3" data-k="스스로 확인하기" ><div class="hd"><span class="tag b">스스로 확인하기</span><h2>사고력</h2><span class="pg">교과서 250~251쪽</span></div><div class="bd mid" style=""><div class="row"><div class="col"><p class="step"><span class="num">3</span><span>황도 12궁에서 3월 한밤중에 남쪽 하늘에서 볼 수 있는 별자리를 찾아보고, 그렇게 생각하는 까닭을 설명해 보자.</span></p><div class="qz hid" data-a="1"><div class="opts"><button class="qo">물병자리</button><button class="qo">사자자리</button><button class="qo">전갈자리</button><button class="qo">황소자리</button></div><div class="qex">3월에 태양은 물병자리 쪽에 있어요. 그 반대쪽인 <b>사자자리</b>가 한밤중에 남쪽 하늘에 높이 떠요.</div></div></div><div class="col" style="flex:.8"><figure class="fig" style="margin:0;"><img src="a2/i51.jpg" alt="" loading="lazy" style=""></figure></div></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="이것만은 꼭" data-k="이것만은 꼭" ><div class="hd"><span class="tag ">이것만은 꼭</span><h2></h2><span class="pg">교과서 250~251쪽</span></div><div class="bd mid" style=""><div class="sec" style="height:70%"><p class="lead" style="font-size:56px;color:var(--ink)">지구가 공전하기 때문에 나타나는<br>태양의 겉보기 운동을 태양의 <span class="bl hid" data-h="ㅇㅈ">연주</span> 운동이라고 한다.</p></div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="핵심 정리" data-k="핵심 정리" ><div class="hd"><span class="tag ">핵심 정리</span><h2></h2><span class="pg">교과서 250~251쪽</span></div><div class="bd mid" style=""><div class="card" style="font-size:30px;line-height:1.85"><b style="color:var(--b)">지구의 공전</b> &nbsp;지구가 <span class="bl hid" data-h="">태양</span> 주위를 서쪽에서 동쪽으로 1년에 한 바퀴씩 회전하는 운동<br><b style="color:var(--b)">태양의 연주 운동</b> &nbsp;지구의 <span class="bl hid" data-h="">공전</span>으로 태양이 별자리 사이를 <span class="bl hid" data-h="">서</span>쪽에서 <span class="bl hid" data-h="">동</span>쪽으로 이동하여 1년 후 처음 위치로 되돌아오는 것처럼 보이는 겉보기 운동<br><b style="color:var(--b)">황도</b> &nbsp;<span class="bl hid" data-h="">태양</span>이 연주 운동하면서 별자리 사이를 지나가는 길<br><b style="color:var(--b)">계절별 별자리</b> &nbsp;<span class="bl hid" data-h="">태양</span> 부근의 별자리는 밤하늘에서 관측하기 힘들고, <span class="bl hid" data-h="">태양 반대편</span>에 있는 별자리는 한밤중에 남쪽 하늘에서 볼 수 있다.</div></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section><section class="sl" data-t="다음 시간에는" data-k="다음 시간" ><div class="next"><div><span class="tag">다음 시간에는</span><h1><b>달의 위상 변화</b>에<br>대해 알아보아요.</h1><p class="small" style="margin-top:20px">교과서 252쪽 · 개념 영상을 미리 확인해 보아요.</p></div><img src="a2/i11.jpg" style="width:300px;border-radius:24px" alt=""></div><div class="credit">made by 한광여중 이상민</div><div class="cnote">본 자료는 저작권법 제25조에 따라 한광여중 수업 목적으로만 제공되며, 화면 캡처 및 무단 유출을 금합니다. (출처: 천재교과서)</div></section>
+</div></div>
+<div id="grid"></div>
+<div id="pal"><button class="dot on" data-c="#ffffff" style="background:#fff" title="흰색"></button><button class="dot" data-c="#ffd24a" style="background:#ffd24a" title="노랑"></button><button class="dot" data-c="#ff5a5a" style="background:#ff5a5a" title="빨강"></button><button class="dot" data-c="#5ab0ff" style="background:#5ab0ff" title="파랑"></button><button data-c="#fff04a" data-hl="1" title="형광펜">형광펜</button><button id="pErase">지우개</button><button id="pClear">모두 지우기</button><button id="pClose">닫기</button></div>
+<nav id="bar"><button id="bPrev" aria-label="이전">◀</button><button id="bNext" aria-label="다음">▶</button><span id="cnt"></span><div id="prog"><i></i></div><div id="stages"></div><span id="ttl"></span><button id="bPen" title="판서 (P)">✏️ 판서</button><button id="bGrid">한눈에 보기</button><button id="bFull">전체 화면</button></nav>
+<script>(function(){
+/* 복제 방지: 우클릭·끌기·복사·저장·인쇄 단축키 막기 */
+['contextmenu','dragstart','copy','cut','selectstart'].forEach(t=>document.addEventListener(t,e=>{if(!(e.target.closest&&e.target.closest('input,textarea')))e.preventDefault()}));
+document.addEventListener('keydown',e=>{const k=(e.key||'').toLowerCase();if((e.ctrlKey||e.metaKey)&&['s','u','p','c'].includes(k)){e.preventDefault();e.stopPropagation()}},true);
+const stage=document.getElementById('wrap');
+function celebrate(title,sub){
+  let o=document.getElementById('celebrate');
+  if(!o){o=document.createElement('div');o.id='celebrate';o.setAttribute('role','status');o.innerHTML='<canvas></canvas><div class="cel-card"><div class="cel-t"></div><div class="cel-s"></div></div>';stage.appendChild(o)}
+  o.querySelector('.cel-t').textContent=title;o.querySelector('.cel-s').textContent=sub||'';
+  o.classList.remove('show');void o.offsetWidth;o.classList.add('show');
+  clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>o.classList.remove('show'),3400);
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const cv=o.querySelector('canvas'),r=stage.getBoundingClientRect(),dp=Math.min(2,window.devicePixelRatio||1);
+  cv.width=r.width*dp;cv.height=r.height*dp;const g=cv.getContext('2d');g.setTransform(dp,0,0,dp,0,0);
+  const cx=r.width/2,cy=r.height*.38,cols=['#ffe38a','#ffffff','#ffd166','#ff9ccc','#9be36a','#8fd3ff'];
+  const P=[];for(let i=0;i<150;i++){const a=Math.random()*Math.PI*2,sp=3+Math.random()*9;
+    P.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,s:3+Math.random()*6,c:cols[i%cols.length],rot:Math.random()*6,vr:(Math.random()-.5)*.3,star:i%3===0,life:1})}
+  for(let i=0;i<40;i++)P.push({x:Math.random()*r.width,y:Math.random()*r.height,vx:0,vy:0,s:2+Math.random()*5,c:'#ffffff',rot:0,vr:0,star:true,life:1,tw:Math.random()*6});
+  const star=(x,y,s,rot)=>{g.save();g.translate(x,y);g.rotate(rot);g.beginPath();for(let k=0;k<8;k++){const rr=k%2?s*.38:s;g.lineTo(Math.cos(k*Math.PI/4)*rr,Math.sin(k*Math.PI/4)*rr)}g.closePath();g.fill();g.restore()};
+  const t0=performance.now();cancelAnimationFrame(celebrate.raf);
+  const step=now=>{const t=(now-t0)/1000;g.clearRect(0,0,r.width,r.height);
+    P.forEach(p=>{if(p.tw===undefined){p.vy+=.18;p.vx*=.985;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life=Math.max(0,1-t/2.4)}else p.life=Math.max(0,Math.sin(t*6+p.tw))*(1-t/2.6);
+      g.globalAlpha=p.life;g.fillStyle=p.c;if(p.star)star(p.x,p.y,p.s,p.rot);else{g.save();g.translate(p.x,p.y);g.rotate(p.rot);g.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);g.restore()}});
+    g.globalAlpha=1;if(t<2.6)celebrate.raf=requestAnimationFrame(step);else g.clearRect(0,0,r.width,r.height)};
+  celebrate.raf=requestAnimationFrame(step);
+}
+
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const deck=$('#deck'),SL=$$('.sl',deck);let cur=-1;
+/* 화면 크기에 맞춰 1600×900 무대를 키우고 줄여요 */
+function fit(){const w=$('#wrap'),k=Math.min(w.clientWidth/1600,w.clientHeight/900);deck.style.transform='scale('+k+')'}
+addEventListener('resize',fit);fit();
+/* 숨긴 답: 앞에서부터 하나씩 */
+const hidden=s=>$$('.hid',s);
+function reveal(el){if(el.classList.contains('qz')){qzSolve(el,false);return}el.classList.remove('hid')}
+/* 확인 문제: 고르면 바로 맞음·틀림. 한 장의 문제를 모두 맞히면 성공 표지 */
+function qzSolve(q,byClick){q.classList.remove('hid');q.classList.add('done');const a=+q.dataset.a;$$('.qo',q).forEach((b,i)=>{b.disabled=true;b.classList.toggle('ok',i===a)});const ex=$('.qex',q);if(ex)ex.classList.add('on');
+  const s=q.closest('.sl'),all=$$('.qz',s);if(byClick&&all.every(x=>x.classList.contains('done'))&&!s.dataset.cel){s.dataset.cel=1;celebrate('성공!',all.length>1?'모두 맞혔어요':'정답이에요')}}
+$$('.qz').forEach(q=>$$('.qo',q).forEach((b,i)=>b.addEventListener('click',e=>{e.stopPropagation();if(q.classList.contains('done'))return;
+  if(i===+q.dataset.a){qzSolve(q,true)}else{b.classList.remove('no');void b.offsetWidth;b.classList.add('no');b.disabled=true;if(!$$('.qo:not(:disabled)',q).some((x,j)=>true))qzSolve(q,false)}})));
+$$('.hid',deck).forEach(el=>{if(el.classList.contains('qz'))return;el.addEventListener('click',e=>{if(el.classList.contains('hid')){e.stopPropagation();reveal(el)}})});
+/* 영상 탭 */
+$$('.vid').forEach(v=>{const tabs=$$('.vtabs button',v),vids=$$('video',v);tabs.forEach((b,i)=>b.onclick=()=>{vids.forEach((x,j)=>{x.style.display=i===j?'':'none';if(i!==j)x.pause()});tabs.forEach((x,j)=>x.classList.toggle('on',i===j))});if(tabs[0])tabs[0].onclick()});
+/* 3D 앱: 보이는 슬라이드에서만 불러와요(그래픽 처리 부담을 줄이려고) */
+function appOn(s,on){$$('.app',s).forEach(a=>{let f=$('iframe',a);if(on&&!f){f=document.createElement('iframe');f.src=a.dataset.src;f.allow='fullscreen';f.title=a.dataset.title||'3D 앱';a.appendChild(f)}if(!on&&f)f.remove()})}
+/* 단계 메뉴: 슬라이드 종류를 수업 단계로 묶어요 */
+const STG={'표지':'도입','도입':'도입','궁금해':'도입','이전에 배웠어요':'도입','학습 목표':'도입','해 보기':'해 보기','학습 자료':'학습 자료','개념':'개념','Q':'개념','3D 실험실':'3D 실험실','탐구':'탐구','스스로 확인하기':'정리','이것만은 꼭':'정리','핵심 정리':'정리','다음 시간':'정리'};
+SL.forEach(s=>s.dataset.st=s.dataset.st||STG[s.dataset.k]||'개념');
+{const gs=[...new Set(SL.map(s=>s.dataset.st))],box=$('#stages');gs.forEach(g=>{const b=document.createElement('button');b.textContent=g;b.dataset.g=g;if(g==='3D 실험실')b.classList.add('app3');
+  b.onclick=()=>{const idx=SL.map((s,i)=>[s,i]).filter(([s])=>s.dataset.st===g).map(x=>x[1]);const nx=idx.find(i=>i>cur&&SL[cur].dataset.st===g)??idx[0];if(SL[cur].dataset.st===g&&idx.every(i=>i<=cur))go(idx[0]);else go(nx)};box.appendChild(b)})}
+/* 판서: 슬라이드마다 따로 남아요 */
+const PEN={on:false,col:'#ffffff',w:5,mode:'pen',S:{},cv:null};
+{const cv=document.createElement('canvas');cv.id='ink';cv.width=1600*2;cv.height=900*2;deck.appendChild(cv);PEN.cv=cv;const g=cv.getContext('2d');g.scale(2,2);g.lineCap=g.lineJoin='round';let cur1=null;
+  const pt=e=>{const r=cv.getBoundingClientRect();return [(e.clientX-r.left)/r.width*1600,(e.clientY-r.top)/r.height*900]};
+  const line=s=>{g.globalAlpha=s.a;g.strokeStyle=s.c;g.lineWidth=s.w;g.beginPath();s.p.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));if(s.p.length===1)g.lineTo(s.p[0][0]+.1,s.p[0][1]);g.stroke();g.globalAlpha=1};
+  PEN.list=()=>PEN.S[cur]||(PEN.S[cur]=[]);
+  PEN.draw=()=>{g.clearRect(0,0,1600,900);(PEN.S[cur]||[]).forEach(line)};
+  cv.addEventListener('pointerdown',e=>{if(!PEN.on)return;e.preventDefault();e.stopPropagation();cv.setPointerCapture(e.pointerId);const p=pt(e);
+    if(PEN.mode==='erase'){cur1={erase:1};erase(p);return}
+    cur1={c:PEN.col,w:PEN.mode==='hl'?26:PEN.w,a:PEN.mode==='hl'?.35:1,p:[p]};PEN.list().push(cur1);PEN.draw()});
+  cv.addEventListener('pointermove',e=>{if(!cur1)return;const p=pt(e);if(cur1.erase){erase(p);return}cur1.p.push(p);PEN.draw()});
+  addEventListener('pointerup',()=>cur1=null);
+  function erase(p){const L=PEN.list(),n=L.length;for(let i=L.length-1;i>=0;i--)if(L[i].p.some(q=>Math.hypot(q[0]-p[0],q[1]-p[1])<22))L.splice(i,1);if(L.length!==n)PEN.draw()}}
+PEN.set=on=>{PEN.on=on;document.body.classList.toggle('pen',on);$('#bPen').classList.toggle('on',on)};
+$('#bPen').onclick=()=>PEN.set(!PEN.on);
+$$('#pal [data-c]').forEach(b=>b.onclick=()=>{PEN.col=b.dataset.c;PEN.mode=b.dataset.hl?'hl':'pen';$$('#pal button').forEach(x=>x.classList.toggle('on',x===b))});
+$('#pErase').onclick=()=>{PEN.mode='erase';$$('#pal button').forEach(x=>x.classList.toggle('on',x.id==='pErase'))};
+$('#pClear').onclick=()=>{PEN.S[cur]=[];PEN.draw()};$('#pClose').onclick=()=>PEN.set(false);
+function go(n){n=Math.max(0,Math.min(SL.length-1,n));if(n===cur)return;
+  if(cur>=0){const o=SL[cur];o.classList.remove('on');$$('video',o).forEach(v=>v.pause());appOn(o,false)}
+  SL.forEach((s,i)=>s.classList.toggle('past',i<n));cur=n;const s=SL[n];s.classList.add('on');appOn(s,true);
+  $('#prog i').style.width=((n+1)/SL.length*100)+'%';$('#cnt').textContent=(n+1)+' / '+SL.length;$('#ttl').textContent=s.dataset.t||'';
+  try{history.replaceState(null,'','#'+(n+1))}catch(e){}
+  $$('#grid button').forEach((b,i)=>b.classList.toggle('cur',i===n));
+  $$('#stages button').forEach(b=>b.classList.toggle('on',b.dataset.g===SL[n].dataset.st));PEN.draw()}
+function next(){const h=hidden(SL[cur]);if(h.length){reveal(h[0]);return}go(cur+1)}
+function prev(){go(cur-1)}
+addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('input,textarea'))return;
+  if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();next()}
+  else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();prev()}
+  else if(e.key==='Home')go(0);else if(e.key==='End')go(SL.length-1);
+  else if(e.key==='g'||e.key==='G'||e.key==='Escape'&&$('#grid').classList.contains('on'))toggleGrid();
+  else if(e.key==='f'||e.key==='F')full();else if(e.key==='p'||e.key==='P')PEN.set(!PEN.on)});
+/* 넘기기: 슬라이드 빈 곳 누르기, 손가락으로 밀기 */
+let tx=null;
+deck.addEventListener('pointerdown',e=>{if(PEN.on){tx=null;return}tx=e.target.closest('.app,video,button,a,.hid,.vtabs,.qz,.sw')?null:{x:e.clientX,y:e.clientY,t:Date.now()}});
+deck.addEventListener('pointerup',e=>{if(!tx)return;const dx=e.clientX-tx.x,dy=e.clientY-tx.y;
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){dx<0?next():prev()}else if(Math.abs(dx)<8&&Math.abs(dy)<8&&Date.now()-tx.t<400){e.clientX<innerWidth*.25?prev():next()}tx=null});
+/* 바닥 막대 */
+$('#bPrev').onclick=prev;$('#bNext').onclick=next;$('#bGrid').onclick=()=>toggleGrid();$('#bFull').onclick=()=>full();
+$('#prog').onclick=e=>{const r=e.currentTarget.getBoundingClientRect();go(Math.floor((e.clientX-r.left)/r.width*SL.length))};
+function full(){const d=document;if(!d.fullscreenElement)(d.documentElement.requestFullscreen||function(){}).call(d.documentElement);else d.exitFullscreen()}
+{const g=$('#grid');SL.forEach((s,i)=>{const b=document.createElement('button');b.innerHTML='<small>'+(i+1)+(s.dataset.k?' · '+s.dataset.k:'')+'</small>'+(s.dataset.t||'');if($('.app',s))b.classList.add('app3');b.onclick=()=>{go(i);toggleGrid(false)};g.appendChild(b)})}
+function toggleGrid(on){$('#grid').classList.toggle('on',on)}
+const h=parseInt((location.hash||'').slice(1));go(h>0?h-1:0);
+addEventListener('hashchange',()=>{const k=parseInt(location.hash.slice(1));if(k>0&&k-1!==cur)go(k-1)});
+})();
+</script></body></html>

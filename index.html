@@ -59,6 +59,11 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-weight:700;font-size:14px}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.mtabs{display:flex;gap:0;margin-top:26px;border-bottom:2px solid var(--ink)}
+.mtab{font:inherit;font-size:17px;font-weight:800;padding:10px 22px;border:2px solid transparent;border-bottom:0;border-radius:10px 10px 0 0;background:transparent;color:var(--muted);cursor:pointer;margin-bottom:-2px}
+.mtab[aria-pressed="true"]{background:var(--surface);border-color:var(--ink);color:var(--ink)}
+.mtab[data-m="ppt"][aria-pressed="true"]{box-shadow:inset 0 4px 0 #ffd24a}
+body.mppt .ctabs{display:none}
 .ctabs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:22px}
 .clabel{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);margin-right:4px}
 .ctab{display:inline-flex;align-items:baseline;gap:7px;border:1.5px solid var(--ink);background:var(--surface);border-radius:8px;padding:5px 12px;font-weight:700;font-size:14px}
@@ -102,6 +107,8 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
 .card{display:flex;flex-direction:column;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .thumb{display:block;position:relative;aspect-ratio:16/10;max-width:100%;background:var(--frame);overflow:hidden}
 .thumb img{position:absolute;inset:0;z-index:1;display:block;width:100%;height:100%;object-fit:cover}
+.thumb .kind{position:absolute;right:10px;top:10px;z-index:2;font-size:12.5px;font-weight:800;padding:4px 10px;border-radius:999px;background:#ffd24a;color:#2a2000;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.card.ppt{outline:2px solid rgba(255,210,74,.55);outline-offset:-2px}
 .thumb .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:34px;color:#e2eee8;background:radial-gradient(ellipse at 50% 40%,#1d3a2e,#0b1712 70%)}
 .code{position:absolute;z-index:2;left:10px;top:10px;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;background:rgba(255,255,255,.92);color:#10201b;border-radius:4px;padding:2px 7px}
 .body{display:flex;flex-direction:column;gap:8px;padding:14px 16px 16px;flex:1}
@@ -165,6 +172,7 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
     </div>
   </header>
 
+  <div class="mtabs" id="mtabs" role="group" aria-label="자료 종류"><button class="mtab" type="button" data-m="lab">3D 실험실</button><button class="mtab" type="button" data-m="ppt">수업 PPT</button></div>
   <div class="ctabs" id="ctabs" role="group" aria-label="교육과정"></div>
   <nav class="gtabs" id="gtabs" aria-label="학년"></nav>
   <div class="units" id="units" role="group" aria-label="단원"></div>
@@ -196,6 +204,7 @@ h1{font-family:var(--display);font-weight:400;font-size:clamp(36px,6vw,60px);lin
   desc: '한두 문장으로 무엇을 할 수 있는지 적어요.',
   tags: ['옴의 법칙', '직렬·병렬'],
   thumb: 'thumbs/circuit.jpg',     // 없으면 이 줄을 지워요
+  // kind: 'ppt',                  // 수업 PPT면 맨 앞 // 를 지워요
   // hidden: true,                 // 숨기려면 맨 앞 // 를 지워요
 },</pre><button class="btn" type="button" data-copy="snipApp">복사</button></div>
     <div class="snip"><pre id="snipUnit">{ id: '2022-3-1', cur: '2022', grade: 3, no: 'Ⅰ', name: '단원 이름' },</pre><button class="btn" type="button" data-copy="snipUnit">복사</button></div>
@@ -230,6 +239,7 @@ const CURRICULA = [
   { id: '2015', name: '2015 개정' },
 ];
 const DEFAULT_CUR = '2015';
+const PPT_CUR = '2022';   // 수업 PPT 탭은 2022 개정만 보여 줘요
 
 /* ============================================================
    여기만 고치면 돼요 ③ 단원 목록
@@ -399,6 +409,24 @@ const APPS = [
     tags: ['지구 공전', '연주 운동', '황도 12궁', '계절별 별자리'],
     thumb: 'thumbs/annual.jpg'
   },
+  {
+    file: 'ppt/ppt-rotation.html',
+    unit: '2022-1-7',
+    kind: 'ppt',
+    title: '01 지구 자전과 일주 운동',
+    desc: '교과서 242~247쪽 수업 PPT예요. 일주 운동 3D 관측소가 슬라이드 안에 들어 있어요.',
+    tags: ['일주 운동', '북두칠성', '천체 관측 프로그램'],
+    thumb: 'thumbs/ppt-rotation.jpg'
+  },
+  {
+    file: 'ppt/ppt-revolution.html',
+    unit: '2022-1-7',
+    kind: 'ppt',
+    title: '02 지구 공전과 별자리 변화',
+    desc: '교과서 248~251쪽 수업 PPT예요. 연주 운동 3D 관측소가 슬라이드 안에 들어 있어요.',
+    tags: ['연주 운동', '황도 12궁', '계절별 별자리'],
+    thumb: 'thumbs/ppt-revolution.jpg'
+  },
 ];
 
 /* ---------------- 아래는 고치지 않아도 돼요 ---------------- */
@@ -408,13 +436,15 @@ const $=s=>document.querySelector(s);
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const base=SITE.endsWith('/')?SITE:SITE+'/';
 const urlOf=a=>/^https?:/.test(a.file)?a.file:base+a.file;
-const SHOWN=APPS.filter(a=>a&&a.hidden!==true);
+const ALLAPPS=APPS.filter(a=>a&&a.hidden!==true);
+let mode='lab',SHOWN=[];
+const setShown=()=>{SHOWN=ALLAPPS.filter(a=>(a.kind==='ppt')===(mode==='ppt'));document.body.classList.toggle('mppt',mode==='ppt')};
 const curName=c=>(CURRICULA.find(x=>x.id===c)||{name:c+' 개정'}).name;
 const unitOf=id=>UNITS.find(u=>u.id===id)||{id,cur:DEFAULT_CUR,grade:0,name:'기타',note:''};
 const unitsOfApp=a=>[].concat(a.unit||[]).filter(Boolean);
 const ROMAN={'Ⅰ':1,'Ⅱ':2,'Ⅲ':3,'Ⅳ':4,'Ⅴ':5,'Ⅵ':6,'Ⅶ':7,'Ⅷ':8,'Ⅸ':9,'Ⅹ':10};
 const noVal=u=>{const v=String(u.no||'').trim();return ROMAN[v]||parseFloat(v)||99};
-const orphan=[...new Set(SHOWN.flatMap(unitsOfApp))].filter(id=>!UNITS.some(u=>u.id===id)).map(unitOf);
+const orphan=[...new Set(ALLAPPS.flatMap(unitsOfApp))].filter(id=>!UNITS.some(u=>u.id===id)).map(unitOf);
 const ALLU=[...UNITS,...orphan].map((u,k)=>Object.assign({k,cur:u.cur||DEFAULT_CUR},u))
   .sort((a,b)=>(a.grade||9)-(b.grade||9)||noVal(a)-noVal(b)||a.k-b.k);
 const appsIn=id=>SHOWN.filter(a=>unitsOfApp(a).includes(id));
@@ -422,18 +452,23 @@ const appsWhere=f=>SHOWN.filter(a=>unitsOfApp(a).some(id=>f(unitOf(id)))).length
 const gName=g=>g?g+'학년':'기타';
 const uLabel=u=>(u.no?u.no+'. ':'')+u.name;
 let cur=DEFAULT_CUR,grade=0,unit='';
-try{cur=localStorage.getItem('hub-cur')||cur;grade=+(localStorage.getItem('hub-grade')||0);unit=localStorage.getItem('hub-unit')||''}catch(e){}
-function fromHash(){const h=decodeURIComponent(location.hash.slice(1));let m;
+try{mode=localStorage.getItem('hub-mode')==='ppt'?'ppt':'lab';cur=localStorage.getItem('hub-cur')||cur;grade=+(localStorage.getItem('hub-grade')||0);unit=localStorage.getItem('hub-unit')||''}catch(e){}
+function fromHash(){let h=decodeURIComponent(location.hash.slice(1));let m;
+  if(h==='ppt'||h.startsWith('ppt-')){mode='ppt';cur=PPT_CUR;grade=0;unit='';h=h.slice(4);if(!h)return;if((m=h.match(/^g(\d)$/))){grade=+m[1];return}}
+  else if(h)mode='lab';
   if((m=h.match(/^c(\d{4})(?:-g(\d))?$/))){cur=m[1];grade=+(m[2]||0);unit=''}
-  else if(h.startsWith('u-')){const u=ALLU.find(x=>x.id===h.slice(2));if(u){unit=u.id;grade=u.grade||0;cur=u.cur}}}
+  if(h.startsWith('u-')){const u=ALLU.find(x=>x.id===h.slice(2));if(u){unit=u.id;grade=u.grade||0;cur=u.cur}}}
 fromHash();
-function goHome(){cur=DEFAULT_CUR;grade=0;unit='';const q=$('#q');if(q)q.value='';save();nav();render();window.scrollTo({top:0,behavior:'smooth'})}
+if(mode==='ppt')cur=PPT_CUR;setShown();
+function goHome(){mode='lab';setShown();cur=DEFAULT_CUR;grade=0;unit='';const q=$('#q');if(q)q.value='';save();nav();render();window.scrollTo({top:0,behavior:'smooth'})}
 if(!CURRICULA.some(c=>c.id===cur))cur=DEFAULT_CUR;
 if(unit&&!ALLU.some(u=>u.id===unit&&u.cur===cur))unit='';
-const viewHash=()=>unit?'#u-'+unit:'#c'+cur+(grade?'-g'+grade:'');
-function save(){try{localStorage.setItem('hub-cur',cur);localStorage.setItem('hub-grade',grade);localStorage.setItem('hub-unit',unit)}catch(e){}
+const viewHash=()=>mode==='ppt'?(unit?'#ppt-u-'+unit:'#ppt'+(grade?'-g'+grade:'')):unit?'#u-'+unit:'#c'+cur+(grade?'-g'+grade:'');
+function save(){try{localStorage.setItem('hub-mode',mode);if(mode!=='ppt')localStorage.setItem('hub-cur',cur);localStorage.setItem('hub-grade',grade);localStorage.setItem('hub-unit',unit)}catch(e){}
   try{history.replaceState(null,'',location.pathname+location.search+viewHash())}catch(e){}}
 function nav(){
+  document.querySelectorAll('#mtabs .mtab').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.m===mode);b.onclick=()=>{if(b.dataset.m===mode)return;mode=b.dataset.m;
+    if(mode==='ppt'){cur=PPT_CUR}else{try{cur=localStorage.getItem('hub-cur')||DEFAULT_CUR}catch(e){cur=DEFAULT_CUR}}unit='';if(grade&&!ALLU.some(u=>u.cur===cur&&u.grade===grade))grade=0;setShown();save();nav();render()}});
   $('#ctabs').innerHTML='<span class="clabel">교육과정</span>'+CURRICULA.map(c=>{const n=appsWhere(u=>u.cur===c.id);
     return '<button class="ctab" type="button" data-c="'+esc(c.id)+'" aria-pressed="'+(c.id===cur)+'">'+esc(c.name)+'<span class="n">'+n+'</span></button>'}).join('');
   const tabs=[0,...GRADES];
@@ -451,9 +486,10 @@ function match(a,q){if(!q)return true;return [a.title,a.desc,unitsOfApp(a).map(i
 function card(a,u,n){
   const code=(u.grade?'중'+u.grade+' · ':'')+(u.no?u.no+' · ':u.name+' · ')+String(n).padStart(2,'0');
   const ph='<div class="ph" aria-hidden="true">'+esc(a.title.slice(0,2))+'</div>';
-  return '<article class="card"><a class="thumb" href="'+esc(urlOf(a))+'" target="_blank" rel="noopener" aria-label="'+esc(a.title)+' 열기">'+ph+
+  const ppt=a.kind==='ppt';
+  return '<article class="card'+(ppt?' ppt':'')+'"><a class="thumb" href="'+esc(urlOf(a))+'" target="_blank" rel="noopener" aria-label="'+esc(a.title)+' 열기">'+ph+
     (a.thumb?'<img src="'+esc(a.thumb)+'" alt="" loading="lazy" onerror="this.remove()">':'')+
-    '<span class="code">'+esc(code)+'</span></a><div class="body"><h4>'+esc(a.title)+'</h4><p>'+esc(a.desc||'')+'</p>'+
+    '<span class="code">'+esc(code)+'</span>'+(ppt?'<span class="kind">수업 PPT</span>':'')+'</a><div class="body"><h4>'+esc(a.title)+'</h4><p>'+esc(a.desc||'')+'</p>'+
     (a.tags&&a.tags.length?'<ul class="tags">'+a.tags.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>':'')+
     '<div class="acts"><a class="btn primary" href="'+esc(urlOf(a))+'" target="_blank" rel="noopener">열기 ↗</a><button class="btn" type="button" data-qr="'+esc(a.file)+'">QR 띄우기</button></div></div></article>';
 }
@@ -489,7 +525,7 @@ function render(){
   }
   $('#list').innerHTML=h;
   const scope=curName(cur)+(unit?' · '+uLabel(unitOf(unit)):grade?' · '+grade+'학년':'');
-  $('#count').textContent=scope+' · '+(q?'찾은 콘텐츠 ':'콘텐츠 ')+seen.size+'개';
+  $('#count').textContent=(mode==='ppt'?'수업 PPT · ':'')+scope+' · '+(q?'찾은 ':'')+(mode==='ppt'?'자료 ':'콘텐츠 ')+seen.size+'개';
   $('#list').querySelectorAll('[data-qr]').forEach(b=>b.onclick=()=>{const a=SHOWN.find(x=>x.file===b.dataset.qr);showQR(a.title,urlOf(a),b)});
 }
 let lastFocus=null;
@@ -506,7 +542,7 @@ $('#qrClose').onclick=closeQR;
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#qr').hidden)closeQR()});
 $('#hubQR').onclick=e=>showQR('3D 과학 실험실',base,e.currentTarget);
 $('#viewQR').onclick=e=>{const t=curName(cur)+(unit?' · '+uLabel(unitOf(unit)):grade?' · '+grade+'학년':'');showQR('3D 과학 실험실 · '+t,base+viewHash(),e.currentTarget)};
-window.addEventListener('hashchange',()=>{fromHash();nav();render()});
+window.addEventListener('hashchange',()=>{fromHash();if(mode==='ppt')cur=PPT_CUR;setShown();nav();render()});
 $('#q').addEventListener('input',render);
 document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{
   const el=document.getElementById(b.dataset.copy),t=el.textContent;
