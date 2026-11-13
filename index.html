@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>3D 과학 실험실</title>
+<title>SM Science Hub</title>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
@@ -162,9 +162,9 @@ body.mppt .ctabs{display:none}
 <div class="wrap">
   <header class="top">
     <div class="id">
-      <p class="eyebrow">MIDDLE SCHOOL SCIENCE · 3D</p>
-      <h1><a class="home" id="homeLink" href="./" title="처음 화면으로">3D 과학 실험실</a></h1>
-      <p class="lead">학년별·단원별 3D 수업 콘텐츠를 모아 둔 곳이에요. 콘텐츠를 눌러 바로 열거나, ‘QR’ 버튼으로 휴대폰·태블릿 접속 코드를 크게 띄울 수 있어요.</p>
+      <p class="eyebrow">MIDDLE SCHOOL SCIENCE · 3D LAB &amp; LESSON</p>
+      <h1><a class="home" id="homeLink" href="./" title="처음 화면으로">SM Science Hub</a></h1>
+      <p class="lead">학년별·단원별 3D 실험실과 수업 PPT를 모아 둔 곳이에요. 자료를 눌러 바로 열거나, ‘QR’ 버튼으로 휴대폰·태블릿 접속 코드를 크게 띄울 수 있어요.</p>
     </div>
     <div class="topacts">
       <a class="btn ytbtn" href="https://www.youtube.com/@%EC%9D%B4%EC%83%81%EB%AF%BC-c7j6d" target="_blank" rel="noopener"><svg viewBox="0 0 28 20" width="22" height="16" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#ff0033"/><path d="M11 5.5v9l8-4.5z" fill="#fff"/></svg>강의 영상 보기</a>
@@ -540,8 +540,8 @@ function showQR(title,url,from){
 function closeQR(){$('#qr').hidden=true;if(lastFocus)lastFocus.focus()}
 $('#qrClose').onclick=closeQR;
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#qr').hidden)closeQR()});
-$('#hubQR').onclick=e=>showQR('3D 과학 실험실',base,e.currentTarget);
-$('#viewQR').onclick=e=>{const t=curName(cur)+(unit?' · '+uLabel(unitOf(unit)):grade?' · '+grade+'학년':'');showQR('3D 과학 실험실 · '+t,base+viewHash(),e.currentTarget)};
+$('#hubQR').onclick=e=>showQR('SM Science Hub',base,e.currentTarget);
+$('#viewQR').onclick=e=>{const t=curName(cur)+(unit?' · '+uLabel(unitOf(unit)):grade?' · '+grade+'학년':'');showQR('SM Science Hub · '+(mode==='ppt'?'수업 PPT · ':'')+t,base+viewHash(),e.currentTarget)};
 window.addEventListener('hashchange',()=>{fromHash();if(mode==='ppt')cur=PPT_CUR;setShown();nav();render()});
 $('#q').addEventListener('input',render);
 document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{
