@@ -160,7 +160,7 @@ img,video{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
 </div></div>
 <div id="grid"></div>
 <div id="pal"><button class="dot on" data-c="#ffffff" style="background:#fff" title="흰색"></button><button class="dot" data-c="#ffd24a" style="background:#ffd24a" title="노랑"></button><button class="dot" data-c="#ff5a5a" style="background:#ff5a5a" title="빨강"></button><button class="dot" data-c="#5ab0ff" style="background:#5ab0ff" title="파랑"></button><button data-c="#fff04a" data-hl="1" title="형광펜">형광펜</button><button id="pErase">지우개</button><button id="pClear">모두 지우기</button><button id="pClose">닫기</button></div>
-<nav id="bar"><button id="bPrev" aria-label="이전">◀</button><button id="bNext" aria-label="다음">▶</button><span id="cnt"></span><div id="prog"><i></i></div><div id="stages"></div><span id="ttl"></span><button id="bPen" title="판서 (P)">✏️ 판서</button><button id="bGrid">한눈에 보기</button><button id="bFull">전체 화면</button></nav>
+<nav id="bar"><button id="bPrev" aria-label="이전">◀</button><button id="bNext" aria-label="다음">▶</button><span id="cnt"></span><div id="prog"><i></i></div><div id="stages"></div><span id="ttl"></span><button id="bHide" title="이 장에서 연 답을 다시 가려요 (R)">다시 가리기</button><button id="bPen" title="판서 (P)">✏️ 판서</button><button id="bGrid">한눈에 보기</button><button id="bFull">전체 화면</button></nav>
 <script>(function(){
 /* 복제 방지: 우클릭·끌기·복사·저장·인쇄 단축키 막기 */
 ['contextmenu','dragstart','copy','cut','selectstart'].forEach(t=>document.addEventListener(t,e=>{if(!(e.target.closest&&e.target.closest('input,textarea')))e.preventDefault()}));
@@ -235,6 +235,10 @@ function go(n){n=Math.max(0,Math.min(SL.length-1,n));if(n===cur)return;
   try{history.replaceState(null,'','#'+(n+1))}catch(e){}
   $$('#grid button').forEach((b,i)=>b.classList.toggle('cur',i===n));
   $$('#stages button').forEach(b=>b.classList.toggle('on',b.dataset.g===SL[n].dataset.st));PEN.draw()}
+/* 다시 가리기: 지금 장에서 연 답·빈칸·퀴즈를 처음 상태로 */
+$$('.hid',deck).forEach(el=>el.dataset.h0=1);
+function rehide(){const s=SL[cur];$$('[data-h0]',s).forEach(el=>el.classList.add('hid'));
+  $$('.qz',s).forEach(q=>{q.classList.remove('done');$$('.qo',q).forEach(b=>{b.disabled=false;b.classList.remove('ok','no')});const ex=$('.qex',q);if(ex)ex.classList.remove('on')});delete s.dataset.cel}
 function next(){const h=$$('.hid',SL[cur]);if(h.length){reveal(h[0]);return}go(cur+1)}
 function prev(){go(cur-1)}
 addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('input,textarea'))return;
@@ -242,14 +246,14 @@ addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('input,text
   else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();prev()}
   else if(e.key==='Home')go(0);else if(e.key==='End')go(SL.length-1);
   else if(e.key==='g'||e.key==='G'||e.key==='Escape'&&$('#grid').classList.contains('on'))toggleGrid();
-  else if(e.key==='f'||e.key==='F')full();else if(e.key==='p'||e.key==='P')PEN.set(!PEN.on)});
+  else if(e.key==='f'||e.key==='F')full();else if(e.key==='p'||e.key==='P')PEN.set(!PEN.on);else if(e.key==='r'||e.key==='R')rehide()});
 /* 넘기기: 슬라이드 빈 곳 누르기, 손가락으로 밀기 */
 let tx=null;
 deck.addEventListener('pointerdown',e=>{if(PEN.on){tx=null;return}tx=e.target.closest('.app,video,button,a,.hid,.vtabs,.qz,.sw')?null:{x:e.clientX,y:e.clientY,t:Date.now()}});
 deck.addEventListener('pointerup',e=>{if(!tx)return;const dx=e.clientX-tx.x,dy=e.clientY-tx.y;
   if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){dx<0?next():prev()}else if(Math.abs(dx)<8&&Math.abs(dy)<8&&Date.now()-tx.t<400){e.clientX<innerWidth*.25?prev():next()}tx=null});
 /* 바닥 막대 */
-$('#bPrev').onclick=prev;$('#bNext').onclick=next;$('#bGrid').onclick=()=>toggleGrid();$('#bFull').onclick=()=>full();
+$('#bHide').onclick=rehide;$('#bPrev').onclick=prev;$('#bNext').onclick=next;$('#bGrid').onclick=()=>toggleGrid();$('#bFull').onclick=()=>full();
 $('#prog').onclick=e=>{const r=e.currentTarget.getBoundingClientRect();go(Math.floor((e.clientX-r.left)/r.width*SL.length))};
 function full(){const d=document;if(!d.fullscreenElement)(d.documentElement.requestFullscreen||function(){}).call(d.documentElement);else d.exitFullscreen()}
 {const g=$('#grid');SL.forEach((s,i)=>{const b=document.createElement('button');b.innerHTML='<small>'+(i+1)+(s.dataset.k?' · '+s.dataset.k:'')+'</small>'+(s.dataset.t||'');if($('.app',s))b.classList.add('app3');b.onclick=()=>{go(i);toggleGrid(false)};g.appendChild(b)})}
