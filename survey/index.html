@@ -54,6 +54,11 @@ textarea { min-height: 76px; resize: vertical; line-height: 1.55; }
 input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
 .req { color: var(--err); font-weight: 400; }
 
+.consent table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.consent th, .consent td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.consent th { width: 30%; background: var(--accent-soft); font-weight: 500; }
+.agree { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--accent); border-radius: 6px; cursor: pointer; font-weight: 500; }
+.agree input { width: 20px; height: 20px; flex: 0 0 auto; margin-top: 2px; accent-color: var(--accent); }
 .tip { background: var(--accent-soft); border-radius: 6px; padding: 12px 14px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
 .tip b { color: var(--accent); }
 
@@ -106,6 +111,18 @@ footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8
 
   <form id="f" novalidate>
     <div class="wrap" style="gap:18px">
+      <section class="sheet consent">
+        <h2>개인정보 수집·이용 동의 <small>제출 전에 꼭 읽어 주세요</small></h2>
+        <table>
+          <tr><th scope="row">수집 목적</th><td>학교생활기록부 '행동특성 및 종합의견' 작성 참고</td></tr>
+          <tr><th scope="row">수집 항목</th><td>번호, 이름, 이 조사서에 적은 내용</td></tr>
+          <tr><th scope="row">보관 방법</th><td>담임 선생님의 구글 계정 스프레드시트에 저장하며, 담임 선생님만 볼 수 있어요.</td></tr>
+          <tr><th scope="row">보유 기간</th><td>해당 학년도 학교생활기록부 마감 후 파기</td></tr>
+          <tr><th scope="row">동의 거부</th><td>동의하지 않을 수 있어요. 동의하지 않으면 이 페이지로는 제출할 수 없고, 종이 조사서로 내도 돼요. 생활기록부 작성에는 어떤 불이익도 없어요.</td></tr>
+        </table>
+        <label class="agree" for="agree"><input type="checkbox" id="agree" name="agree"><span>위 내용을 읽었으며, 개인정보 수집·이용에 동의합니다. <span class="req">*</span></span></label>
+      </section>
+
       <section class="sheet">
         <h2>기본 정보</h2>
         <div class="row2">
@@ -215,6 +232,7 @@ function showErr(text, focusId) {
 
 form.addEventListener("submit", ev => {
   ev.preventDefault();
+  if (!$("agree").checked) return showErr("개인정보 수집·이용 동의에 체크해 주세요.", "agree");
   const num = $("num").value.trim();
   if (!/^\d{1,2}$/.test(num) || +num < 1) return showErr("번호를 숫자로 적어 주세요.", "num");
   if (!$("name").value.trim()) return showErr("이름을 적어 주세요.", "name");
@@ -229,7 +247,7 @@ $("backBtn").addEventListener("click", () => { $("confirm").hidden = true; $("su
 
 $("sendBtn").addEventListener("click", async () => {
   const btn = $("sendBtn"); btn.disabled = true; btn.textContent = "보내는 중…";
-  const data = { year: YEAR, cls: CLASS };
+  const data = { year: YEAR, cls: CLASS, agree: "동의" };
   FIELDS.forEach(k => data[k] = $(k).value.trim());
   try {
     if (SCRIPT_URL) {
