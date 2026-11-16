@@ -130,6 +130,7 @@ footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8
           <div class="field"><label for="name">이름 <span class="req">*</span></label><input id="name" name="name" maxlength="20"></div>
         </div>
         <div class="field"><label for="role">학급 역할</label><input id="role" name="role" maxlength="60" placeholder="예) 1학기 학습부장, 2학기 환경 도우미"></div>
+        <div class="field"><label for="roleWork">그 역할로 실제로 한 일</label><p class="hint">예) 수행평가 날짜를 칠판 옆에 정리해 두고 하루 전에 알려 줬다</p><textarea id="roleWork" name="roleWork"></textarea></div>
       </section>
 
       <section class="sheet">
@@ -137,6 +138,7 @@ footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8
         <div class="field"><label for="words">나를 나타내는 단어 3개</label><textarea id="words" name="words" rows="2"></textarea></div>
         <div class="field"><label for="strength">내가 가장 자신 있는 점</label><textarea id="strength" name="strength"></textarea></div>
         <div class="field"><label for="effort">요즘 고치려고 노력하는 점</label><textarea id="effort" name="effort"></textarea></div>
+        <div class="field"><label for="praise">친구나 선생님에게 들은 칭찬 한마디</label><p class="hint">누구에게, 어떤 일로 들었는지도 함께 적어 주세요</p><textarea id="praise" name="praise"></textarea></div>
       </section>
 
       <section class="sheet">
@@ -150,7 +152,9 @@ footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8
 
       <section class="sheet">
         <h2><span class="n">3</span>마무리</h2>
+        <div class="field"><label for="hardship">어려움을 겪고 이겨 낸 경험</label><p class="hint">공부, 친구 관계, 생활 습관 등 무엇이든 괜찮아요. 어떻게 이겨 냈는지 적어 주세요</p><textarea id="hardship" name="hardship"></textarea></div>
         <div class="field"><label for="change">작년과 비교해 가장 달라진 점</label><textarea id="change" name="change"></textarea></div>
+        <div class="field"><label for="interest">관심 분야와 키우고 싶은 능력</label><p class="hint">직업 이름보다 어떤 능력을 키우고 싶은지 적어 주세요. 예) 사람들의 이야기를 잘 들어 주는 능력</p><textarea id="interest" name="interest"></textarea></div>
         <div class="field"><label for="toTeacher">선생님께 하고 싶은 말</label><textarea id="toTeacher" name="toTeacher"></textarea></div>
       </section>
 
@@ -193,7 +197,7 @@ const [grade, ban] = CLASS.split("-");
 const classLabel = grade && ban ? `${grade}학년 ${ban}반` : CLASS;
 document.getElementById("metaLine").textContent = `${YEAR}학년도 · ${classLabel}`;
 
-const FIELDS = ["num","name","role","words","strength","effort","sports","festival","cleaning","service","study","change","toTeacher"];
+const FIELDS = ["num","name","role","roleWork","words","strength","effort","praise","sports","festival","cleaning","service","study","hardship","change","interest","toTeacher"];
 const form = document.getElementById("f");
 const DRAFT_KEY = `hs-draft-${YEAR}-${CLASS}`;
 const $ = id => document.getElementById(id);
