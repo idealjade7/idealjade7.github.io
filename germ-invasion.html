@@ -59,6 +59,22 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 .choice.right{border-color:var(--ok);background:#173a26}
 .choice.wrong{border-color:var(--bad);background:#3e1a1f}
 .choice:disabled{cursor:default}
+.choice.gone{opacity:.25;text-decoration:line-through}
+.choice.hint{border-color:#ffd84a;box-shadow:0 0 0 2px #7a5a00,0 0 16px rgba(255,216,74,.6)}
+.qitems{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.qitems button{font-family:'Do Hyeon';font-size:15px;padding:6px 10px;border:2px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer}
+.qitems button:disabled{opacity:.35;cursor:default}
+.qitems button:not(:disabled):hover{border-color:var(--gold)}
+.qitems .cnt{color:var(--gold);margin-left:4px}
+.retryAsk{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.retryAsk button{font-family:'Do Hyeon';font-size:16px;padding:6px 12px;border:2px solid var(--line);cursor:pointer;background:var(--panel2);color:var(--text)}
+.retryAsk button.go{background:#2e6b45;border-color:#5ee08a}
+.guide h3{font-family:'Do Hyeon';color:var(--gold);margin:14px 0 6px;font-size:19px;font-weight:400}
+.guide .it{display:flex;gap:12px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line)}
+.guide .it canvas,.guide .it .ic{width:44px;height:44px;flex:0 0 44px;image-rendering:pixelated;display:flex;align-items:center;justify-content:center;font-size:26px}
+.guide .it b{font-family:'Do Hyeon';font-size:17px;font-weight:400}
+.guide .it div{font-size:14px;line-height:1.45}
+.guide .it .pr{color:var(--gold);font-family:'Do Hyeon'}
 .feedback{margin-top:12px;padding:10px 12px;border-left:4px solid var(--ok);background:#15261c;font-size:15px;line-height:1.5}
 .feedback.bad{border-color:var(--bad);background:#2a1418}
 .feedback b{font-family:'Do Hyeon';font-size:18px}
@@ -164,7 +180,7 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
   <div class="warn" id="warn"></div>
   <div class="row" style="gap:18px;margin-top:6px"><div class="vol" style="margin:0">🎵 <input type="range" min="0" max="100" class="bgmVol" style="width:120px"><span class="pct"></span></div><div class="vol" style="margin:0">🔊 <input type="range" min="0" max="100" class="sfxVol" style="width:120px"><span class="pct"></span></div></div>
   <button class="btn" id="startBtn">게임 시작 <small>(Enter)</small></button>
-  <button class="btn sec2" id="rankOpenBtn" style="font-size:16px;margin-top:8px">🏆 명예의 전당</button>
+  <div class="row" style="gap:8px;margin-top:8px"><button class="btn sec2" id="rankOpenBtn" style="font-size:16px;margin:0;flex:1">🏆 명예의 전당</button><button class="btn sec2" id="guideOpenBtn" style="font-size:16px;margin:0;flex:1">📖 아이템 도감</button></div>
  </div>
 </div>
 
@@ -174,6 +190,7 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
   <h2><span id="qTitle">보급 상자 퀴즈</span><span><span class="tag" id="qUnit"></span> <span class="tag" id="qLv"></span></span></h2>
   <div class="qtext" id="qText"></div>
   <div class="choices" id="qChoices"></div>
+  <div class="qitems" id="qItems"></div>
   <div id="qFeed"></div>
   <button class="btn hidden" id="qNext">보상 받기 <small>(Enter)</small></button>
  </div>
@@ -201,6 +218,13 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 </div>
 
 <!-- 명예의 전당 -->
+<div class="overlay dim hidden" id="guideOv">
+ <div class="panel guide" style="max-width:720px">
+  <div class="ctitle">📖 아이템 도감</div>
+  <div id="guideBody"></div>
+  <button class="btn" id="guideClose">닫기 <small>(Esc)</small></button>
+ </div>
+</div>
 <div class="overlay dim hidden" id="rankOv">
  <div class="panel" style="max-width:640px">
   <div class="ctitle">🏆 명예의 전당</div>
@@ -309,6 +333,7 @@ function beep(freq=440, dur=.08, type="square", vol=.05, slide=0){
  }catch(e){}
 }
 const SFX = {
+ bigCoin:()=>{ [1047,1319,1568,2093].forEach((f,i)=>setTimeout(()=>beep(f,.09,"square",.03),i*45)); setTimeout(()=>beep(2637,.18,"triangle",.04),190); },
  gem:()=>{ beep(1320+Math.random()*120,.035,"square",.022); setTimeout(()=>beep(1760,.04,"square",.018),35); },
  lvl:()=>{beep(523,.1,"square",.05);setTimeout(()=>beep(659,.1,"square",.05),90);setTimeout(()=>beep(784,.16,"square",.05),180)},
  ok:()=>{beep(660,.1,"triangle",.08);setTimeout(()=>beep(990,.18,"triangle",.08),100)},
@@ -860,10 +885,10 @@ function bossFrames(k){
 }
 // ================= 주인공 캐릭터 (3방향 걷기, 캐릭터 4종) =================
 const HEROES = [
- {id:"m1", name:"남학생 1", hair:"short", female:false, hc:["#3b2418","#5c3a26","#8f5e3c"], skin:["#f9d3ab","#e2aa82"], shirt:["#4a86e0","#2f5fae"], legs:["#34406e","#232b4f"]},
- {id:"m2", name:"남학생 2", hair:"spiky", female:false, hc:["#17131f","#2a2433","#4a4058"], skin:["#f3c69a","#d99f74"], shirt:["#3fb37f","#2a7d58"], legs:["#3a3f4a","#262a33"]},
- {id:"f1", name:"여학생 1", hair:"pony",  female:true,  hc:["#17131f","#2a2433","#4a4058"], skin:["#fad6b4","#e5ae8a"], shirt:["#e04a6a","#a8304b"], legs:["#34406e","#232b4f"], tie:"#e04a6a"},
- {id:"f2", name:"여학생 2", hair:"bob",   female:true,  hc:["#6b3518","#93501f","#c07a3e"], skin:["#f9d3ab","#e2aa82"], shirt:["#9b6bff","#6f45c9"], legs:["#5a3b6e","#3e2850"], tie:"#ff7bd5", pin:"#ff9cf6"},
+ {id:"m1", name:"민준", hair:"short", female:false, hc:["#3b2418","#5c3a26","#8f5e3c"], skin:["#f9d3ab","#e2aa82"], shirt:["#4a86e0","#2f5fae"], legs:["#34406e","#232b4f"]},
+ {id:"m2", name:"현우", hair:"spiky", female:false, hc:["#17131f","#2a2433","#4a4058"], skin:["#f3c69a","#d99f74"], shirt:["#3fb37f","#2a7d58"], legs:["#3a3f4a","#262a33"]},
+ {id:"f1", name:"서연", hair:"pony",  female:true,  hc:["#17131f","#2a2433","#4a4058"], skin:["#fad6b4","#e5ae8a"], shirt:["#e04a6a","#a8304b"], legs:["#34406e","#232b4f"], tie:"#e04a6a"},
+ {id:"f2", name:"지아", hair:"bob",   female:true,  hc:["#6b3518","#93501f","#c07a3e"], skin:["#f9d3ab","#e2aa82"], shirt:["#9b6bff","#6f45c9"], legs:["#5a3b6e","#3e2850"], tie:"#ff7bd5", pin:"#ff9cf6"},
  // 사진 속 캐릭터를 도트로 옮긴 선생님 캐릭터
  {id:"sm", name:"상민", chibi:"sm", hair:"mop", lip:"#7a3b34", female:false, glasses:true, blush:true, collar:true, coat:["#cfe0ef","#b3c8dc","#8ea6bf"], hc:["#141018","#23202b","#3d3848"], skin:["#fbe3c4","#e8c29c"], shirt:["#ffffff","#e6ecf3"], legs:["#4a5568","#323a48"]},
  {id:"sh", name:"소희", chibi:"sh", hair:"hime", female:false, lip:"#e0475a", coat:["#fbf6ea","#ece2cc","#cdbf9f"], neck:true, hc:["#120d10","#221a1e","#4a3a36"], skin:["#fde8dc","#ecc6b6"], shirt:["#fbf6ea","#ece2cc"], legs:["#3a3340","#27222c"]},
@@ -1093,7 +1118,7 @@ const keys = {};
 addEventListener("keydown", e=>{
  if(e.target && e.target.tagName==="INPUT" && e.target.type!=="range") return;
  if(e.code) keys[e.code] = true;   // 한/영 상태와 관계없이 같은 자판 위치로 인식
- if(!document.getElementById("menu").classList.contains("hidden") && document.getElementById("rankOv").classList.contains("hidden") && e.key==="Enter"){ startGame(); e.preventDefault(); return; }
+ if(!document.getElementById("menu").classList.contains("hidden") && document.getElementById("rankOv").classList.contains("hidden") && document.getElementById("guideOv").classList.contains("hidden") && e.key==="Enter"){ startGame(); e.preventDefault(); return; }
  if(G && G.mode==="quiz") quizKey(e);
  else if(G && G.mode==="cards") cardKey(e);
  else if(G && (e.key==="p"||e.key==="P"||e.key==="Escape")){ if(G.mode==="play") pauseGame(); else if(G.mode==="pause") resumeGame(); }
@@ -1127,7 +1152,7 @@ function startGame(){
   p:{x:0,y:0,r:14,hp:120,maxhp:120,spd:170,inv:0,face:{x:1,y:0},flip:false,regen:.6,walk:0},
   lvl:1, xp:0, need:xpNeed(1), pendingLv:0,
   weapons:{}, passives:{}, evolved:{},
-  enemies:[], shots:[], pools:[], gems:[], chests:[], fx:[], texts:[], bolts:[], ebullets:[], hazards:[],
+  enemies:[], shots:[], pools:[], gems:[], chests:[], fx:[], texts:[], bolts:[], ebullets:[], hazards:[], drops:[], items:{half:0,retry:0,answer:0},
   spawnAcc:0, chestTimer:25, nextBoss:BOSS_INTERVAL, bossSpawned:0, bossKilled:0,
   kills:0, quizRight:0, quizTotal:0, quizTime:0, wrongs:[], qpool:shuffle(p.slice()), qused:new Set(),
   cdmul:1, dmgmul:1, areamul:1, durmul:1, magnet:110, buffs:{atk:0,spd:0}, score:0, shake:0, cleared:false, over:false,
@@ -1286,11 +1311,14 @@ function hurtEnemy(e,dmg,kb,src){
  dmg*=accMul(); if(G.buffs&&G.buffs.atk>0) dmg*=1.6; if(shielded(e)){ dmg*=shieldFactor(); e.shieldHit=.15; }
  e.hp-=dmg; e.hitT=.08;
  if(kb && e.type!=="boss"){ const s=src||G.p; const a=Math.atan2(e.y-s.y,e.x-s.x); e.kb.x+=Math.cos(a)*120; e.kb.y+=Math.sin(a)*120; }
- if(Math.random()<.5 || dmg>30) G.texts.push({x:e.x+rnd(-6,6),y:e.y-e.r,txt:Math.round(dmg),life:.6,col:dmg>40?"#ffd84a":"#fff"});
+ // 데미지 숫자: 매번 띄우되, 아주 짧은 사이(0.12초)에 들어온 피해는 합쳐서 한 번에 보여 줘요
+ e.dmgAcc=(e.dmgAcc||0)+dmg; if(!(e.dmgT>0) || e.hp<=0) showDmg(e);
  if(e.hp<=0) killEnemy(e);
 }
 const MOB_COL={virus:"#c98bff",amoeba:"#7cc0ff",spore:"#f29a45",phage:"#8fd3df",split:"#f07bc0"};
 function mobShot(e,ang,spd,o={}){ if(G.ebullets.length>140 || G.mobShots>45) return; G.mobShots=(G.mobShots||0)+1; G.ebullets.push(Object.assign({x:e.x,y:e.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,r:6,dmg:e.dmg*.8,life:3.2,col:MOB_COL[e.type]||"#fff",mob:true},o)); }
+function showDmg(e){ const v=Math.round(e.dmgAcc||0); e.dmgAcc=0; e.dmgT=.12; if(v<=0) return;
+ G.texts.push({x:e.x+rnd(-8,8),y:e.y-e.r-rnd(0,6),txt:v,life:.6,col:v>40?"#ffd84a":"#fff"}); if(G.texts.length>160) G.texts.splice(0,G.texts.length-160); }
 function killEnemy(e){
  e.dead=true; G.kills++; G.score+=e.type==="boss"?1000*e.k:10;
  for(let i=0;i<6;i++) G.fx.push({kind:"spark",x:e.x,y:e.y,vx:rnd(-120,120),vy:rnd(-120,120),life:.4,T:.4,col:e.type==="boss"?e.col:(MOB_COL[e.type]||"#7ff59a")});
@@ -1300,6 +1328,7 @@ function killEnemy(e){
   for(let i=0;i<40;i++) G.fx.push({kind:"spark",x:e.x,y:e.y,vx:rnd(-300,300),vy:rnd(-300,300),life:.9,T:.9,col:e.col});
   for(let i=0;i<12;i++) G.gems.push({x:e.x+rnd(-50,50),y:e.y+rnd(-50,50),v:5});
   G.ebullets = []; G.hazards = G.hazards.filter(h=>h.boss!==e);
+  const cd=rollBossCard(); if(cd) G.drops.push({x:e.x,y:e.y,id:cd,t:0});
   queueQuiz("boss", e.k);
  } else {
   if(Math.random()<.02) SFX.kill();
@@ -1317,6 +1346,21 @@ function spawnChest(){
 }
 
 // ================= 퀴즈 =================
+// ================= 보스 드랍 카드(퀴즈 도우미) =================
+// 보스를 잡으면 반반 30%, 다시 풀기 30%, 정답 5% 확률로 카드 1장이 떨어져요(35%는 없음).
+const QCARDS = {
+ half:  {name:"반반 카드",     ch:"반", col:"#5fd0ff", rate:.30, desc:"퀴즈에서 오답 보기 2개를 지워요."},
+ retry: {name:"다시 풀기 카드", ch:"재", col:"#7dffb0", rate:.30, desc:"틀렸을 때 한 번 더 고를 수 있어요. 다시 골라 맞히면 정답으로 쳐요."},
+ answer:{name:"정답 카드",     ch:"정", col:"#ffd84a", rate:.05, desc:"정답 보기를 빛나게 알려 줘요. 이 카드를 쓴 문제는 정답률에 들어가지 않아요."},
+};
+function rollBossCard(){ let r=Math.random(); for(const [id,c] of Object.entries(QCARDS)){ if(r<c.rate) return id; r-=c.rate; } return null; }
+function drawCardIcon(x, cx, cy, id, sc=1){   // 작은 카드 그림(게임 화면·도감 공용)
+ const c=QCARDS[id], w=18*sc, h=24*sc;
+ x.fillStyle="#120c1d"; x.fillRect(cx-w/2-2*sc,cy-h/2-2*sc,w+4*sc,h+4*sc);
+ x.fillStyle=c.col; x.fillRect(cx-w/2,cy-h/2,w,h);
+ x.fillStyle="rgba(255,255,255,.55)"; x.fillRect(cx-w/2,cy-h/2,w,3*sc); x.fillStyle="rgba(0,0,0,.25)"; x.fillRect(cx-w/2,cy+h/2-3*sc,w,3*sc);
+ x.fillStyle="#1a1426"; x.font=`${Math.round(14*sc)}px 'Do Hyeon', sans-serif`; x.textAlign="center"; x.textBaseline="middle"; x.fillText(c.ch,cx,cy+1*sc); x.textBaseline="alphabetic";
+}
 let quizQueue=[];
 function queueQuiz(kind, k){ quizQueue.push({kind,k}); }
 function pickQuestion(kind){
@@ -1346,22 +1390,58 @@ function openQuiz(item){ clearKeys();
  order.forEach((oi,i)=>{ const b=document.createElement("button"); b.className="choice"; b.innerHTML=`<span class="n">${i+1}</span><span>${esc(q[3][oi])}</span>`; b.onclick=()=>answer(i); box.appendChild(b); });
  document.getElementById("qFeed").innerHTML="";
  document.getElementById("qNext").classList.add("hidden");
+ renderQItems();
  document.getElementById("quizOv").classList.remove("hidden");
 }
+function renderQItems(){
+ const box=document.getElementById("qItems"); box.innerHTML="";
+ if(qAnswered || curQ.asking) return;
+ const mk=(id,label,fn,dis)=>{ const n=G.items[id]; if(!n) return; const b=document.createElement("button"); b.innerHTML=`${label}<span class="cnt">×${n}</span>`; b.disabled=!!dis; b.onclick=fn; box.appendChild(b); };
+ mk("half",'✂️ 반반 카드',useHalf,curQ.halfUsed);
+ mk("answer",'💡 정답 카드',useAnswerCard,curQ.usedAnswer);
+ if(G.items.retry && !curQ.retried){ const t=document.createElement("button"); t.disabled=true; t.innerHTML=`🔁 다시 풀기 카드<span class="cnt">×${G.items.retry}</span> <small>(틀리면 쓸 수 있어요)</small>`; box.appendChild(t); }
+}
+function choiceBtns(){ return [...document.querySelectorAll("#qChoices .choice")]; }
+function useHalf(){ if(qAnswered||curQ.halfUsed||!G.items.half) return; G.items.half--; curQ.halfUsed=true;
+ const bs=choiceBtns(), wrong=bs.map((b,j)=>j).filter(j=>j!==curQ.ans && !bs[j].disabled); shuffle(wrong).slice(0,2).forEach(j=>{ bs[j].disabled=true; bs[j].classList.add("gone"); });
+ SFX.lvl(); renderQItems(); }
+function useAnswerCard(){ if(qAnswered||curQ.usedAnswer||!G.items.answer) return; G.items.answer--; curQ.usedAnswer=true;
+ choiceBtns()[curQ.ans].classList.add("hint"); SFX.lucky(); renderQItems();
+ document.getElementById("qFeed").innerHTML=`<div class="feedback" style="border-color:#ffd84a;background:#2e2610">💡 빛나는 보기가 정답이에요. 정답 카드를 쓴 문제는 정답률에 들어가지 않아요.</div>`; }
 function answer(i){
- if(qAnswered) return; qAnswered=true;
- const ok = i===curQ.ans; G.quizTotal++; G.quizTime += Math.min(90,(performance.now()-curQ.t0)/1000);   // 문제 하나당 최대 90초까지 셈
- const btns=[...document.querySelectorAll("#qChoices .choice")];
- btns.forEach((b,j)=>{ b.disabled=true; if(j===curQ.ans) b.classList.add("right"); if(j===i&&!ok) b.classList.add("wrong"); });
+ if(qAnswered || curQ.asking) return;
+ const btn=choiceBtns()[i]; if(!btn || btn.disabled) return;
+ const ok = i===curQ.ans;
+ // 다시 풀기 카드가 있으면 틀린 순간 한 번 더 고를지 물어봐요
+ if(!ok && G.items.retry>0 && !curQ.retried){
+  curQ.asking=true; curQ.pendingWrong=i; btn.classList.add("wrong"); btn.disabled=true; SFX.bad(); renderQItems();
+  document.getElementById("qFeed").innerHTML=`<div class="feedback bad"><b>틀렸어요!</b> 🔁 다시 풀기 카드(${G.items.retry}장)를 써서 한 번 더 고를까요?<div class="retryAsk"><button class="go" id="rtYes">카드 쓰고 다시 고르기 (R)</button><button id="rtNo">그냥 정답 보기 (Enter)</button></div></div>`;
+  document.getElementById("rtYes").onclick=useRetry; document.getElementById("rtNo").onclick=()=>finishAnswer(curQ.pendingWrong);
+  return;
+ }
+ finishAnswer(i);
+}
+function useRetry(){ if(!curQ.asking) return; G.items.retry--; curQ.retried=true; curQ.asking=false; document.getElementById("qFeed").innerHTML=`<div class="feedback" style="border-color:#7dffb0">🔁 다시 풀기 카드 사용! 남은 보기 중에서 다시 골라 보세요.</div>`; SFX.lvl(); renderQItems(); }
+function finishAnswer(i){
+ curQ.asking=false; qAnswered=true;
+ const ok = i===curQ.ans; G.quizTime += Math.min(90,(performance.now()-curQ.t0)/1000);   // 문제 하나당 최대 90초까지 셈
+ const counted=!curQ.usedAnswer;   // 정답 카드를 쓴 문제는 정답률에서 빼요
+ if(counted) G.quizTotal++;
+ choiceBtns().forEach((b,j)=>{ b.disabled=true; if(j===curQ.ans) b.classList.add("right"); if(j===i&&!ok) b.classList.add("wrong"); });
  const q=curQ.q;
- if(ok){ G.quizRight++; SFX.ok(); }
+ if(ok){ if(counted) G.quizRight++; SFX.ok(); }
  else { SFX.bad(); G.wrongs.push({q:q[2],ans:q[3][q[4]],mine:q[3][curQ.order[i]],exp:q[5],unit:q[0]}); }
  curQ.ok=ok;
- const lose = curQ.item.kind==="level" ? "아쉬워요! 오답 패널티로 카드 1장만 받아요" : "아쉬워요! 카드 2장 중에서 고르세요";
- document.getElementById("qFeed").innerHTML = `<div class="feedback ${ok?"":"bad"}"><b>${ok?"정답! 카드 3장 중에서 고르세요":lose}</b><br>${esc(q[5])}<br><span style="color:var(--dim);font-size:13px">현재 정답률 ${Math.round(accNow()*100)}%</span></div>`;
+ const kind=curQ.item.kind;
+ const win = kind==="chest" ? `정답! 특수 효과 ${BUFF_TIME.ok}초` : "정답! 카드 3장 중에서 고르세요";
+ const lose = kind==="level" ? "아쉬워요! 오답 패널티로 카드 1장만 받아요" : kind==="chest" ? `아쉬워요! 특수 효과 ${BUFF_TIME.no}초` : "아쉬워요! 카드 2장 중에서 고르세요";
+ const note = curQ.usedAnswer ? " · 💡 정답 카드 사용(정답률 제외)" : (curQ.retried&&ok ? " · 🔁 다시 풀기로 정답" : "");
+ renderQItems();
+ document.getElementById("qFeed").innerHTML = `<div class="feedback ${ok?"":"bad"}"><b>${ok?win:lose}</b><br>${esc(q[5])}<br><span style="color:var(--dim);font-size:13px">현재 정답률 ${G.quizTotal?Math.round(accNow()*100)+"%":"-"}${note}</span></div>`;
  const nb=document.getElementById("qNext"); nb.classList.remove("hidden"); nb.focus();
 }
 function quizKey(e){
+ if(curQ && curQ.asking){ if(e.code==="KeyR") useRetry(); else if(e.key==="Enter"){ e.preventDefault(); finishAnswer(curQ.pendingWrong); } return; }
  if(!qAnswered && ["1","2","3","4"].includes(e.key)) answer(+e.key-1);
  else if(qAnswered && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); afterQuiz(); }
 }
@@ -1625,6 +1705,36 @@ async function openRanks(){
  document.getElementById("rankFull").innerHTML=RANK.table(rows);
  document.getElementById("rankSrc").textContent=RANK.srcText(L.where,L.err);
 }
+function guideIcon(draw){ const c=document.createElement("canvas"); c.width=44; c.height=44; const x=c.getContext("2d"); x.imageSmoothingEnabled=false; draw(x); return c; }
+function openGuide(){
+ const body=document.getElementById("guideBody"); body.innerHTML="";
+ const sec=t=>{ const h=document.createElement("h3"); h.textContent=t; body.appendChild(h); };
+ const item=(icon,name,desc,pr)=>{ const d=document.createElement("div"); d.className="it"; if(typeof icon==="string"){ const s=document.createElement("span"); s.className="ic"; s.textContent=icon; d.appendChild(s); } else d.appendChild(icon);
+  const t=document.createElement("div"); t.innerHTML=`<b>${name}</b>${pr?` <span class="pr">${pr}</span>`:""}<br>${desc}`; d.appendChild(t); body.appendChild(d); };
+ const coin=v=>guideIcon(x=>drawCoin({x:22,y:22,v},x,.25));
+ const heart=guideIcon(x=>{ const c="#ff5d7a",s=10,gx=22,gy=22; x.fillStyle="#14101f"; x.beginPath(); x.moveTo(gx,gy-s-3); x.lineTo(gx+s+2,gy); x.lineTo(gx,gy+s+3); x.lineTo(gx-s-2,gy); x.fill(); x.fillStyle=c; x.beginPath(); x.moveTo(gx,gy-s-1); x.lineTo(gx+s,gy); x.lineTo(gx,gy+s+1); x.lineTo(gx-s,gy); x.fill(); x.fillStyle="#fff"; x.fillRect(gx-4,gy-1,8,3); x.fillRect(gx-1,gy-4,3,8); });
+ const chest=guideIcon(x=>{ if(SPR.chest) x.drawImage(SPR.chest[0],-2,0); });
+ sec("🪙 몬스터가 떨어뜨리는 것");
+ item(coin(1),"작은 금화","경험치 1. 모으면 레벨 업 → 레벨 업 퀴즈 → 무기·능력 카드를 골라요.");
+ item(coin(6),"중간 금화","경험치 5 이상. 강한 몬스터가 떨어뜨려요.");
+ item(coin(25),"큰 금화","경험치 20 이상. 반짝이는 큰 금화예요.");
+ item(heart,"체력 회복","체력 30 회복. 몬스터를 잡으면 아주 드물게 나와요.");
+ sec("📦 보급 상자");
+ item(chest,"보급 상자","가끔 맵에 나타나요. 열면 퀴즈가 나오고, 풀고 나면 아래 특수 효과 중 하나가 같은 확률로 걸려요. 정답이면 15초, 오답이면 8초 동안 이어져요.");
+ for(const B of Object.values(BUFFS)) item(B.ic,B.name,B.desc);
+ sec("🃏 보스가 떨어뜨리는 카드 (퀴즈 도우미)");
+ for(const [id,c] of Object.entries(QCARDS)) item(guideIcon(x=>drawCardIcon(x,22,22,id,1.3)),c.name,c.desc,`${Math.round(c.rate*100)}%`);
+ item("❔","카드 없음","보스를 잡아도 35% 확률로는 카드가 나오지 않아요. 모은 카드는 퀴즈 화면 아래 버튼으로 써요.","35%");
+ sec("⬆️ 성장 카드");
+ item("🃏","무기·능력 카드","레벨 업이나 보스 퀴즈를 풀면 골라요. 레벨 업 퀴즈는 정답 3장·오답 1장, 보스 퀴즈는 정답 3장·오답 2장 중에서 골라요.");
+ item("✨","행운 카드","퀴즈를 맞히면 30% 확률로 카드 한 장이 금색 행운 카드로 바뀌어요. 고르면 한 번에 2단계 강화돼요.","30%");
+ sec("💚 부활");
+ item("💚","정답률 부활","처음 쓰러질 때 정답률 90% 이상이면 체력 30%, 80% 이상이면 체력 10%로 한 번 부활해요. 퀴즈를 3문제 이상 풀어야 해요.");
+ document.getElementById("guideOv").classList.remove("hidden");
+}
+document.getElementById("guideOpenBtn").onclick=()=>{ audioInit(); openGuide(); };
+document.getElementById("guideClose").onclick=()=>document.getElementById("guideOv").classList.add("hidden");
+addEventListener("keydown",e=>{ if(e.key==="Escape" && !document.getElementById("guideOv").classList.contains("hidden")) document.getElementById("guideOv").classList.add("hidden"); });
 document.getElementById("rankOpenBtn").onclick=()=>{ audioInit(); rankGrade=sel.grade; openRanks(); };
 document.getElementById("rankClose").onclick=()=>document.getElementById("rankOv").classList.add("hidden");
 
@@ -1633,6 +1743,10 @@ function update(dt){
  const p=G.p;
  G.t+=dt;
  for(const b in G.buffs) G.buffs[b]=Math.max(0,G.buffs[b]-dt);
+ for(const c of G.drops){ c.t+=dt; const p=G.p, d=Math.hypot(p.x-c.x,p.y-c.y);
+  if(c.t>.9 && d>1){ const v=Math.min(d, 520*dt); c.x+=(p.x-c.x)/d*v; c.y+=(p.y-c.y)/d*v; }   // 잠깐 뒤 내게 날아와요
+  if(c.t>.9 && Math.hypot(p.x-c.x,p.y-c.y)<p.r+10){ c.dead=true; G.items[c.id]++; SFX.lucky(); G.texts.push({x:p.x,y:p.y-34,txt:`${QCARDS[c.id].name} +1`,life:1.2,col:QCARDS[c.id].col}); } }
+ G.drops=G.drops.filter(c=>!c.dead);
  // 이동
  let mx=0,my=0;
  if(keys.KeyA||keys.ArrowLeft) mx-=1; if(keys.KeyD||keys.ArrowRight) mx+=1;
@@ -1716,7 +1830,7 @@ function update(dt){
  for(const g of G.gems){
   const d=Math.sqrt(dist2(g,p));
   if(d<G.magnet || g.pull){ g.pull=true; const a=Math.atan2(p.y-g.y,p.x-g.x), sp=Math.max(260,520-d); g.x+=Math.cos(a)*sp*dt; g.y+=Math.sin(a)*sp*dt; }
-  if(d<p.r+8){ g.dead=true; if(g.heal){ p.hp=Math.min(p.maxhp,p.hp+30); G.texts.push({x:p.x,y:p.y-20,txt:"+30",life:.8,col:"#7ff59a"}); } else { gainXp(g.v); SFX.gem(); } }
+  if(d<p.r+8){ g.dead=true; if(g.heal){ p.hp=Math.min(p.maxhp,p.hp+30); G.texts.push({x:p.x,y:p.y-20,txt:"+30",life:.8,col:"#7ff59a"}); } else { gainXp(g.v); if(g.v>=20){ SFX.bigCoin(); G.fx.push({kind:"ring",x:p.x,y:p.y,r:8,R:70,life:.35,T:.35,col:"#ffd84a"}); for(let i=0;i<10;i++) G.fx.push({kind:"spark",x:p.x,y:p.y,vx:rnd(-160,160),vy:rnd(-160,160),life:.4,T:.4,col:i%2?"#ffd84a":"#fff3a0"}); G.texts.push({x:p.x,y:p.y-30,txt:"+"+g.v+" XP",life:.8,col:"#ffd84a"}); } else SFX.gem(); } }
  }
  G.gems=G.gems.filter(g=>!g.dead);
  if(G.gems.length>450){ // 너무 많으면 합치기
@@ -1730,6 +1844,7 @@ function update(dt){
  for(const f of G.fx){ f.life-=dt; if(f.vx!==undefined){ f.x+=f.vx*dt; f.y+=f.vy*dt; f.vx*=.9; f.vy*=.9; } }
  G.fx=G.fx.filter(f=>f.life>0);
  for(const t of G.texts){ t.life-=dt; t.y-=30*dt; } G.texts=G.texts.filter(t=>t.life>0);
+ for(const e of G.enemies){ if(e.dmgT>0){ e.dmgT-=dt; if(e.dmgT<=0 && e.dmgAcc>0 && !e.dead) showDmg(e); } }
  for(const b of G.bolts) b.life-=dt; G.bolts=G.bolts.filter(b=>b.life>0);
  G.shake=Math.max(0,G.shake-dt);
 
@@ -1805,19 +1920,19 @@ function hazardsUpdate(dt){
  for(const b of G.ebullets) if(b.seek>0){ b.seek-=dt; const a=Math.atan2(p.y-b.y,p.x-b.x), v=Math.hypot(b.vx,b.vy); let c=Math.atan2(b.vy,b.vx), d=((a-c+Math.PI*3)%(Math.PI*2))-Math.PI; c+=clamp(d,-2.2*dt,2.2*dt); b.vx=Math.cos(c)*v; b.vy=Math.sin(c)*v; }
 }
 // 경험치 금화: 빙글빙글 도는 픽셀 금화 (큰 금화일수록 경험치가 많아요)
-function drawCoin(g){
- const R=g.v>=20?13:g.v>=5?10:8, ph=G.t*5+(g.x*.37+g.y*.13), c=Math.cos(ph), w=Math.max(.14,Math.abs(c)), bob=Math.sin(G.t*4+g.x*.1)*2, x=g.x, y=g.y+bob, rx=R*w;
- ctx.save();
- ctx.globalAlpha=.32+.12*Math.sin(G.t*6+g.x); ctx.fillStyle="#ffd84a"; ctx.beginPath(); ctx.arc(x,y,R+6,0,7); ctx.fill(); ctx.globalAlpha=1;
- ctx.fillStyle="#5a3600"; ctx.beginPath(); ctx.ellipse(x,y,rx+2,R+2,0,0,7); ctx.fill();               // 테두리
- ctx.fillStyle=c>0?"#e09b12":"#d48a0a"; ctx.beginPath(); ctx.ellipse(x,y,rx+.5,R,0,0,7); ctx.fill(); // 옆면
- if(w>.3){ ctx.fillStyle="#ffcf2e"; ctx.beginPath(); ctx.ellipse(x-(c>0?.8:-.8),y,rx*.82,R*.82,0,0,7); ctx.fill();
-  ctx.strokeStyle="#c27c06"; ctx.lineWidth=1.4; ctx.beginPath(); ctx.ellipse(x,y,rx*.55,R*.55,0,0,7); ctx.stroke();
-  if(w>.55){ ctx.fillStyle="#b06f04"; ctx.fillRect(x-1,y-R*.38,2,R*.76); ctx.fillRect(x-rx*.25,y-R*.18,rx*.5,2); } // 가운데 무늬
-  ctx.fillStyle="rgba(255,255,255,.85)"; ctx.fillRect(x-rx*.5,y-R*.62,Math.max(1.5,rx*.28),2.5); }
- else { ctx.fillStyle="#fff3a0"; ctx.fillRect(x-1,y-R+2,2,R*2-4); }                                    // 옆으로 선 순간 반짝
- if(g.v>=20 && Math.sin(G.t*3+g.x)>.7){ ctx.fillStyle="#fff"; ctx.fillRect(x+R*.5,y-R-3,2,6); ctx.fillRect(x+R*.5-2,y-R-1,6,2); }
- ctx.restore();
+function drawCoin(g, X=ctx, T=(G?G.t:0)){
+ const R=g.v>=20?26:g.v>=5?12:7, ph=T*5+(g.x*.37+g.y*.13), c=Math.cos(ph), w=Math.max(.14,Math.abs(c)), bob=Math.sin(T*4+g.x*.1)*2, x=g.x, y=g.y+bob, rx=R*w;
+ X.save();
+ X.globalAlpha=.32+.12*Math.sin(T*6+g.x); X.fillStyle="#ffd84a"; X.beginPath(); X.arc(x,y,R+6,0,7); X.fill(); X.globalAlpha=1;
+ X.fillStyle="#5a3600"; X.beginPath(); X.ellipse(x,y,rx+2,R+2,0,0,7); X.fill();               // 테두리
+ X.fillStyle=c>0?"#e09b12":"#d48a0a"; X.beginPath(); X.ellipse(x,y,rx+.5,R,0,0,7); X.fill(); // 옆면
+ if(w>.3){ X.fillStyle="#ffcf2e"; X.beginPath(); X.ellipse(x-(c>0?.8:-.8),y,rx*.82,R*.82,0,0,7); X.fill();
+  X.strokeStyle="#c27c06"; X.lineWidth=1.4; X.beginPath(); X.ellipse(x,y,rx*.55,R*.55,0,0,7); X.stroke();
+  if(w>.55){ X.fillStyle="#b06f04"; X.fillRect(x-1,y-R*.38,2,R*.76); X.fillRect(x-rx*.25,y-R*.18,rx*.5,2); } // 가운데 무늬
+  X.fillStyle="rgba(255,255,255,.85)"; X.fillRect(x-rx*.5,y-R*.62,Math.max(1.5,rx*.28),2.5); }
+ else { X.fillStyle="#fff3a0"; X.fillRect(x-1,y-R+2,2,R*2-4); }                                    // 옆으로 선 순간 반짝
+ if(g.v>=20){ const tw=(Math.sin(T*4+g.x)+1)/2; X.globalAlpha=.4+.6*tw; X.fillStyle="#fff"; for(const [sx,sy,k] of [[.7,-1.05,1],[-.95,-.4,.7],[.8,.75,.6]]){ const px=x+R*sx, py=y+R*sy, L=Math.round(5*k*(.6+.4*tw)); X.fillRect(px-1,py-L,2,L*2); X.fillRect(px-L,py-1,L*2,2); } X.globalAlpha=1; }
+ X.restore();
 }
 function drawHazards(){
  for(const h of G.hazards){
@@ -2048,7 +2163,8 @@ function drawLighting(camX,camY){
   else if(h.kind==="bomb") hole(h.x,h.y,h.r*1.5,.75);
  }
  for(const b of G.ebullets) hole(b.x,b.y,30,.5);
- { let n=0; for(const g of G.gems){ if(Math.abs(g.x-p.x)<VW*.6&&Math.abs(g.y-p.y)<VH*.6){ hole(g.x,g.y,g.v>=20?44:30,.55); if(++n>140) break; } } }
+ for(const c of G.drops) hole(c.x,c.y,70,.9);
+ { let n=0; for(const g of G.gems){ if(Math.abs(g.x-p.x)<VW*.6&&Math.abs(g.y-p.y)<VH*.6){ hole(g.x,g.y,g.v>=20?70:g.v>=5?34:26,.55); if(++n>140) break; } } }
  for(const pl of G.pools) hole(pl.x,pl.y,pl.R*1.6,.7);
  for(const s of G.shots) if(s.kind!=="beaker") hole(s.x,s.y,50,.6);
  ctx.setTransform(1,0,0,1,0,0); ctx.imageSmoothingEnabled=true; ctx.drawImage(LM,0,0,w,h); ctx.imageSmoothingEnabled=false;
@@ -2082,6 +2198,8 @@ function draw(){
   ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(g.x,gy-s-1); ctx.lineTo(g.x+s,gy); ctx.lineTo(g.x,gy+s+1); ctx.lineTo(g.x-s,gy); ctx.fill();
   ctx.fillStyle="rgba(255,255,255,.45)"; ctx.beginPath(); ctx.moveTo(g.x,gy-s-1); ctx.lineTo(g.x-s,gy); ctx.lineTo(g.x,gy); ctx.fill();
   ctx.fillStyle="rgba(255,255,255,.9)"; ctx.fillRect(g.x-2,gy-s+2,3,3); if(g.heal){ ctx.fillStyle="#fff"; ctx.fillRect(g.x-4,gy-1,8,3); ctx.fillRect(g.x-1,gy-4,3,8); } }
+ // 보스 드랍 카드
+ for(const c of G.drops){ const bob=Math.sin(G.t*5)*3; ctx.save(); ctx.globalAlpha=.35+.15*Math.sin(G.t*8); ctx.fillStyle=QCARDS[c.id].col; ctx.beginPath(); ctx.arc(c.x,c.y+bob,24,0,7); ctx.fill(); ctx.restore(); drawCardIcon(ctx,c.x,c.y+bob,c.id,1.2); }
  // 상자
  for(const c of G.chests){ const bob=Math.round(Math.sin(c.t*3)*3), img=SPR.chest[Math.floor(c.t*4)%4];
   ctx.save(); ctx.translate(c.x,c.y);
@@ -2220,6 +2338,8 @@ function drawHUD(){
  for(const [k,wv] of Object.entries(G.weapons)){ const evo=G.evolved[k]; ctx.fillStyle=evo?"rgba(255,123,243,.35)":"rgba(35,26,51,.85)"; ctx.fillRect(ix,hy+22,30,30); ctx.fillStyle="#fff"; ctx.fillText(evo?WEAPONS[k].evoIc:WEAPONS[k].ic,ix+5,hy+44); ctx.font="10px DotGothic16, monospace"; ctx.fillStyle="#ffcf3f"; ctx.fillText(evo?"★":wv.lv,ix+22,hy+50); ctx.font="18px sans-serif"; ix+=33; }
  ix=hx;
  for(const [k,l] of Object.entries(G.passives)){ ctx.fillStyle="rgba(35,26,51,.7)"; ctx.fillRect(ix,hy+56,24,24); ctx.font="14px sans-serif"; ctx.fillStyle="#fff"; ctx.fillText(PASSIVES[k].ic,ix+4,hy+74); ctx.font="9px DotGothic16, monospace"; ctx.fillStyle="#7cc8ff"; ctx.fillText(l,ix+17,hy+80); ix+=27; }
+ // 보유한 퀴즈 카드
+ { let cx=hx; for(const id of ["half","retry","answer"]){ const n=G.items[id]; if(!n) continue; drawCardIcon(ctx,cx+10,hy+100,id,.9); ctx.font="13px 'Do Hyeon', sans-serif"; ctx.textAlign="left"; ctx.fillStyle="#fff"; ctx.fillText(`×${n}`,cx+22,hy+106); cx+=46; } }
  // 오른쪽 정보
  ctx.textAlign="right"; ctx.font="15px 'Do Hyeon', sans-serif"; ctx.fillStyle="#efe9ff";
  ctx.fillText(`처치 ${G.kills}`,W2-12,82); ctx.fillText(`퀴즈 ${G.quizRight} / ${G.quizTotal}`,W2-12,102);
