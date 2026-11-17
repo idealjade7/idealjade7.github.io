@@ -73,6 +73,10 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 .card.evo{border-color:#ff7bf3;background:linear-gradient(#3b1f45,#2a1b3a);box-shadow:0 0 18px rgba(255,123,243,.35)}
 .card.evo .lv{color:#ff9cf6}
 .card.new .lv{color:var(--ok)}
+.card.double{border-color:#ffd84a;background:linear-gradient(#4a3a12,#2e2342 70%);box-shadow:0 0 0 2px #7a5a00,0 0 22px rgba(255,216,74,.55);position:relative;animation:lucky 1.2s ease-in-out infinite alternate}
+.card.double .lv{color:#ffd84a;font-size:15px}
+.card.double .luck{position:absolute;left:50%;top:-13px;transform:translateX(-50%);background:#ffd84a;color:#2a1700;font-family:'Do Hyeon';font-size:14px;padding:2px 10px;border:2px solid #6b4b00;white-space:nowrap}
+@keyframes lucky{from{box-shadow:0 0 0 2px #7a5a00,0 0 12px rgba(255,216,74,.35)}to{box-shadow:0 0 0 2px #7a5a00,0 0 28px rgba(255,216,74,.85)}}
 .ctitle{font-family:'Do Hyeon';font-size:26px;color:var(--gold);text-align:center}
 .csub{text-align:center;color:var(--dim);font-size:14px}
 /* results */
@@ -247,6 +251,7 @@ const MOBMUL = 1.15;         // 몹 수 배율
 const XPMUL = .85;          // 레벨업에 필요한 경험치 배율
 const BOSS_ROUNDS = 10;      // 10라운드 보스까지 처치하면 클리어
 const EVO_TIME = 150;        // 2분 30초 이후 진화 가능
+const LUCKY_CHANCE = 0.3;     // 정답일 때 '2단계 강화' 행운 카드가 나올 확률
 const CLEAR_ACC = 0.8;       // 이 정답률 아래에서는 최종 보스에 보호막이 생긴다
 
 const STAGES = [
@@ -302,6 +307,7 @@ const SFX = {
  boss:()=>{beep(110,.5,"sawtooth",.07,-40);setTimeout(()=>beep(98,.6,"sawtooth",.07,-30),300)},
  chest:()=>{beep(392,.08,"square",.05);setTimeout(()=>beep(523,.12,"square",.05),80)},
  kill:()=>beep(300+Math.random()*80,.03,"square",.015),
+ lucky:()=>{[880,1175,1568,2093].forEach((f,i)=>setTimeout(()=>beep(f,.12,"triangle",.07),i*70))},
  win:()=>{[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.22,"triangle",.09),i*140))},
 };
 
@@ -1219,9 +1225,10 @@ function afterQuiz(){
  document.getElementById("quizOv").classList.add("hidden");
  const kind=curQ.item.kind, isBoss = kind==="boss", k = curQ.item.k;
  const n = curQ.ok?3:(kind==="level"?1:2);
+ const lucky = curQ.ok && Math.random()<LUCKY_CHANCE;
  showCards(n, true, isBoss?`ROUND ${k} 보상`:kind==="level"?`레벨 업! Lv.${k}`:"보급 상자 보상", ()=>{
   if(isBoss && G.bossKilled>=BOSS_ROUNDS) return winGame();
- });
+ }, lucky);
 }
 
 // ================= 카드 =================
@@ -1266,21 +1273,30 @@ function hasUpgrades(){
  for(const k of Object.keys(PASSIVES)) if((G.passives[k]||0)<5) return true;
  return false;
 }
-function showCards(n, allowEvo, title, done){
+function showCards(n, allowEvo, title, done, lucky){
  G.mode="cards"; drag.on=false;
  curCards=cardOptions(n, allowEvo); cardDone=done||null;
+ if(lucky){
+  const cand=curCards.map((c,i)=>[c,i]).filter(([c])=> (c.type==="wnew") || (c.type==="wup" && G.weapons[c.k].lv<=3) || (c.type==="pas" && (G.passives[c.k]||0)<=3));
+  if(cand.length){ const [c]=cand[Math.floor(Math.random()*cand.length)];
+   const cur = c.type==="wnew"?0 : c.type==="wup"?G.weapons[c.k].lv : (G.passives[c.k]||0);
+   c.double=true; c.cls="double"; c.lv = cur===0 ? "NEW → Lv.2" : `Lv.${cur} → ${Math.min(5,cur+2)}`;
+   c.ds = `<b style="color:#ffd84a">한 번에 2단계 강화!</b><br>`+c.ds; SFX.lucky(); }
+ }
  document.getElementById("cTitle").textContent=title;
  document.getElementById("cSub").textContent= curCards.length===1 ? "오답 패널티: 이 카드 1장만 받을 수 있어요 (1)" : `카드를 하나 고르세요 (1~${curCards.length})`;
  const box=document.getElementById("cards"); box.innerHTML="";
- curCards.forEach((c,i)=>{ const d=document.createElement("div"); d.className="card "+(c.cls||""); d.innerHTML=`<div class="ic">${c.ic}</div><div class="nm">${c.nm}</div><div class="lv">${c.lv}</div><div class="ds">${c.ds}</div>`; d.onclick=()=>pickCard(i); box.appendChild(d); });
+ curCards.forEach((c,i)=>{ const d=document.createElement("div"); d.className="card "+(c.cls||""); d.innerHTML=(c.double?`<div class="luck">✨ 행운 카드</div>`:"")+`<div class="ic">${c.ic}</div><div class="nm">${c.nm}</div><div class="lv">${c.lv}</div><div class="ds">${c.ds}</div>`; d.onclick=()=>pickCard(i); box.appendChild(d); });
  document.getElementById("cardOv").classList.remove("hidden");
 }
 function cardKey(e){ const i=+e.key-1; if(i>=0&&i<curCards.length) pickCard(i); }
 function pickCard(i){
  const c=curCards[i]; if(!c) return;
- if(c.type==="wnew") addWeapon(c.k);
- else if(c.type==="wup") G.weapons[c.k].lv++;
- else if(c.type==="pas"){ G.passives[c.k]=(G.passives[c.k]||0)+1; recalcPassives(); }
+ const up = c.double?2:1;
+ if(c.type==="wnew"){ addWeapon(c.k); if(c.double) G.weapons[c.k].lv=2; }
+ else if(c.type==="wup") G.weapons[c.k].lv=Math.min(5,G.weapons[c.k].lv+up);
+ else if(c.type==="pas"){ G.passives[c.k]=Math.min(5,(G.passives[c.k]||0)+up); recalcPassives(); }
+ if(c.double) G.fx.push({kind:"ring",x:G.p.x,y:G.p.y,r:10,R:160,life:.5,T:.5,col:"#ffd84a"});
  else if(c.type==="evo"){ G.evolved[c.k]=true; G.fx.push({kind:"ring",x:G.p.x,y:G.p.y,r:10,R:220,life:.6,T:.6,col:"#ff9cf6"}); }
  else if(c.type==="heal") G.p.hp=Math.min(G.p.maxhp,G.p.hp+G.p.maxhp*.4);
  else if(c.type==="score") G.score+=500;
