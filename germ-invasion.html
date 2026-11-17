@@ -30,6 +30,9 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 .stage b{display:block;font-size:16px;color:var(--text)}
 .stage.on b{color:var(--gold)}
 .stage small{font-family:'Gowun Dodum';font-size:12px;color:var(--dim);line-height:1.35;display:block;margin-top:2px}
+.hero{width:96px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px}
+.hero canvas{image-rendering:pixelated;width:44px;height:58px}
+.hero span{font-size:13px}
 .weap{width:104px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px}
 .weap .ic{font-size:24px;line-height:1}
 .weap span{font-size:13px}
@@ -129,13 +132,15 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 <!-- 시작 화면 -->
 <div class="overlay" id="menu">
  <div class="panel">
-  <div class="logo-row"><canvas id="logoSprite" width="48" height="56"></canvas><h1 class="logo">세균 대침공</h1><canvas id="logoVirus" width="56" height="56"></canvas></div>
+  <div class="logo-row"><canvas id="logoSprite" width="48" height="62"></canvas><h1 class="logo">세균 대침공</h1><canvas id="logoVirus" width="56" height="56"></canvas></div>
   <div class="sub">실험실을 지켜라! — 중3 과학 개념 서바이벌</div>
   <div class="sec">단원 (여러 개 선택 가능)</div>
   <div class="row" id="unitRow"></div>
   <div class="sec">문제 수준 (여러 개 선택 가능)</div>
   <div class="row" id="levelRow"></div>
   <div class="cnt" id="poolCnt"></div>
+  <div class="sec">캐릭터</div>
+  <div class="row" id="heroRow"></div>
   <div class="sec">스테이지</div>
   <div class="row" id="stageRow"></div>
   <div class="sec">시작 무기</div>
@@ -189,7 +194,7 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 <div class="overlay dim hidden" id="rankOv">
  <div class="panel" style="max-width:640px">
   <div class="ctitle">🏆 명예의 전당</div>
-  <div class="csub">10라운드를 클리어한 기록 · 클리어 타임이 빠른 순</div>
+  <div class="csub">10라운드를 클리어한 기록 · 클리어 타임(플레이 + 문제 풀이 시간)이 빠른 순</div>
   <div class="tabs cls" id="rankCls"></div>
   <div class="tabs" id="rankTabs"></div>
   <div id="rankFull"></div>
@@ -271,7 +276,8 @@ const BOSS_NAMES = ["거대 아메바","폭주 바이러스","산성비 구름",
 const BOSS_COLORS = ["#5bd6ff","#c06bff","#7fa6c9","#ff9a3c","#9cff5b","#ffd84a","#ff5a3c","#7fe8ff","#9b7bff","#ffffff"];
 
 // ================= 상태 =================
-const sel = {units:new Set([0,1,2,3,4,5,6]), levels:new Set([1,2,3]), stage:0, weapon:"laser"};
+const sel = {units:new Set([0,1,2,3,4,5,6]), levels:new Set([1,2,3]), stage:0, weapon:"laser", hero:"m1"};
+try{ const hv=localStorage.getItem("germ-hero"); if(hv) sel.hero=hv; }catch(e){}
 let G = null; // 게임 상태
 let muted = false; let SFXVOL = .7;
 
@@ -315,14 +321,14 @@ function noiseBuf(){
  for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
  return NOISE=b;
 }
-function mtone(t, n, dur, wave, vol, slide){
+function mtone(t, n, dur, wave, vol, slide, send){
  const o=AC.createOscillator(), g=AC.createGain();
  if(typeof wave==="number") o.setPeriodicWave(pulseWave(wave)); else o.type=wave;
  const f=midi(n); o.frequency.setValueAtTime(f,t);
  if(slide) o.frequency.exponentialRampToValueAtTime(f*slide, t+dur);
  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.006);
  g.gain.setValueAtTime(vol*.8,t+Math.max(.01,dur*.6)); g.gain.linearRampToValueAtTime(0,t+dur);
- o.connect(g); g.connect(MUSIC.bus); o.start(t); o.stop(t+dur+.02);
+ o.connect(g); g.connect(MUSIC.bus); if(send&&MUSIC.dly) g.connect(MUSIC.dly); o.start(t); o.stop(t+dur+.02);
 }
 function mdrum(t, kind){
  if(kind==="k"){ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine"; o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(42,t+.12); g.gain.setValueAtTime(.55,t); g.gain.exponentialRampToValueAtTime(.001,t+.15); o.connect(g); g.connect(MUSIC.bus); o.start(t); o.stop(t+.16); return; }
@@ -379,10 +385,70 @@ const BOSS = {
   if(bar===7 && s%2===0) mtone(t, 76+s/2, spb*.9, .125, .05);
  }
 };
-const TRACKS={main:MAIN, boss:BOSS};
+// 5라운드 이후 평소 곡: 깊은 밤의 실험실 (D단조, 메아리 아르페지오와 긴 화음)
+CH.Gm=[55,[0,3,7]]; CH.A=[57,[0,4,7]];
+const MAIN2 = {
+ bpm:126,
+ bars:["Dm","Bb","F","C","Dm","Bb","Gm","A"],
+ lead:[[0,74,6],[6,77,2],[8,76,4],[12,72,4],
+       [16,74,3],[19,70,1],[20,69,4],[24,65,4],[28,67,4],
+       [32,69,6],[38,72,2],[40,77,4],[44,76,2],[46,74,2],
+       [48,72,8],[56,74,4],[60,76,4],
+       [64,81,6],[70,79,2],[72,77,4],[76,74,4],
+       [80,77,3],[83,76,1],[84,74,4],[88,70,4],[92,74,4],
+       [96,70,4],[100,74,4],[104,79,4],[108,77,4],
+       [112,76,6],[118,73,2],[120,76,4],[124,81,4]],
+ play(step,t,spb){
+  const bar=Math.floor(step/16), s=step%16, [root,iv]=CH[this.bars[bar]];
+  // 긴 화음 패드 (마디 처음)
+  if(s===0){ for(const i of iv) mtone(t, root+12+i, spb*15.5, "triangle", .05); mtone(t, root+24, spb*15.5, "sine", .03); }
+  // 메아리 아르페지오
+  const ap=[0,2,1,2,0,1,2,1][s%8]; if(s%2===0) mtone(t, root+24+iv[ap]+(s%8===6?12:0), spb*1.6, .125, .04, 0, true);
+  // 낮게 맥박 치는 베이스
+  if(s%2===0) mtone(t, root-12+((s%8===6)?7:0), spb*1.5, "triangle", s%4===0?.24:.16);
+  // 묵직한 북 (반박자 느낌)
+  if(s===0||s===7||s===10) mdrum(t,"k");
+  if(s===8) mdrum(t,"s");
+  if(s%2===1 && MUSIC.pass>0) mdrum(t,"h");
+  if(s===14 && bar%2===1) mdrum(t,"h");
+  // 두 번째 바퀴부터 멜로디
+  if(MUSIC.pass%2===1){ for(const [st,n,len] of this.lead) if(st===step) mtone(t, n, spb*len*.95, .25, .07, 0, true); }
+  else if(s===4 && bar%2===0) mtone(t, root+36+iv[2], spb*3, "sine", .04, 1.01, true);
+ }
+};
+// 최종 보스 곡: 빅뱅 마왕 (E 프리지아, 빠르고 웅장하게)
+CH.Em=[52,[0,3,7]]; CH.Fm=[53,[0,4,7]]; CH.B=[59,[0,4,7]]; CH.Cm=[48,[0,4,7]];
+const FINAL = {
+ bpm:174,
+ bars:["Em","Fm","Em","Fm","Cm","B","Em","B"],
+ lead:[[0,76,4],[4,77,2],[6,76,2],[8,74,4],[12,71,4],
+       [16,77,4],[20,76,2],[22,77,2],[24,79,8],
+       [32,76,2],[34,79,2],[36,83,4],[40,82,2],[42,79,2],[44,76,4],
+       [48,77,4],[52,76,4],[56,74,4],[60,77,4],
+       [64,79,4],[68,76,4],[72,72,4],[76,76,4],
+       [80,75,4],[84,78,4],[88,83,8],
+       [96,88,2],[98,86,2],[100,83,2],[102,79,2],[104,76,4],[108,79,4],
+       [112,78,2],[114,75,2],[116,71,4],[120,75,2],[122,78,2],[124,83,4]],
+ play(step,t,spb){
+  const bar=Math.floor(step/16), s=step%16, [root,iv]=CH[this.bars[bar]];
+  // 16분음표로 몰아치는 베이스
+  mtone(t, root-12+(s%2?12:0), spb*.85, "sawtooth", .07); mtone(t, root-12+(s%2?12:0), spb*.85, "triangle", .14);
+  // 4박 킥 + 스네어 + 하이햇
+  if(s%4===0) mdrum(t,"k"); if(s===4||s===12) mdrum(t,"s"); if(s%2===1) mdrum(t,"h"); if(s===14&&bar%2===1){ mdrum(t,"s"); }
+  // 오르간 같은 화음 찌르기
+  if(s===0||s===6||s===10){ for(const i of iv) mtone(t, root+12+i, spb*1.8, .5, .035); }
+  // 경보음 (마디 처음, 2마디마다)
+  if(s===0 && bar%2===0) mtone(t, root+36, spb*4, "sine", .035, 1.06);
+  // 멜로디 (항상)
+  for(const [st,n,len] of this.lead) if(st===step){ mtone(t, n, spb*len*.92, .25, .085, 0, true); mtone(t, n+12, spb*len*.6, .125, .025); }
+ }
+};
+const TRACKS={main:MAIN, main2:MAIN2, boss:BOSS, final:FINAL};
 function musicStart(){
  if(!AC) return;
- if(!MUSIC.bus){ MUSIC.bus=AC.createGain(); MUSIC.bus.gain.value=0; MUSIC.bus.connect(AC.destination); }
+ if(!MUSIC.bus){ MUSIC.bus=AC.createGain(); MUSIC.bus.gain.value=0; MUSIC.bus.connect(AC.destination);
+  const d=AC.createDelay(1), fb=AC.createGain(), wet=AC.createGain(), lp=AC.createBiquadFilter(); d.delayTime.value=.33; fb.gain.value=.38; wet.gain.value=.5; lp.type="lowpass"; lp.frequency.value=2600;
+  d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(wet); wet.connect(MUSIC.bus); MUSIC.dly=d; }
  MUSIC.playing=true; MUSIC.track=MUSIC.want="main"; MUSIC.step=0; MUSIC.pass=0; MUSIC.next=AC.currentTime+.08;
  musicVol();
 }
@@ -398,7 +464,7 @@ function musicTick(){
  if(MUSIC.next < now-.25) MUSIC.next = now+.05;   // 탭이 쉬었다 돌아오면 다시 맞춤
  let guard=0;
  while(MUSIC.next < now+.16 && guard++<64){
-  if(MUSIC.want!==MUSIC.track && MUSIC.step%16===0){ MUSIC.track=MUSIC.want; MUSIC.step=0; MUSIC.pass=MUSIC.track==="main"?1:0; }
+  if(MUSIC.want!==MUSIC.track && MUSIC.step%16===0){ MUSIC.track=MUSIC.want; MUSIC.step=0; MUSIC.pass=(MUSIC.track==="main"||MUSIC.track==="main2")?1:0; }
   const T=TRACKS[MUSIC.track], spb=60/T.bpm/4;
   if(MUSIC.on) T.play(MUSIC.step, MUSIC.next, spb);
   MUSIC.step++; if(MUSIC.step>=128){ MUSIC.step=0; MUSIC.pass++; }
@@ -507,20 +573,14 @@ const SPR_AMOEBA = [
 ];
 const PAL_AMOEBA = {k:"#0b2340",b:"#4aa3ff",l:"#bfe3ff",c:"#2361b3",w:"#fff",o:"#0b2340"};
 const HERO_PAL = {"k": "#1a1426", "H": "#3b2418", "h": "#5c3a26", "L": "#8f5e3c", "l": "#b07a50", "S": "#f9d3ab", "s": "#e2aa82", "m": "#c0605a", "F": "#2d3350", "G": "#58d2ff", "g": "#e6fdff", "D": "#2a8fc2", "W": "#f6f8fd", "w": "#cfd6e8", "v": "#98a2bd", "T": "#4a86e0", "t": "#2f5fae", "B": "#ffcf3f", "P": "#34406e", "p": "#232b4f", "O": "#3a2a24", "o": "#1f1613", "C": "#d8f1ff", "c": "#5ff0a0", "x": "#2fbf74"};
-const HERO_ANIM = {"idle0": ["......kkkkkk........", "....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhSSSSShhhhHk...", ".kHhSSSSSSSSShhHk...", ".kHFFFFFFFFFFFFHk...", ".kFGGgFkkkFGGgFFk...", ".kFGDGFSSSFGDGFkk...", ".kHFFFSSSSSFFFSk....", "..kSSSSSSSSSSssk....", "..ksSSSSmmSSSsk.....", "...kssSSSSSSsk......", "....kkwWTTWwkk......", "...kWWWwTtWWWWk.....", "..kWWWWwTtWBWWwk....", ".kWWkWWwTtWWWwvk....", ".kWkWWWwTtWWWwvkCk..", ".kSkWWWwTTWWWwvkCCk.", "..kkWWWWwwWWWwvkcck.", "...kWWWWWwWWWwvkxxk.", "...kWWWWkkWWWwvkkk..", "....kPPpk.kPPpk.....", "....kPPpk.kPPpk.....", "...kooOOk.koOOOk....", "...kkkkk...kkkkk...."], "idle1": ["....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhSSSSShhhhHk...", ".kHhSSSSSSSSShhHk...", ".kHFFFFFFFFFFFFHk...", ".kFGGgFkkkFGGgFFk...", ".kFGDGFSSSFGDGFkk...", ".kHFFFSSSSSFFFSk....", "..kSSSSSSSSSSssk....", "..ksSSSSmmSSSsk.....", "...kssSSSSSSsk......", "....kkwWTTWwkk......", "...kWWWwTtWWWWk.....", "..kWWWWwTtWBWWwk....", ".kWWkWWwTtWWWwvk....", ".kWkWWWwTtWWWwvkCk..", ".kSkWWWwTTWWWwvkCCk.", "..kkWWWWwwWWWwvkcck.", "...kWWWWWwWWWwvkxxk.", "...kWWWWkkWWWwvkkk..", "...kWWWWkkWWWwvkkk..", "....kPPpk.kPPpk.....", "....kPPpk.kPPpk.....", "...kooOOk.koOOOk....", "...kkkkk...kkkkk...."], "blink": ["......kkkkkk........", "....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhSSSSShhhhHk...", ".kHhSSSSSSSSShhHk...", ".kHFFFFFFFFFFFFHk...", ".kFDDDFkkkFDDDFFk...", ".kFDDDFSSSFDDDFkk...", ".kHFFFSSSSSFFFSk....", "..kSSSSSSSSSSssk....", "..ksSSSSmmSSSsk.....", "...kssSSSSSSsk......", "....kkwWTTWwkk......", "...kWWWwTtWWWWk.....", "..kWWWWwTtWBWWwk....", ".kWWkWWwTtWWWwvk....", ".kWkWWWwTtWWWwvkCk..", ".kSkWWWwTTWWWwvkCCk.", "..kkWWWWwwWWWwvkcck.", "...kWWWWWwWWWwvkxxk.", "...kWWWWkkWWWwvkkk..", "....kPPpk.kPPpk.....", "....kPPpk.kPPpk.....", "...kooOOk.koOOOk....", "...kkkkk...kkkkk...."], "w0": ["......kkkkkk........", "....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhSSSSShhhhHk...", ".kHhSSSSSSSSShhHk...", ".kHFFFFFFFFFFFFHk...", ".kFGGgFkkkFGGgFFk...", ".kFGDGFSSSFGDGFkk...", ".kHFFFSSSSSFFFSk....", "..kSSSSSSSSSSssk....", "..ksSSSSmmSSSsk.....", "...kssSSSSSSsk......", "....kkwWTTWwkk......", "...kWWWwTtWWWWk.....", ".kWWWWWwTtWBWWwk....", ".kWWkWWwTtWWWwvk....", ".kSkWWWwTtWWWwvk....", "..kkWWWwTTWWWwvkCk..", "...kWWWWwwWWWwvkCCk.", "...kWWWWWwWWWwvkcck.", "...kWWWWkkWWWwvkxxk.", "....kPPpk..kPPk.....", "...kPPpk....kPPk....", "..kooOOk....kOOOk...", "..kkkkk.....kkkkk..."], "w1": ["....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhSSSSShhhhHk...", ".kHhSSSSSSSSShhHk...", ".kHFFFFFFFFFFFFHk...", ".kFGGgFkkkFGGgFFk...", ".kFGDGFSSSFGDGFkk...", ".kHFFFSSSSSFFFSk....", "..kSSSSSSSSSSssk....", "..ksSSSSmmSSSsk.....", "...kssSSSSSSsk......", "....kkwWTTWwkk......", "...kWWWwTtWWWWk.....", "..kWWWWwTtWBWWwk....", ".kWWkWWwTtWWWwvk....", ".kWkWWWwTtWWWwvkCk..", ".kSkWWWwTTWWWwvkCCk.", "..kkWWWWwwWWWwvkcck.", "...kWWWWWwWWWwvkxxk.", "...kWWWWkkWWWwvkkk..", "...kWWWWkkWWWwvkkk..", "....kPPpkkPPpk......", "....kPPpkkPPpk......", "....kooOOkOOOk......", "....kkkkkkkkkk......"], "w2": ["......kkkkkk........", "....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhSSSSShhhhHk...", ".kHhSSSSSSSSShhHk...", ".kHFFFFFFFFFFFFHk...", ".kFGGgFkkkFGGgFFk...", ".kFGDGFSSSFGDGFkk...", ".kHFFFSSSSSFFFSk....", "..kSSSSSSSSSSssk....", "..ksSSSSmmSSSsk.....", "...kssSSSSSSsk......", "....kkwWTTWwkk......", "...kWWWwTtWWWWk.....", "...WWWWwTtWBWWwk....", "..kWkWWwTtWWWwvkCk..", ".kWkWWWwTtWWWwvkCCk.", ".kWkWWWwTTWWWwvkcck.", ".kSkWWWWwwWWWwvkxxk.", "..kkWWWWWwWWWwvkkk..", "...kWWWWkkWWWwvk....", "....kPPk...kPPpk....", "....kPPpk...kPPpk...", "...kooOOk...kooOOk..", "...kkkkk....kkkkk..."], "w3": ["....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhSSSSShhhhHk...", ".kHhSSSSSSSSShhHk...", ".kHFFFFFFFFFFFFHk...", ".kFGGgFkkkFGGgFFk...", ".kFGDGFSSSFGDGFkk...", ".kHFFFSSSSSFFFSk....", "..kSSSSSSSSSSssk....", "..ksSSSSmmSSSsk.....", "...kssSSSSSSsk......", "....kkwWTTWwkk......", "...kWWWwTtWWWWk.....", "..kWWWWwTtWBWWwk....", ".kWWkWWwTtWWWwvk....", ".kWkWWWwTtWWWwvkCk..", ".kSkWWWwTTWWWwvkCCk.", "..kkWWWWwwWWWwvkcck.", "...kWWWWWwWWWwvkxxk.", "...kWWWWkkWWWwvkkk..", "...kWWWWkkWWWwvkkk..", "....kPPpkkPPpk......", "....kPPpkkPPpk......", "....kooOOkOOOk......", "....kkkkkkkkkk......"], "b0": ["......kkkkkk........", "....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhhhhhhhhhhHk...", ".kHhhhhhhhhhhhhHk...", ".kHFFFFFFFFFFFFHk...", ".kHhhhhhhhhhhhhHk...", ".kHhhhhhhhhhhhHHk...", "..kHhhhhhhhhhHHk....", "..kSHhhhhhhhHHsk....", "..ksSHHhhhHHHsk.....", "...kssSSSSSSsk......", "....kkwWWwWwkk......", "...kWWWwWwWWWWk.....", ".kWWWWWwWwWWWWwk....", ".kWWkWWwWwWWWwvk....", ".kSkWWWwWwWWWwvk....", "..kkWWWwWwWWWwvkCk..", "...kWWWWwwWWWwvkCCk.", "...kWWWWWwWWWwvkcck.", "...kWWWWkkWWWwvkxxk.", "....kPPpk..kPPk.....", "...kPPpk....kPPk....", "..kooOOk....kOOOk...", "..kkkkk.....kkkkk..."], "b1": ["....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhhhhhhhhhhHk...", ".kHhhhhhhhhhhhhHk...", ".kHFFFFFFFFFFFFHk...", ".kHhhhhhhhhhhhhHk...", ".kHhhhhhhhhhhhHHk...", "..kHhhhhhhhhhHHk....", "..kSHhhhhhhhHHsk....", "..ksSHHhhhHHHsk.....", "...kssSSSSSSsk......", "....kkwWWwWwkk......", "...kWWWwWwWWWWk.....", "..kWWWWwWwWWWWwk....", ".kWWkWWwWwWWWwvk....", ".kWkWWWwWwWWWwvkCk..", ".kSkWWWwWwWWWwvkCCk.", "..kkWWWWwwWWWwvkcck.", "...kWWWWWwWWWwvkxxk.", "...kWWWWkkWWWwvkkk..", "...kWWWWkkWWWwvkkk..", "....kPPpkkPPpk......", "....kPPpkkPPpk......", "....kooOOkOOOk......", "....kkkkkkkkkk......"], "b2": ["......kkkkkk........", "....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhhhhhhhhhhHk...", ".kHhhhhhhhhhhhhHk...", ".kHFFFFFFFFFFFFHk...", ".kHhhhhhhhhhhhhHk...", ".kHhhhhhhhhhhhHHk...", "..kHhhhhhhhhhHHk....", "..kSHhhhhhhhHHsk....", "..ksSHHhhhHHHsk.....", "...kssSSSSSSsk......", "....kkwWWwWwkk......", "...kWWWwWwWWWWk.....", "...WWWWwWwWWWWwk....", "..kWkWWwWwWWWwvkCk..", ".kWkWWWwWwWWWwvkCCk.", ".kWkWWWwWwWWWwvkcck.", ".kSkWWWWwwWWWwvkxxk.", "..kkWWWWWwWWWwvkkk..", "...kWWWWkkWWWwvk....", "....kPPk...kPPpk....", "....kPPpk...kPPpk...", "...kooOOk...kooOOk..", "...kkkkk....kkkkk..."], "b3": ["....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhhhhhhhhhhHk...", ".kHhhhhhhhhhhhhHk...", ".kHFFFFFFFFFFFFHk...", ".kHhhhhhhhhhhhhHk...", ".kHhhhhhhhhhhhHHk...", "..kHhhhhhhhhhHHk....", "..kSHhhhhhhhHHsk....", "..ksSHHhhhHHHsk.....", "...kssSSSSSSsk......", "....kkwWWwWwkk......", "...kWWWwWwWWWWk.....", "..kWWWWwWwWWWWwk....", ".kWWkWWwWwWWWwvk....", ".kWkWWWwWwWWWwvkCk..", ".kSkWWWwWwWWWwvkCCk.", "..kkWWWWwwWWWwvkcck.", "...kWWWWWwWWWwvkxxk.", "...kWWWWkkWWWwvkkk..", "...kWWWWkkWWWwvkkk..", "....kPPpkkPPpk......", "....kPPpkkPPpk......", "....kooOOkOOOk......", "....kkkkkkkkkk......"], "bidle": ["......kkkkkk........", "....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhhhhhhhhhhHk...", ".kHhhhhhhhhhhhhHk...", ".kHFFFFFFFFFFFFHk...", ".kHhhhhhhhhhhhhHk...", ".kHhhhhhhhhhhhHHk...", "..kHhhhhhhhhhHHk....", "..kSHhhhhhhhHHsk....", "..ksSHHhhhHHHsk.....", "...kssSSSSSSsk......", "....kkwWWwWwkk......", "...kWWWwWwWWWWk.....", "..kWWWWwWwWWWWwk....", ".kWWkWWwWwWWWwvk....", ".kWkWWWwWwWWWwvkCk..", ".kSkWWWwWwWWWwvkCCk.", "..kkWWWWwwWWWwvkcck.", "...kWWWWWwWWWwvkxxk.", "...kWWWWkkWWWwvkkk..", "....kPPpk.kPPpk.....", "....kPPpk.kPPpk.....", "...kooOOk.koOOOk....", "...kkkkk...kkkkk...."]};
 const HERO_FRAMES = {"idle": ["......kkkkkk........", "....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhSSSSShhhhHk...", ".kHhSSSSSSSSShhHk...", ".kHFFFFFFFFFFFFHk...", ".kFGGgFkkkFGGgFFk...", ".kFGDGFSSSFGDGFkk...", ".kHFFFSSSSSFFFSk....", "..kSSSSSSSSSSssk....", "..ksSSSSmmSSSsk.....", "...kssSSSSSSsk......", "....kkwWTTWwkk......", "...kWWWwTtWWWWk.....", "..kWWWWwTtWBWWwk....", ".kWWkWWwTtWWWwvk....", ".kWkWWWwTtWWWwvkCk..", ".kSkWWWwTTWWWwvkCCk.", "..kkWWWWwwWWWwvkcck.", "...kWWWWWwWWWwvkxxk.", "...kWWWWkkWWWwvkkk..", "....kPPpk.kPPpk.....", "....kPPpk.kPPpk.....", "...kooOOk.koOOOk....", "...kkkkk...kkkkk...."], "w1": ["......kkkkkk........", "....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhSSSSShhhhHk...", ".kHhSSSSSSSSShhHk...", ".kHFFFFFFFFFFFFHk...", ".kFGGgFkkkFGGgFFk...", ".kFGDGFSSSFGDGFkk...", ".kHFFFSSSSSFFFSk....", "..kSSSSSSSSSSssk....", "..ksSSSSmmSSSsk.....", "...kssSSSSSSsk......", "....kkwWTTWwkk......", "...kWWWwTtWWWWk.....", "..kWWWWwTtWBWWwk....", ".kWWkWWwTtWWWwvk....", ".kWkWWWwTtWWWwvkCk..", ".kSkWWWwTTWWWwvkCCk.", "..kkWWWWwwWWWwvkcck.", "...kWWWWWwWWWwvkxxk.", "...kWWWWkkWWWwvkkk..", "....kPPpk..kPPk.....", "...kPPpk...kPPpk....", "..kooOOk....kOOOk...", "..kkkkk.....kkkkk..."], "w2": ["......kkkkkk........", "....kkLLhhhhkk......", "...kLLlLhhhhhhk.....", "..khLLhhhhhhhhHk....", "..khhhhhhhhhhhHHk...", ".kHhhhSSSSShhhhHk...", ".kHhSSSSSSSSShhHk...", ".kHFFFFFFFFFFFFHk...", ".kFGGgFkkkFGGgFFk...", ".kFGDGFSSSFGDGFkk...", ".kHFFFSSSSSFFFSk....", "..kSSSSSSSSSSssk....", "..ksSSSSmmSSSsk.....", "...kssSSSSSSsk......", "....kkwWTTWwkk......", "...kWWWwTtWWWWk.....", "..kWWWWwTtWBWWwk....", ".kWWkWWwTtWWWwvk....", ".kWkWWWwTtWWWwvkCk..", ".kSkWWWwTTWWWwvkCCk.", "..kkWWWWwwWWWwvkcck.", "...kWWWWWwWWWwvkxxk.", "...kWWWWkkWWWwvkkk..", "....kPPk..kPPpk.....", "....kPPpk...kPPpk...", "...kooOOk...kooOOk..", "...kkkkk.....kkkkk.."]};
 function mkSpriteFull(rows, pal, scale=2){
  const w=rows[0].length, h=rows.length; const c=document.createElement("canvas"); c.width=w*scale; c.height=h*scale; const x=c.getContext("2d");
  rows.forEach((r,j)=>{ for(let i=0;i<r.length;i++){ const ch=r[i]; if(ch!=="."&&pal[ch]){ x.fillStyle=pal[ch]; x.fillRect(i*scale,j*scale,scale,scale);} } }); return c;
 }
 let SPR = {};
+function drawLogo(){ const lc=document.getElementById("logoSprite").getContext("2d"); lc.imageSmoothingEnabled=false; lc.clearRect(0,0,48,62); lc.drawImage(heroSet(sel.hero).down.idle[0],0,0); }
 function buildSprites(){
- const mk=k=>mkSpriteFull(HERO_ANIM[k],HERO_PAL,2);
- const tint=(src,col)=>{ const c=document.createElement("canvas"); c.width=src.width; c.height=src.height; const x=c.getContext("2d"); x.drawImage(src,0,0); x.globalCompositeOperation="source-atop"; x.fillStyle=col; x.fillRect(0,0,c.width,c.height); return c; };
- SPR.hero = {idle:[mk("idle0"),mk("idle1")], blink:mk("blink"), w:[mk("w0"),mk("w1"),mk("w2"),mk("w3")], b:[mk("b0"),mk("b1"),mk("b2"),mk("b3")], bidle:mk("bidle")};
- SPR.hero.idle0=SPR.hero.idle[0];
- SPR.hero.red=new Map(); for(const c of [...SPR.hero.idle,SPR.hero.blink,...SPR.hero.w,...SPR.hero.b,SPR.hero.bidle]) SPR.hero.red.set(c,tint(c,"rgba(255,70,70,.7)"));
- SPR.player = SPR.hero.idle0;
  SPR.bact = mkSprite(SPR_BACT, PAL_BACT, 3);
  SPR.virus = mkSprite(SPR_VIRUS, PAL_VIRUS, 3);
  SPR.amoeba = mkSprite(SPR_AMOEBA, PAL_AMOEBA, 3);
@@ -533,7 +593,7 @@ function buildSprites(){
  buildMonsterSprites();
  const lc = document.getElementById("logoSprite").getContext("2d");
  const vc=document.getElementById("logoVirus").getContext("2d"); vc.imageSmoothingEnabled=false; vc.drawImage(SPR.mon.virus.n[0],4,4);
- lc.imageSmoothingEnabled=false; lc.clearRect(0,0,48,56); lc.drawImage(mkSpriteFull(HERO_FRAMES.idle,HERO_PAL,2),4,1);
+ drawLogo();
 }
 
 // ================= 도트 생성기 (음영·외곽선·디더링) =================
@@ -708,6 +768,131 @@ function bossFrames(k){
  const fr=[0,1].map(f=>makeBoss(k,f));
  return BOSS_CACHE[k]={n:fr.map(p=>p.canvas(3)), hit:fr.map(p=>p.canvas(3,"#ffffff")), body:13, size:56};
 }
+// ================= 주인공 캐릭터 (3방향 걷기, 캐릭터 4종) =================
+const HEROES = [
+ {id:"m1", name:"남학생 1", hair:"short", female:false, hc:["#3b2418","#5c3a26","#8f5e3c"], skin:["#f9d3ab","#e2aa82"], shirt:["#4a86e0","#2f5fae"], legs:["#34406e","#232b4f"]},
+ {id:"m2", name:"남학생 2", hair:"spiky", female:false, hc:["#17131f","#2a2433","#4a4058"], skin:["#f3c69a","#d99f74"], shirt:["#3fb37f","#2a7d58"], legs:["#3a3f4a","#262a33"]},
+ {id:"f1", name:"여학생 1", hair:"pony",  female:true,  hc:["#17131f","#2a2433","#4a4058"], skin:["#fad6b4","#e5ae8a"], shirt:["#e04a6a","#a8304b"], legs:["#34406e","#232b4f"], tie:"#e04a6a"},
+ {id:"f2", name:"여학생 2", hair:"bob",   female:true,  hc:["#6b3518","#93501f","#c07a3e"], skin:["#f9d3ab","#e2aa82"], shirt:["#9b6bff","#6f45c9"], legs:["#5a3b6e","#3e2850"], tie:"#ff7bd5", pin:"#ff9cf6"},
+];
+const HC={W:"#f6f8fd",w:"#cfd6e8",v:"#98a2bd",F:"#2d3350",G:"#58d2ff",g:"#e6fdff",O:"#3a2a24",o:"#1f1613",m:"#c0605a",e:"#1a1426",b:"#f2a0a0",y:"#ffcf3f",C:"#d8f1ff",c:"#5ff0a0",x:"#2fbf74",sock:"#f2f2f7"};
+function heroPix(H, dir, fr, st){
+ const P=new Pix(24,31), S=H.skin, hc=H.hc, walking=fr>=0;
+ const bob = walking ? ((fr===1||fr===3)?-1:0) : (st.breath?1:0);
+ const sw = walking ? [1,0,-1,0][fr] : 0;             // 팔 흔들기
+ const R=(x,y,w,h,c)=>P.rect(x,y,w,h,c), D=(x,y,c)=>P.set(x,y,c);
+ const side=dir==="side", back=dir==="up";
+ // ---------- 다리 ----------
+ const shoe=(x,y,w)=>{ R(x,y,w,2,HC.O); R(x,y+1,w,1,HC.o); };
+ if(!side){
+  const liftL = walking&&fr===2?1:0, liftR = walking&&fr===0?1:0;
+  if(H.female){
+   R(8,22-liftL,3,5,S[0]); R(13,22-liftR,3,5,S[0]); R(8,24-liftL,3,3,HC.sock); R(13,24-liftR,3,3,HC.sock);
+  } else { R(8,22-liftL,3,5,H.legs[0]); R(13,22-liftR,3,5,H.legs[0]); R(10,22-liftL,1,5,H.legs[1]); R(15,22-liftR,1,5,H.legs[1]); }
+  shoe(7,27-liftL,4); shoe(13,27-liftR,4);
+ } else {
+  const pos=[[13,7],[11,10],[7,13],[10,11]][walking?fr:1].map(v=>v+0);   // 앞다리 x, 뒷다리 x
+  const lift = walking&&(fr===1||fr===3)?1:0;
+  const legC = H.female?S:[H.legs[0],H.legs[1]];
+  // 뒷다리(어둡게)
+  R(pos[1],22,3,5,H.female?S[1]:H.legs[1]); if(H.female) R(pos[1],24,3,3,"#d8d8e2"); shoe(pos[1],27,4);
+  // 앞다리
+  R(pos[0],22-lift,3,5,legC[0]); if(H.female) R(pos[0],24-lift,3,3,HC.sock); shoe(pos[0],27-lift,4);
+ }
+ const T=13+bob;   // 어깨 높이
+ // ---------- 뒤쪽 머리(포니테일 등) ----------
+ const swing = walking ? [1,0,-1,0][fr] : 0;
+ if(H.hair==="pony"){
+  if(back){}
+  else if(side){ R(2+swing,T-8,5,4,hc[1]); R(1+swing,T-5,4,5,hc[1]); R(2+swing,T-7,2,3,hc[2]); R(6,T-8,2,2,H.tie); }
+  else { R(17+(swing>0?1:0),T-7,2,7,hc[0]); }
+ }
+ // ---------- 몸통(가운) ----------
+ if(!side){
+  R(6,T,12,9,HC.W); R(5,T+5,14,5,HC.W); R(5,T+9,14,1,HC.w);
+  R(15,T+1,2,8,HC.w); R(17,T+5,2,5,HC.v);
+  if(!back){
+   if(H.female){ R(10,T,4,6,"#ffffff"); R(11,T,2,2,H.tie); D(10,T+1,H.tie); D(13,T+1,H.tie); R(7,T+7,10,3,H.legs[0]); R(7,T+9,10,1,H.legs[1]); for(let i=0;i<5;i++) D(8+i*2,T+8,H.legs[1]); }
+   else { R(10,T,4,6,H.shirt[0]); R(11,T+1,2,5,H.shirt[1]); }
+   R(9,T,1,6,HC.w); R(14,T,1,6,HC.w);        // 옷깃
+   R(6,T+7,3,1,HC.w); D(15,T+2,HC.y);         // 주머니, 배지
+  } else { R(11,T+4,2,6,HC.w); R(6,T+6,12,1,HC.w); }
+ } else {
+  R(8,T,8,9,HC.W); R(7,T+5,10,5,HC.W); R(7,T+9,10,1,HC.w); R(14,T+1,2,8,HC.w); R(16,T+5,1,5,HC.v);
+  R(15,T,1,5,H.female?"#ffffff":H.shirt[0]); if(H.female){ R(8,T+7,8,3,H.legs[0]); }
+ }
+ // ---------- 팔 ----------
+ const flask=(x,y)=>{ R(x,y,3,5,HC.C); R(x,y+2,3,3,HC.c); D(x,y+2,"#ffffff"); D(x+1,y-1,HC.C); };
+ if(!side){
+  const aL=back?-sw:sw, aR=-aL;
+  R(4,T+1+aL,2,7,HC.W); R(4,T+1+aL,1,7,HC.w); R(4,T+8+aL,2,2,S[0]);
+  R(18,T+1+aR,2,7,HC.W); R(19,T+1+aR,1,7,HC.v); R(18,T+8+aR,2,2,S[0]);
+  if(back) flask(1,T+6+aL); else flask(20,T+6+aR);
+ } else {
+  const fx=11+sw*2;                         // 아래팔 위치(앞뒤로 흔들림)
+  R(11,T+1,3,4,HC.W); R(fx,T+4,3,4,HC.W);
+  R(11,T+1,1,4,HC.v); R(fx,T+4,1,4,HC.v); R(13,T+1,1,3,HC.w); R(fx+2,T+4,1,4,HC.w);
+  R(fx,T+8,3,2,S[0]); flask(fx+3,T+5);
+ }
+ // ---------- 머리 ----------
+ const hy=T-11;
+ if(!side){
+  R(7,hy,10,10,S[0]); R(6,hy+1,12,8,S[0]); R(16,hy+2,1,7,S[1]); R(8,hy+9,8,1,S[1]);
+  if(!back){ R(5,hy+5,1,2,S[1]); R(18,hy+5,1,2,S[1]); }
+ } else {
+  R(7,hy,10,10,S[0]); R(6,hy+1,12,8,S[0]); R(18,hy+5,1,2,S[0]); R(17,hy+6,2,1,S[1]);   // 코
+ }
+ // ---------- 얼굴 ----------
+ if(!back){
+  const ey=hy+5;
+  if(!side){
+   if(st.blink){ R(8,ey+1,2,1,HC.e); R(14,ey+1,2,1,HC.e); }
+   else { R(8,ey,2,2,HC.e); R(14,ey,2,2,HC.e); D(8,ey,"#ffffff"); D(14,ey,"#ffffff"); }
+   D(7,ey+2,HC.b); D(16,ey+2,HC.b); R(11,ey+3,2,1,HC.m);
+  } else {
+   if(st.blink) R(14,ey+1,2,1,HC.e); else { R(14,ey,2,2,HC.e); D(14,ey,"#ffffff"); }
+   D(16,ey+2,HC.b); R(16,ey+3,2,1,HC.m); R(10,ey,2,2,S[1]);    // 귀
+  }
+ }
+ // ---------- 머리카락 ----------
+ const hairTop=()=>{ R(7,hy-1,10,1,hc[1]); R(6,hy,12,3,hc[1]); R(5,hy+1,1,3,hc[0]); R(18,hy+1,1,3,hc[0]); R(8,hy,4,1,hc[2]); R(7,hy+1,2,1,hc[2]); };
+ if(back){
+  hairTop(); R(6,hy+3,12,6,hc[1]); R(5,hy+3,1,5,hc[0]); R(18,hy+3,1,5,hc[0]); R(7,hy+3,2,2,hc[2]);
+  if(H.hair==="bob"||H.hair==="pony") { R(5,hy+8,14,2,hc[1]); }
+  else R(8,hy+9,8,1,S[1]);
+  if(H.hair==="spiky") for(const x of [7,10,13,16]) R(x,hy-2,2,1,hc[1]);
+ if(H.hair==="pony"){ const px=10+swing; R(10,T-7,4,2,H.tie); R(px,T-5,4,3,hc[1]); R(px+1,T-2,3,3,hc[1]); R(px+1,T+1,2,2,hc[0]); R(px+1,T-5,1,4,hc[2]); }
+ } else if(!side){
+  hairTop(); R(7,hy+3,3,1,hc[1]); R(14,hy+3,3,1,hc[1]); R(6,hy+3,1,3,hc[1]); R(17,hy+3,1,3,hc[1]);
+  if(H.hair==="spiky"){ for(const x of [7,10,13,16]) R(x,hy-2,2,1,hc[1]); R(11,hy+3,2,1,hc[1]); }
+  if(H.hair==="bob"){ R(5,hy+3,2,7,hc[1]); R(17,hy+3,2,7,hc[1]); R(5,hy+3,1,7,hc[0]); R(9,hy+3,6,1,hc[1]); D(16,hy+3,H.pin); D(17,hy+2,H.pin); }
+  if(H.hair==="pony"){ R(5,hy+3,2,5,hc[1]); R(17,hy+3,2,5,hc[1]); R(9,hy+3,2,1,hc[1]); }
+ } else {
+  hairTop(); R(6,hy+3,6,4,hc[1]); R(6,hy+7,4,2,hc[1]); R(12,hy+3,5,1,hc[1]); R(7,hy+3,2,2,hc[2]);
+  if(H.hair==="spiky") for(const x of [7,10,13]) R(x,hy-2,2,1,hc[1]);
+  if(H.hair==="bob"){ R(6,hy+3,5,7,hc[1]); D(12,hy+2,H.pin); }
+ }
+ // ---------- 고글(이마 위) ----------
+ const gy=hy+1;
+ if(back){ R(5,gy+1,14,1,HC.F); }
+ else if(!side){ R(5,gy+1,14,1,HC.F); R(7,gy,4,3,HC.F); R(13,gy,4,3,HC.F); R(8,gy+1,2,1,HC.G); R(14,gy+1,2,1,HC.G); D(8,gy+1,HC.g); D(14,gy+1,HC.g); }
+ else { R(6,gy+1,12,1,HC.F); R(13,gy,4,3,HC.F); R(14,gy+1,2,1,HC.G); D(14,gy+1,HC.g); }
+ outline(P,K_OUT);
+ return P;
+}
+function buildHeroSet(H){
+ const mk=(dir,fr,st={})=>heroPix(H,dir,fr,st).canvas(2);
+ const tint=(src)=>{ const c=document.createElement("canvas"); c.width=src.width; c.height=src.height; const x=c.getContext("2d"); x.drawImage(src,0,0); x.globalCompositeOperation="source-atop"; x.fillStyle="rgba(255,70,70,.7)"; x.fillRect(0,0,c.width,c.height); return c; };
+ const set={};
+ for(const dir of ["down","up","side"]){
+  set[dir]={walk:[0,1,2,3].map(f=>mk(dir,f)), idle:[mk(dir,-1,{}),mk(dir,-1,{breath:1})], blink:mk(dir,-1,{blink:1})};
+ }
+ set.red=new Map(); for(const dir of ["down","up","side"]) for(const c of [...set[dir].walk,...set[dir].idle,set[dir].blink]) set.red.set(c,tint(c));
+ return set;
+}
+const HERO_SETS={};
+function heroSet(id){ if(!HERO_SETS[id]) HERO_SETS[id]=buildHeroSet(HEROES.find(h=>h.id===id)||HEROES[0]); return HERO_SETS[id]; }
+
 function buildMonsterSprites(){
  const mk=(fn,n)=>{ const fr=[]; for(let f=0;f<n;f++) fr.push(fn(f)); return {n:fr.map(p=>p.canvas(2)), hit:fr.map(p=>p.canvas(2,"#ffffff"))}; };
  SPR.mon={bact:mk(makeBact,3), virus:mk(makeVirus,3), amoeba:mk(makeAmoeba,3)};
@@ -723,6 +908,8 @@ function buildMenu(){
  UNIT_SHORT.forEach((u,i)=> ur.appendChild(chip(u, sel.units.has(i), ()=>{ sel.units.has(i)?sel.units.delete(i):sel.units.add(i); buildMenu(); })));
  const lr = document.getElementById("levelRow"); lr.innerHTML="";
  [[1,"기초"],[2,"보통"],[3,"도전"]].forEach(([l,n])=> lr.appendChild(chip(n, sel.levels.has(l), ()=>{ sel.levels.has(l)?sel.levels.delete(l):sel.levels.add(l); buildMenu(); })));
+ const hr = document.getElementById("heroRow"); hr.innerHTML="";
+ HEROES.forEach(H=>{ const b=chip(`<canvas width="48" height="62"></canvas><span>${H.name}</span>`, sel.hero===H.id, ()=>{ sel.hero=H.id; try{ localStorage.setItem("germ-hero",H.id); }catch(e){} buildMenu(); drawLogo(); }, "chip hero"); const cx=b.querySelector("canvas").getContext("2d"); cx.imageSmoothingEnabled=false; cx.drawImage(heroSet(H.id).down.idle[0],0,0); hr.appendChild(b); });
  const sr = document.getElementById("stageRow"); sr.innerHTML="";
  STAGES.forEach((s,i)=> sr.appendChild(chip(`<b>${s.name}</b><small>${s.desc}</small>`, sel.stage===i, ()=>{ sel.stage=i; buildMenu(); }, "chip stage")));
  const wr = document.getElementById("weapRow"); wr.innerHTML="";
@@ -784,7 +971,7 @@ function startGame(){
   weapons:{}, passives:{}, evolved:{},
   enemies:[], shots:[], pools:[], gems:[], chests:[], fx:[], texts:[], bolts:[], ebullets:[],
   spawnAcc:0, chestTimer:25, nextBoss:BOSS_INTERVAL, bossSpawned:0, bossKilled:0,
-  kills:0, quizRight:0, quizTotal:0, wrongs:[], qpool:shuffle(p.slice()), qused:new Set(),
+  kills:0, quizRight:0, quizTotal:0, quizTime:0, wrongs:[], qpool:shuffle(p.slice()), qused:new Set(),
   cdmul:1, dmgmul:1, areamul:1, durmul:1, magnet:110, score:0, shake:0, cleared:false, over:false,
  };
  addWeapon(sel.weapon);
@@ -982,7 +1169,7 @@ function openQuiz(item){
  const q=pickQuestion(item.kind);
  // 보기 순서를 매번 섞는다
  const order=shuffle([0,1,2,3]);
- curQ={q,item,order,ans:order.indexOf(q[4])};
+ curQ={q,item,order,ans:order.indexOf(q[4]),t0:performance.now()};
  qAnswered=false;
  document.getElementById("qTitle").textContent = item.kind==="boss" ? `ROUND ${item.k} 보스 격파! 퀴즈` : item.kind==="level" ? `레벨 업! Lv.${item.k} 퀴즈` : "보급 상자 퀴즈";
  document.getElementById("qUnit").textContent = UNIT_SHORT[q[0]-1];
@@ -996,7 +1183,7 @@ function openQuiz(item){
 }
 function answer(i){
  if(qAnswered) return; qAnswered=true;
- const ok = i===curQ.ans; G.quizTotal++;
+ const ok = i===curQ.ans; G.quizTotal++; G.quizTime += Math.min(90,(performance.now()-curQ.t0)/1000);   // 문제 하나당 최대 90초까지 셈
  const btns=[...document.querySelectorAll("#qChoices .choice")];
  btns.forEach((b,j)=>{ b.disabled=true; if(j===curQ.ans) b.classList.add("right"); if(j===i&&!ok) b.classList.add("wrong"); });
  const q=curQ.q;
@@ -1135,21 +1322,22 @@ function loseGame(){ G.over=true; G.mode="end"; musicStop(1.2); SFX.bad(); setTi
 function showResult(win){
  document.getElementById("topbtns").classList.add("hidden");
  document.getElementById("rTitle").textContent = win ? "클리어! 실험실을 지켜냈어요" : "게임 오버";
- document.getElementById("rSub").textContent = win ? "10라운드 보스를 모두 물리쳤습니다" : `ROUND ${Math.min(BOSS_ROUNDS,G.bossKilled+1)}에서 쓰러졌어요 · 보스 ${G.bossKilled}마리 처치`;
+ document.getElementById("rSub").textContent = win ? `10라운드 보스를 모두 물리쳤습니다 · 클리어 타임 = 플레이 ${fmtT(G.t)} + 문제 풀이 ${fmtT(G.quizTime)}` : `ROUND ${Math.min(BOSS_ROUNDS,G.bossKilled+1)}에서 쓰러졌어요 · 보스 ${G.bossKilled}마리 처치`;
  const rate = G.quizTotal?Math.round(G.quizRight/G.quizTotal*100):0;
- document.getElementById("rStats").innerHTML = [[win?"클리어 타임":"생존 시간",win?fmtT(G.t):fmt(G.t)],["처치",G.kills],["퀴즈 정답",`${G.quizRight}/${G.quizTotal}`],["정답률",rate+"%"]].map(([a,b])=>`<div class="stat"><b>${b}</b><span>${a}</span></div>`).join("");
+ document.getElementById("rStats").innerHTML = [[win?"클리어 타임":"생존 시간",win?fmtT(totalT()):fmt(G.t)],["처치",G.kills],["퀴즈 정답",`${G.quizRight}/${G.quizTotal}`],["정답률",rate+"%"]].map(([a,b])=>`<div class="stat"><b>${b}</b><span>${a}</span></div>`).join("");
  const wl=document.getElementById("rWrongs");
  if(G.wrongs.length){
   document.getElementById("wrongHead").textContent=`오답 노트 (${G.wrongs.length}문제)`;
   wl.innerHTML = G.wrongs.map(w=>`<div class="wrong-item"><div>[${UNIT_SHORT[w.unit-1]}] ${esc(w.q)}</div><div class="x">내 답: ${esc(w.mine)}</div><div class="a">정답: ${esc(w.ans)}</div><div class="e">${esc(w.exp)}</div></div>`).join("");
  } else { document.getElementById("wrongHead").textContent= G.quizTotal? "오답 노트 — 틀린 문제가 없어요!":"오답 노트"; wl.innerHTML=""; }
  const rb=document.getElementById("rankBox");
- if(win){ rb.classList.remove("hidden"); document.getElementById("rankMsg").textContent=`클리어 타임 ${fmtT(G.t)} · 정답률 ${rate}% · 이름을 적고 등록하세요`; document.getElementById("rankMini").innerHTML=""; const inp=document.getElementById("rankName"); const cs=document.getElementById("rankClass"); cs.innerHTML=`<option value="">반 선택</option>`+Array.from({length:CLASS_COUNT},(_,i)=>`<option value="${i+1}">${RANK_GRADE}학년 ${i+1}반</option>`).join(""); try{ inp.value=localStorage.getItem("germ-name")||""; cs.value=localStorage.getItem("germ-class")||""; }catch(e){} document.getElementById("rankSave").disabled=false; setTimeout(()=>inp.focus(),300); }
+ if(win){ rb.classList.remove("hidden"); document.getElementById("rankMsg").textContent=`클리어 타임 ${fmtT(totalT())} (문제 풀이 ${fmtT(G.quizTime)} 포함) · 정답률 ${rate}% · 반과 이름을 적고 등록하세요`; document.getElementById("rankMini").innerHTML=""; const inp=document.getElementById("rankName"); const cs=document.getElementById("rankClass"); cs.innerHTML=`<option value="">반 선택</option>`+Array.from({length:CLASS_COUNT},(_,i)=>`<option value="${i+1}">${RANK_GRADE}학년 ${i+1}반</option>`).join(""); try{ inp.value=localStorage.getItem("germ-name")||""; cs.value=localStorage.getItem("germ-class")||""; }catch(e){} document.getElementById("rankSave").disabled=false; setTimeout(()=>inp.focus(),300); }
  else { rb.classList.add("hidden"); }
  document.getElementById("resultOv").classList.remove("hidden");
 }
 
 // ================= 순위표 =================
+function totalT(){ return G.t + (G.quizTime||0); }
 function fmtT(t){ const m=Math.floor(t/60), s=t-m*60; return `${m}:${s.toFixed(1).padStart(4,"0")}`; }
 const RANK = {
  online(){ return !!RANK_DB_URL; },
@@ -1171,7 +1359,7 @@ const RANK = {
     let data;
     try{ data=await this.req(this.url('?orderBy="time"&limitToFirst=300')); }
     catch(e){ data=await this.req(this.url()); }          // 색인(.indexOn)이 없을 때
-    const rows=Object.values(data||{}).filter(r=>r&&typeof r.time==="number").map(r=>({cls:+r.cls||0,name:String(r.name||"?"),time:r.time,acc:+r.acc||0,stage:+r.stage||0,weapon:String(r.weapon||""),quiz:+r.quiz||0,at:String(r.at||"")}));
+    const rows=Object.values(data||{}).filter(r=>r&&typeof r.time==="number").map(r=>({cls:+r.cls||0,name:String(r.name||"?"),time:r.time,play:+r.play||0,qtime:+r.qtime||0,acc:+r.acc||0,stage:+r.stage||0,weapon:String(r.weapon||""),quiz:+r.quiz||0,at:String(r.at||"")}));
     rows.sort((a,b)=>a.time-b.time||b.acc-a.acc);
     return {rows, where:"online"};
    } catch(e){ return {rows:this.local(), where:"local", err:true}; }
@@ -1180,9 +1368,9 @@ const RANK = {
  },
  table(rows, me){
   if(!rows.length) return `<div class="cnt" style="margin:14px 0">아직 등록된 기록이 없어요. 첫 번째 주인공이 되어 보세요!</div>`;
-  return `<table class="ranks"><tr><th>순위</th><th>반</th><th>이름</th><th>클리어 타임</th><th>정답률</th><th>스테이지</th><th>무기</th><th>날짜</th></tr>`+
+  return `<table class="ranks"><tr><th>순위</th><th>반</th><th>이름</th><th>클리어 타임</th><th>문제 풀이</th><th>정답률</th><th>스테이지</th><th>무기</th><th>날짜</th></tr>`+
    rows.map((r,i)=>{ const d=r.at?new Date(r.at):null; const ds=d&&!isNaN(d)?`${d.getMonth()+1}/${d.getDate()}`:""; const isMe=me&&r.at===me.at&&r.name===me.name;
-    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td>${r.cls?r.cls+"반":"-"}</td><td class="nm">${esc(r.name)}</td><td class="tm">${fmtT(r.time)}</td><td>${r.acc}%</td><td>${r.stage||"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
+    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td>${r.cls?r.cls+"반":"-"}</td><td class="nm">${esc(r.name)}</td><td class="tm">${fmtT(r.time)}</td><td class="tm" style="color:var(--dim)">${r.qtime?fmtT(r.qtime):"-"}</td><td>${r.acc}%</td><td>${r.stage||"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
  },
  srcText(where, err){ return where==="online" ? "반 전체 온라인 순위표" : (err ? "온라인 순위표에 연결하지 못해 이 기기에 저장된 기록을 보여 줘요" : "이 기기(브라우저)에만 저장된 기록이에요 · 반 전체 순위표는 선생님이 온라인 설정을 하면 열려요"); },
 };
@@ -1194,7 +1382,7 @@ document.getElementById("rankSave").onclick=async ()=>{
  if(!G||!G.cleared||G.saved) return;
  btn.disabled=true; msg.textContent="등록하는 중…";
  try{ localStorage.setItem("germ-name",name); localStorage.setItem("germ-class",cls); }catch(e){}
- const rec={cls, name, time:Math.round(G.t*10)/10, acc:Math.round(accNow()*100), stage:G.stageIdx+1, weapon:sel.weapon, quiz:G.quizTotal, at:new Date().toISOString()};
+ const rec={cls, name, time:Math.round(totalT()*10)/10, play:Math.round(G.t*10)/10, qtime:Math.round(G.quizTime*10)/10, acc:Math.round(accNow()*100), stage:G.stageIdx+1, weapon:sel.weapon, quiz:G.quizTotal, at:new Date().toISOString()};
  const r=await RANK.add(rec); G.saved=true;
  const L=await RANK.list(); const same=x=>x.at===rec.at&&x.name===rec.name;
  const all=L.rows.filter(x=>x.stage===rec.stage), rows=all.filter(x=>x.cls===cls);
@@ -1231,7 +1419,7 @@ function update(dt){
  if(keys["a"]||keys["arrowleft"]) mx-=1; if(keys["d"]||keys["arrowright"]) mx+=1;
  if(keys["w"]||keys["arrowup"]) my-=1; if(keys["s"]||keys["arrowdown"]) my+=1;
  if(drag.on){ const dx=drag.x-drag.sx, dy=drag.y-drag.sy, L=Math.hypot(dx,dy); if(L>6){ mx=dx/Math.max(L,40); my=dy/Math.max(L,40); } }
- const ml=Math.hypot(mx,my); p.moving=ml>0;
+ const ml=Math.hypot(mx,my); p.moving=ml>0; if(ml>0){ p.mvx=mx/ml; p.mvy=my/ml; }
  if(ml>0){ if(ml>1){mx/=ml;my/=ml;} p.x+=mx*p.spd*dt; p.y+=my*p.spd*dt; const fl=Math.hypot(mx,my); p.face={x:mx/fl,y:my/fl}; if(mx) p.flip=mx<0; p.walk+=dt*10; }
  if(G.bounds){ p.y=clamp(p.y,G.bounds.y1+p.r,G.bounds.y2-p.r); }
  p.inv=Math.max(0,p.inv-dt);
@@ -1596,23 +1784,25 @@ function draw(){
  drawHUD();
 }
 function drawHero(){
- const p=G.p, H=SPR.hero;
- const up = p.moving ? (p.face.y < -.55) : !!p.lastUp;
- if(p.moving) p.lastUp = p.face.y < -.55;
+ const p=G.p, H=heroSet(sel.hero);
+ if(p.moving){
+  const ax=Math.abs(p.mvx||0), ay=Math.abs(p.mvy||0);
+  if(ax>ay*1.15) p.dir="side"; else if(ay>ax*1.15) p.dir=(p.mvy<0?"up":"down");
+  if(p.dir==="side" && ax>.1) p.flipS = p.mvx<0;
+ }
+ const dir=p.dir||"down", set=H[dir];
  let fr, step=-1;
- if(p.moving){ step=Math.floor(p.walk/1.6)%4; fr=(up?H.b:H.w)[step]; }
- else if(up) fr=H.bidle;
- else fr=((G.t%3.4)<.12)?H.blink:H.idle[Math.floor(G.t*1.5)%2];
- if(p.moving && step!==p.lastStep){ p.lastStep=step; if(step===0||step===2){ G.fx.push({kind:"puff",x:p.x+(step===0?-6:6)*(p.flip?-1:1),y:p.y+24,vx:-p.face.x*20,vy:-6,life:.35,T:.35,r:4}); } }
+ if(p.moving){ step=Math.floor(p.walk/1.5)%4; fr=set.walk[step]; }
+ else fr=((G.t%3.4)<.13)?set.blink:set.idle[Math.floor(G.t*1.4)%2];
+ if(p.moving && step!==p.lastStep){ p.lastStep=step; if(step===0||step===2){ G.fx.push({kind:"puff",x:p.x+(dir==="side"?(p.flipS?6:-6):(step===0?-5:5)),y:p.y+25,vx:-(p.mvx||0)*25,vy:-6,life:.35,T:.35,r:4}); } }
  const hurt=p.hurtT>0; if(hurt) p.hurtT-=1/60;
- const blinkInv = p.inv>0 && !hurt && Math.floor(G.t*16)%2;
- const sq = p.moving&&(step===0||step===2) ? 1 : 0;
- ctx.save(); ctx.translate(Math.round(p.x+(hurt?(Math.random()-.5)*4:0)),Math.round(p.y));
- ctx.fillStyle="rgba(0,0,0,.38)"; ctx.beginPath(); ctx.ellipse(0,25,14+sq*2,4,0,0,7); ctx.fill();
- if(p.flip) ctx.scale(-1,1);
- if(sq) ctx.scale(1.04,.96);
- ctx.globalAlpha = blinkInv ? .45 : 1;
- ctx.drawImage(hurt?H.red.get(fr)||fr:fr, -fr.width/2, -fr.height/2-2 + (sq?1:0));
+ const fade = p.inv>0 && !hurt && Math.floor(G.t*16)%2;
+ ctx.save(); ctx.translate(Math.round(p.x),Math.round(p.y));
+ ctx.fillStyle="rgba(0,0,0,.38)"; ctx.beginPath(); ctx.ellipse(0,26,13,4,0,0,7); ctx.fill();
+ if(dir==="side" && p.flipS) ctx.scale(-1,1);
+ ctx.globalAlpha = fade ? .45 : 1;
+ const img = hurt ? (H.red.get(fr)||fr) : fr;
+ ctx.drawImage(img, -24 + (hurt?(Math.random()<.5?-1:1):0), -32);
  ctx.globalAlpha=1; ctx.restore();
 }
 function drawBoss(e){
@@ -1668,7 +1858,7 @@ function drawHUD(){
  ctx.textAlign="right"; ctx.font="15px 'Do Hyeon', sans-serif"; ctx.fillStyle="#efe9ff";
  ctx.fillText(`처치 ${G.kills}`,W2-12,82); ctx.fillText(`퀴즈 ${G.quizRight} / ${G.quizTotal}`,W2-12,102);
  const ac=Math.round(accNow()*100); ctx.fillStyle=G.quizTotal===0?"#a99cc4":accNow()>=CLEAR_ACC?"#5ee08a":"#ff8c8c"; ctx.fillText(`정답률 ${G.quizTotal?ac+"%":"-"}`,W2-12,122);
- ctx.fillStyle="#a99cc4"; ctx.fillText(G.stage.name,W2-12,142);
+ ctx.fillStyle="#a99cc4"; ctx.fillText(`문제 풀이 ${fmt(G.quizTime)}`,W2-12,142); ctx.fillText(G.stage.name,W2-12,162);
  ctx.textAlign="left";
 }
 
@@ -1677,7 +1867,7 @@ let last=performance.now();
 function loop(now){
  let dt=(now-last)/1000; last=now; dt=Math.min(dt,.05);
  if(G && G.mode==="play") update(dt);
- if(G && MUSIC.playing){ MUSIC.want = G.enemies.some(e=>e.type==="boss") ? "boss" : "main"; const d = G.mode==="play"?1:(G.mode==="pause"?0:.45); if(d!==MUSIC.duck){ MUSIC.duck=d; musicVol(); } }
+ if(G && MUSIC.playing){ const bs=G.enemies.filter(e=>e.type==="boss"); MUSIC.want = bs.some(e=>e.k===BOSS_ROUNDS) ? "final" : bs.length ? "boss" : (G.bossKilled>=5 ? "main2" : "main"); const d = G.mode==="play"?1:(G.mode==="pause"?0:.45); if(d!==MUSIC.duck){ MUSIC.duck=d; musicVol(); } }
  draw();
  requestAnimationFrame(loop);
 }
