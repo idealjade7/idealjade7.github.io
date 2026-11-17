@@ -69,6 +69,18 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 .retryAsk{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .retryAsk button{font-family:'Do Hyeon';font-size:16px;padding:6px 12px;border:2px solid var(--line);cursor:pointer;background:var(--panel2);color:var(--text)}
 .retryAsk button.go{background:#2e6b45;border-color:#5ee08a}
+#slotOv .panel{max-width:420px;text-align:center}
+.slotWin{position:relative;height:210px;overflow:hidden;margin:12px auto 6px;width:300px;border:3px solid #ffd84a;background:#120c1d;box-shadow:0 0 0 3px #5a3600,inset 0 0 30px rgba(0,0,0,.8)}
+.slotWin:before,.slotWin:after{content:"";position:absolute;left:0;right:0;height:70px;z-index:2;pointer-events:none}
+.slotWin:before{top:0;background:linear-gradient(#120c1d,rgba(18,12,29,.2))}
+.slotWin:after{bottom:0;background:linear-gradient(rgba(18,12,29,.2),#120c1d)}
+.slotMark{position:absolute;left:0;right:0;top:70px;height:70px;border-top:3px solid #ffd84a;border-bottom:3px solid #ffd84a;z-index:3;pointer-events:none;box-shadow:0 0 18px rgba(255,216,74,.5)}
+.slotReel{position:absolute;left:0;right:0;top:0;will-change:transform}
+.slotItem{height:70px;display:flex;align-items:center;justify-content:center;gap:12px;font-family:'Do Hyeon';font-size:26px}
+.slotItem .ic{font-size:36px}
+.slotWin.done .slotMark{animation:slotFlash .5s ease-out 3}
+@keyframes slotFlash{0%{background:rgba(255,216,74,.55)}100%{background:rgba(255,216,74,0)}}
+#slotRes{min-height:46px;font-family:'Do Hyeon';font-size:18px;color:#fff3c4}
 .guide h3{font-family:'Do Hyeon';color:var(--gold);margin:14px 0 6px;font-size:19px;font-weight:400}
 .guide .it{display:flex;gap:12px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line)}
 .guide .it canvas,.guide .it .ic{width:44px;height:44px;flex:0 0 44px;image-rendering:pixelated;display:flex;align-items:center;justify-content:center;font-size:26px}
@@ -174,7 +186,7 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
   <div class="hint" id="weapDesc"></div>
   <div class="hint">
    ▸ <span class="y">무기 진화: 무기 Lv.5 + 짝 패시브 → 2분 30초 이후 진화</span><br>
-   <b>WASD·방향키·드래그</b> 이동 · 공격 자동 · <b>레벨업</b> 퀴즈: 정답 카드 3장, 오답 1장 · <b>부활</b>: 처음 쓰러질 때 정답률 90%↑ 체력 30%, 80%↑ 체력 10%로 1번 부활 · <b>보스</b> 퀴즈: 정답 3장, 오답 2장 · <b>보급 상자</b> 퀴즈: 특수 효과(공격력↑·이동 속도↑·전체 금화 흡수 중 하나) — 정답 15초, 오답 8초<br>
+   <b>WASD·방향키·드래그</b> 이동 · 공격 자동 · <b>레벨업</b> 퀴즈: 정답 카드 3장, 오답 1장 · <b>부활</b>: 처음 쓰러질 때 정답률 90%↑ 체력 30%, 80%↑ 체력 10%로 1번 부활 · <b>보스</b> 퀴즈: 정답 3장, 오답 2장 · <b>보급 상자</b> 퀴즈: 룰렛으로 특수 효과 7가지 중 하나 — 정답 15초, 오답 8초(무적은 절반)<br>
    <b>1분마다 보스</b> 등장 · <b>10라운드 보스</b>까지 물리치면 클리어 · <span class="y">퀴즈를 많이 맞힐수록 공격력 UP · 최종 보스의 보호막도 약해져요</span>
   </div>
   <div class="warn" id="warn"></div>
@@ -218,6 +230,15 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 </div>
 
 <!-- 명예의 전당 -->
+<div class="overlay dim hidden" id="slotOv">
+ <div class="panel">
+  <div class="ctitle">🎰 보급 상자 룰렛</div>
+  <div class="csub" id="slotSub"></div>
+  <div class="slotWin" id="slotWin"><div class="slotMark"></div><div class="slotReel" id="slotReel"></div></div>
+  <div id="slotRes"></div>
+  <button class="btn" id="slotBtn">건너뛰기 <small>(Enter)</small></button>
+ </div>
+</div>
 <div class="overlay dim hidden" id="guideOv">
  <div class="panel guide" style="max-width:720px">
   <div class="ctitle">📖 아이템 도감</div>
@@ -1121,6 +1142,7 @@ addEventListener("keydown", e=>{
  if(!document.getElementById("menu").classList.contains("hidden") && document.getElementById("rankOv").classList.contains("hidden") && document.getElementById("guideOv").classList.contains("hidden") && e.key==="Enter"){ startGame(); e.preventDefault(); return; }
  if(G && G.mode==="quiz") quizKey(e);
  else if(G && G.mode==="cards") cardKey(e);
+ else if(G && G.mode==="slot"){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); closeSlot(); } }
  else if(G && (e.key==="p"||e.key==="P"||e.key==="Escape")){ if(G.mode==="play") pauseGame(); else if(G.mode==="pause") resumeGame(); }
  if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(e.key.toLowerCase())) e.preventDefault();
 });
@@ -1155,7 +1177,7 @@ function startGame(){
   enemies:[], shots:[], pools:[], gems:[], chests:[], fx:[], texts:[], bolts:[], ebullets:[], hazards:[], drops:[], items:{half:0,retry:0,answer:0},
   spawnAcc:0, chestTimer:25, nextBoss:BOSS_INTERVAL, bossSpawned:0, bossKilled:0,
   kills:0, quizRight:0, quizTotal:0, quizTime:0, wrongs:[], qpool:shuffle(p.slice()), qused:new Set(),
-  cdmul:1, dmgmul:1, areamul:1, durmul:1, magnet:110, buffs:{atk:0,spd:0}, score:0, shake:0, cleared:false, over:false,
+  cdmul:1, dmgmul:1, areamul:1, durmul:1, magnet:110, buffs:{atk:0,spd:0,inv:0,rapid:0,coin2:0}, score:0, shake:0, cleared:false, over:false,
  };
  addWeapon(sel.weapon);
  if(st.corridor){ G.bounds = {y1:-290, y2:290}; }
@@ -1190,7 +1212,7 @@ function fireWeapons(dt){
  const p=G.p;
  for(const [k,w] of Object.entries(G.weapons)){
   const L=w.lv, evo=!!G.evolved[k];
-  w.cd -= dt;
+  w.cd -= dt*(G.buffs.rapid>0?2:1);   // 연사 폭주: 재사용 시간 절반
   if(k==="laser"){
    if(w.cd<=0){
     if(evo){
@@ -1452,13 +1474,62 @@ const BUFFS = {
  atk:   {ic:"⚔️", tag:"공격↑", name:"공격력 상승",    desc:"모든 무기 공격력 ×1.6", col:"#ff6b4a"},
  spd:   {ic:"👟", tag:"이속↑", name:"이동 속도 증가", desc:"이동 속도 ×1.45",       col:"#5fd0ff"},
  magnet:{ic:"🧲", name:"전체 금화 흡수", desc:"맵의 모든 금화가 날아와요", col:"#ffd84a"},
+ inv:   {ic:"🛡️", tag:"무적", name:"무적 보호막",   desc:"피해를 받지 않아요 (다른 효과의 절반 시간)", col:"#9be7ff", half:true},
+ clear: {ic:"💣", name:"화면 정화",      desc:"화면 안의 잡몹이 한 번에 터지고 적 탄이 사라져요", col:"#ff9a3c"},
+ rapid: {ic:"🔥", tag:"연사", name:"연사 폭주", desc:"무기 재사용 시간 절반", col:"#ff5d3c"},
+ coin2: {ic:"💰", tag:"금화×2", name:"금화 2배", desc:"금화 경험치 2배", col:"#ffe066"},
 };
 const BUFF_TIME = {ok:15, no:8};
-function giveBuff(ok){
- const keys=Object.keys(BUFFS), id=keys[Math.floor(Math.random()*keys.length)], B=BUFFS[id], dur=ok?BUFF_TIME.ok:BUFF_TIME.no;
+// ---- 슬롯머신: 효과가 고르는 모습을 보여 준 뒤 적용 ----
+let slot=null;
+function spinSlot(ok){
+ G.mode="slot";
+ const keys=Object.keys(BUFFS), pick=keys[Math.floor(Math.random()*keys.length)], H=70;
+ const reel=document.getElementById("slotReel"), win=document.getElementById("slotWin"); win.classList.remove("done");
+ // 효과 목록을 여러 번 이어 붙이고, 마지막에 뽑힌 효과가 가운데 칸에 오도록 해요
+ const strip=[]; const loops=6+Math.floor(Math.random()*2); for(let i=0;i<loops;i++) strip.push(...shuffle(keys.slice()));
+ strip.push(pick, keys[(keys.indexOf(pick)+1)%keys.length]); strip.unshift(keys[(keys.indexOf(strip[0])+keys.length-1)%keys.length]);
+ reel.innerHTML=strip.map(k=>`<div class="slotItem" style="color:${BUFFS[k].col}"><span class="ic">${BUFFS[k].ic}</span>${BUFFS[k].name}</div>`).join("");
+ const target=(strip.length-2)-1;   // 뽑힌 칸이 가운데(두 번째 줄)에 오도록
+ const endY=-target*H, dur=2200, t0=performance.now();
+ document.getElementById("slotSub").textContent = ok ? `정답! 효과 ${BUFF_TIME.ok}초` : `오답… 효과 ${BUFF_TIME.no}초`;
+ document.getElementById("slotRes").innerHTML=""; document.getElementById("slotBtn").innerHTML='건너뛰기 <small>(Enter)</small>';
+ document.getElementById("slotOv").classList.remove("hidden");
+ slot={ok,pick,endY,dur,t0,done:false,lastIdx:-1};
+ const ease=t=>1-Math.pow(1-t,3.2);
+ const step=now=>{ if(!slot||slot.done) return; const t=Math.min(1,(now-slot.t0)/slot.dur), y=slot.endY*ease(t);
+  reel.style.transform=`translateY(${y}px)`; const idx=Math.floor(-y/H+.5); if(idx!==slot.lastIdx){ slot.lastIdx=idx; beep(520+(idx%3)*90,.03,"square",.025); }
+  if(t<1) requestAnimationFrame(step); else landSlot(); };
+ requestAnimationFrame(step);
+}
+function landSlot(){
+ if(!slot || slot.done) return; slot.done=true;
+ document.getElementById("slotReel").style.transform=`translateY(${slot.endY}px)`; document.getElementById("slotWin").classList.add("done");
+ const B=BUFFS[slot.pick]; document.getElementById("slotRes").innerHTML=`<span style="color:${B.col};font-size:24px">${B.ic} ${B.name}!</span><br>${B.desc}`;
+ [784,988,1175,1568].forEach((f,i)=>setTimeout(()=>beep(f,.1,"square",.045),i*70));
+ document.getElementById("slotBtn").innerHTML='확인 <small>(Enter)</small>'; document.getElementById("slotBtn").focus();
+ slot.closeT=setTimeout(closeSlot,1600);
+}
+function closeSlot(){
+ if(!slot) return; if(!slot.done){ landSlot(); return; }
+ clearTimeout(slot.closeT); const s=slot; slot=null;
+ document.getElementById("slotOv").classList.add("hidden");
+ G.mode="play"; giveBuff(s.ok, s.pick); last=performance.now(); nextModal();
+}
+document.getElementById("slotBtn").onclick=()=>closeSlot();
+function screenClear(){
+ const p=G.p; G.shake=.5; BSFX.boom&&BSFX.boom();
+ for(const e of G.enemies){ if(e.type==="boss"||e.dead) continue; if(Math.abs(e.x-p.x)<VW*.62 && Math.abs(e.y-p.y)<VH*.62){ for(let i=0;i<4;i++) G.fx.push({kind:"spark",x:e.x,y:e.y,vx:rnd(-200,200),vy:rnd(-200,200),life:.45,T:.45,col:"#ff9a3c"}); killEnemy(e); } }
+ G.enemies=G.enemies.filter(e=>!e.dead); G.ebullets=[];
+ G.fx.push({kind:"ring",x:p.x,y:p.y,r:20,R:Math.max(VW,VH)*.7,life:.6,T:.6,col:"#ff9a3c"}); G.fx.push({kind:"ring",x:p.x,y:p.y,r:10,R:Math.max(VW,VH)*.45,life:.45,T:.45,col:"#fff3c4"});
+}
+function giveBuff(ok, forced){
+ const keys=Object.keys(BUFFS), id=forced||keys[Math.floor(Math.random()*keys.length)], B=BUFFS[id], dur=ok?BUFF_TIME.ok:BUFF_TIME.no;
+ const d2 = B.half ? dur/2 : dur;
  if(id==="magnet"){ for(const g of G.gems) g.pull=true; }
- else G.buffs[id]=Math.max(G.buffs[id]||0, dur);
- const bb=document.getElementById("buffBanner"); bb.innerHTML=`${B.ic} ${B.name}<small>${id==="magnet"?B.desc:`${dur}초 동안 · ${B.desc}`}</small>`; bb.style.color=B.col; bb.classList.remove("go"); void bb.offsetWidth; bb.classList.add("go");
+ else if(id==="clear"){ screenClear(); }
+ else G.buffs[id]=Math.max(G.buffs[id]||0, d2);
+ const bb=document.getElementById("buffBanner"); bb.innerHTML=`${B.ic} ${B.name}<small>${(id==="magnet"||id==="clear")?B.desc:`${d2}초 동안 · ${B.desc.replace(" (다른 효과의 절반 시간)","")}`}</small>`; bb.style.color=B.col; bb.classList.remove("go"); void bb.offsetWidth; bb.classList.add("go");
  G.fx.push({kind:"ring",x:G.p.x,y:G.p.y,r:10,R:200,life:.6,T:.6,col:B.col}); SFX.lucky();
  return id;
 }
@@ -1466,7 +1537,7 @@ function afterQuiz(){
  if(!qAnswered || document.getElementById("quizOv").classList.contains("hidden")) return;
  document.getElementById("quizOv").classList.add("hidden");
  const kind=curQ.item.kind, isBoss = kind==="boss", k = curQ.item.k;
- if(kind==="chest"){ G.mode="play"; giveBuff(curQ.ok); last=performance.now(); nextModal(); return; }
+ if(kind==="chest"){ spinSlot(curQ.ok); return; }
  const n = curQ.ok?3:(kind==="level"?1:2);
  const lucky = curQ.ok && Math.random()<LUCKY_CHANCE;
  showCards(n, true, isBoss?`ROUND ${k} 보상`:kind==="level"?`레벨 업! Lv.${k}`:"보급 상자 보상", ()=>{
@@ -1720,7 +1791,7 @@ function openGuide(){
  item(coin(25),"큰 금화","경험치 20 이상. 반짝이는 큰 금화예요.");
  item(heart,"체력 회복","체력 30 회복. 몬스터를 잡으면 아주 드물게 나와요.");
  sec("📦 보급 상자");
- item(chest,"보급 상자","가끔 맵에 나타나요. 열면 퀴즈가 나오고, 풀고 나면 아래 특수 효과 중 하나가 같은 확률로 걸려요. 정답이면 15초, 오답이면 8초 동안 이어져요.");
+ item(chest,"보급 상자","가끔 맵에 나타나요. 열면 퀴즈가 나오고, 풀고 나면 아래 특수 효과 중 하나가 같은 확률로 걸려요. 정답이면 15초, 오답이면 8초 동안 이어져요(무적 보호막은 절반).");
  for(const B of Object.values(BUFFS)) item(B.ic,B.name,B.desc);
  sec("🃏 보스가 떨어뜨리는 카드 (퀴즈 도우미)");
  for(const [id,c] of Object.entries(QCARDS)) item(guideIcon(x=>drawCardIcon(x,22,22,id,1.3)),c.name,c.desc,`${Math.round(c.rate*100)}%`);
@@ -1743,6 +1814,7 @@ function update(dt){
  const p=G.p;
  G.t+=dt;
  for(const b in G.buffs) G.buffs[b]=Math.max(0,G.buffs[b]-dt);
+ if(G.p.blockT>0) G.p.blockT-=dt;
  for(const c of G.drops){ c.t+=dt; const p=G.p, d=Math.hypot(p.x-c.x,p.y-c.y);
   if(c.t>.9 && d>1){ const v=Math.min(d, 520*dt); c.x+=(p.x-c.x)/d*v; c.y+=(p.y-c.y)/d*v; }   // 잠깐 뒤 내게 날아와요
   if(c.t>.9 && Math.hypot(p.x-c.x,p.y-c.y)<p.r+10){ c.dead=true; G.items[c.id]++; SFX.lucky(); G.texts.push({x:p.x,y:p.y-34,txt:`${QCARDS[c.id].name} +1`,life:1.2,col:QCARDS[c.id].col}); } }
@@ -1830,7 +1902,7 @@ function update(dt){
  for(const g of G.gems){
   const d=Math.sqrt(dist2(g,p));
   if(d<G.magnet || g.pull){ g.pull=true; const a=Math.atan2(p.y-g.y,p.x-g.x), sp=Math.max(260,520-d); g.x+=Math.cos(a)*sp*dt; g.y+=Math.sin(a)*sp*dt; }
-  if(d<p.r+8){ g.dead=true; if(g.heal){ p.hp=Math.min(p.maxhp,p.hp+30); G.texts.push({x:p.x,y:p.y-20,txt:"+30",life:.8,col:"#7ff59a"}); } else { gainXp(g.v); if(g.v>=20){ SFX.bigCoin(); G.fx.push({kind:"ring",x:p.x,y:p.y,r:8,R:70,life:.35,T:.35,col:"#ffd84a"}); for(let i=0;i<10;i++) G.fx.push({kind:"spark",x:p.x,y:p.y,vx:rnd(-160,160),vy:rnd(-160,160),life:.4,T:.4,col:i%2?"#ffd84a":"#fff3a0"}); G.texts.push({x:p.x,y:p.y-30,txt:"+"+g.v+" XP",life:.8,col:"#ffd84a"}); } else SFX.gem(); } }
+  if(d<p.r+8){ g.dead=true; if(g.heal){ p.hp=Math.min(p.maxhp,p.hp+30); G.texts.push({x:p.x,y:p.y-20,txt:"+30",life:.8,col:"#7ff59a"}); } else { const xv=g.v*(G.buffs.coin2>0?2:1); gainXp(xv); if(g.v>=20){ SFX.bigCoin(); G.fx.push({kind:"ring",x:p.x,y:p.y,r:8,R:70,life:.35,T:.35,col:"#ffd84a"}); for(let i=0;i<10;i++) G.fx.push({kind:"spark",x:p.x,y:p.y,vx:rnd(-160,160),vy:rnd(-160,160),life:.4,T:.4,col:i%2?"#ffd84a":"#fff3a0"}); G.texts.push({x:p.x,y:p.y-30,txt:"+"+xv+" XP",life:.8,col:"#ffd84a"}); } else SFX.gem(); } }
  }
  G.gems=G.gems.filter(g=>!g.dead);
  if(G.gems.length>450){ // 너무 많으면 합치기
@@ -1957,7 +2029,7 @@ function drawHazards(){
    ctx.globalAlpha=.9; ctx.fillStyle="#ffd84a"; ctx.font="bold 30px 'Do Hyeon'"; ctx.textAlign="center"; ctx.fillText("!!",e.x,e.y-e.r-18); ctx.restore(); }
  }
 }
-function damagePlayer(d){ const p=G.p; p.hp-=d; p.inv=.6; p.hurtT=.18; G.shake=.15; SFX.hurt(); G.texts.push({x:p.x,y:p.y-24,txt:"-"+Math.round(d),life:.6,col:"#ff6b6b"}); }
+function damagePlayer(d){ const p=G.p; if(G.buffs && G.buffs.inv>0){ if(!(p.blockT>0)){ p.blockT=.3; G.texts.push({x:p.x,y:p.y-26,txt:"막음!",life:.5,col:"#9be7ff"}); } return; } p.hp-=d; p.inv=.6; p.hurtT=.18; G.shake=.15; SFX.hurt(); G.texts.push({x:p.x,y:p.y-24,txt:"-"+Math.round(d),life:.6,col:"#ff6b6b"}); }
 function gainXp(v){ G.xp+=v; while(G.xp>=G.need){ G.xp-=G.need; G.lvl++; G.need=xpNeed(G.lvl); G.pendingLv++; } }
 
 // ================= 그리기 =================
@@ -2267,6 +2339,8 @@ function drawHero(){
  if(p.moving && step!==p.lastStep){ p.lastStep=step; if(step===0||step===2){ G.fx.push({kind:"puff",x:p.x+(dir==="side"?(p.flipS?6:-6):(step===0?-5:5)),y:p.y+25,vx:-(p.mvx||0)*25,vy:-6,life:.35,T:.35,r:4}); } }
  const hurt=p.hurtT>0; if(hurt) p.hurtT-=1/60;
  const fade = p.inv>0 && !hurt && Math.floor(G.t*16)%2;
+ if(G.buffs.inv>0){ ctx.save(); const a=.35+.15*Math.sin(G.t*10)*(G.buffs.inv<2?2:1); ctx.globalAlpha=a; ctx.strokeStyle="#9be7ff"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(p.x,p.y-4,34,0,7); ctx.stroke(); ctx.globalAlpha=a*.35; ctx.fillStyle="#9be7ff"; ctx.fill(); ctx.restore(); }
+ if(G.buffs.rapid>0||G.buffs.coin2>0){ ctx.save(); ctx.globalAlpha=.22+.1*Math.sin(G.t*9); ctx.fillStyle=G.buffs.rapid>0?BUFFS.rapid.col:BUFFS.coin2.col; ctx.beginPath(); ctx.ellipse(p.x,p.y+18,24,8,0,0,7); ctx.fill(); ctx.restore(); }
  if(G.buffs.atk>0||G.buffs.spd>0){ ctx.save(); ctx.globalAlpha=.25+.12*Math.sin(G.t*8); ctx.fillStyle=G.buffs.atk>0?BUFFS.atk.col:BUFFS.spd.col; ctx.beginPath(); ctx.ellipse(p.x,p.y+4,22,30,0,0,7); ctx.fill(); ctx.restore();
   if(G.buffs.spd>0 && p.moving && Math.random()<.5) G.fx.push({kind:"spark",x:p.x-(p.mvx||0)*14+rnd(-6,6),y:p.y+rnd(-14,20),vx:-(p.mvx||0)*60,vy:-(p.mvy||0)*60,life:.3,T:.3,col:BUFFS.spd.col}); }
  ctx.save(); ctx.translate(Math.round(p.x),Math.round(p.y));
@@ -2285,8 +2359,9 @@ function drawHero(){
  // 특수 효과 남은 시간
  const act=Object.entries(G.buffs).filter(([,t])=>t>0);
  if(act.length){ ctx.save(); ctx.font="bold 11px 'Do Hyeon'"; ctx.textAlign="center";
-  act.forEach(([id,t],i)=>{ const B=BUFFS[id], x=p.x+(i-(act.length-1)/2)*48, y=by-6, blink=t<3&&Math.floor(G.t*6)%2;
-   ctx.globalAlpha=blink?.45:1; ctx.fillStyle="rgba(10,6,18,.85)"; ctx.fillRect(x-23,y-11,46,14); ctx.strokeStyle=B.col; ctx.lineWidth=1; ctx.strokeRect(x-22.5,y-10.5,45,13); ctx.fillStyle=B.col; ctx.fillText(`${B.tag} ${Math.ceil(t)}`,x,y); });
+  const lab=act.map(([id,t])=>`${BUFFS[id].tag} ${Math.ceil(t)}`), ws=lab.map(t=>ctx.measureText(t).width+10), tot=ws.reduce((a,b)=>a+b,0)+(ws.length-1)*4; let cx=p.x-tot/2;
+  act.forEach(([id,t],i)=>{ const B=BUFFS[id], w=ws[i], x=cx+w/2, y=by-6, blink=t<3&&Math.floor(G.t*6)%2; cx+=w+4;
+   ctx.globalAlpha=blink?.45:1; ctx.fillStyle="rgba(10,6,18,.85)"; ctx.fillRect(x-w/2,y-11,w,14); ctx.strokeStyle=B.col; ctx.lineWidth=1; ctx.strokeRect(x-w/2+.5,y-10.5,w-1,13); ctx.fillStyle=B.col; ctx.fillText(lab[i],x,y); });
   ctx.restore(); }
 }
 function drawBoss(e){
