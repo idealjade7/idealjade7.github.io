@@ -279,7 +279,7 @@ const PASSIVES = {
  shoes:    {name:"관성 운동화", ic:"👟", desc:"이동 속도 +8%"},
  capacitor:{name:"축전기", ic:"🔋", desc:"지속 시간·연쇄 +12%"},
  vitamin:  {name:"비타민", ic:"💊", desc:"최대 체력 +15, 초당 회복 +0.3"},
- magnet:   {name:"네오디뮴 자석", ic:"🧲", desc:"보석 끌어당기는 범위 +30%"},
+ magnet:   {name:"네오디뮴 자석", ic:"🧲", desc:"금화 끌어당기는 범위 +30%"},
 };
 const BOSS_NAMES = ["거대 아메바","폭주 바이러스","산성비 구름","돌연변이 초파리","방사능 슬라임","전자기 골렘","화산 정령","혜성 드래곤","블랙홀 군주","빅뱅 마왕"];
 const BOSS_COLORS = ["#5bd6ff","#c06bff","#7fa6c9","#ff9a3c","#9cff5b","#ffd84a","#ff5a3c","#7fe8ff","#9b7bff","#ffffff"];
@@ -305,11 +305,15 @@ function beep(freq=440, dur=.08, type="square", vol=.05, slide=0){
  }catch(e){}
 }
 const SFX = {
- gem:()=>beep(880+Math.random()*200,.04,"square",.025),
+ gem:()=>{ beep(1320+Math.random()*120,.035,"square",.022); setTimeout(()=>beep(1760,.04,"square",.018),35); },
  lvl:()=>{beep(523,.1,"square",.05);setTimeout(()=>beep(659,.1,"square",.05),90);setTimeout(()=>beep(784,.16,"square",.05),180)},
  ok:()=>{beep(660,.1,"triangle",.08);setTimeout(()=>beep(990,.18,"triangle",.08),100)},
  bad:()=>{beep(220,.25,"sawtooth",.05,-80)},
  hurt:()=>beep(140,.08,"sawtooth",.04),
+ warn:()=>{beep(880,.06,"square",.035);setTimeout(()=>beep(880,.06,"square",.035),110)},
+ laserBoss:()=>{beep(220,.35,"sawtooth",.06,-160)},
+ dash:()=>{beep(300,.25,"sawtooth",.06,500)},
+ boom:()=>{beep(70,.3,"sawtooth",.07,-40)},
  boss:()=>{beep(110,.5,"sawtooth",.07,-40);setTimeout(()=>beep(98,.6,"sawtooth",.07,-30),300)},
  chest:()=>{beep(392,.08,"square",.05);setTimeout(()=>beep(523,.12,"square",.05),80)},
  kill:()=>beep(300+Math.random()*80,.03,"square",.015),
@@ -965,20 +969,22 @@ addEventListener("resize", resize); resize();
 const keys = {};
 addEventListener("keydown", e=>{
  if(e.target && e.target.tagName==="INPUT" && e.target.type!=="range") return;
- keys[e.key.toLowerCase()] = true;
+ if(e.code) keys[e.code] = true;   // 한/영 상태와 관계없이 같은 자판 위치로 인식
  if(!document.getElementById("menu").classList.contains("hidden") && document.getElementById("rankOv").classList.contains("hidden") && e.key==="Enter"){ startGame(); e.preventDefault(); return; }
  if(G && G.mode==="quiz") quizKey(e);
  else if(G && G.mode==="cards") cardKey(e);
  else if(G && (e.key==="p"||e.key==="P"||e.key==="Escape")){ if(G.mode==="play") pauseGame(); else if(G.mode==="pause") resumeGame(); }
  if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(e.key.toLowerCase())) e.preventDefault();
 });
-addEventListener("keyup", e=>{ keys[e.key.toLowerCase()] = false; });
-addEventListener("blur", ()=>{ for(const k in keys) keys[k]=false; if(G&&G.mode==="play") pauseGame(); });
+function clearKeys(){ for(const k in keys) keys[k]=false; }
+addEventListener("keyup", e=>{ if(e.code) keys[e.code] = false; if(e.key==="Shift"||e.key==="HangulMode"||e.key==="Process") clearKeys(); });
+addEventListener("blur", ()=>{ clearKeys(); if(G&&G.mode==="play") pauseGame(); });
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden){ clearKeys(); if(G&&G.mode==="play") pauseGame(); } });
 const drag = {on:false, sx:0, sy:0, x:0, y:0, id:null};
 cv.addEventListener("pointerdown", e=>{ drag.on=true; drag.id=e.pointerId; drag.sx=drag.x=e.clientX; drag.sy=drag.y=e.clientY; try{cv.setPointerCapture(e.pointerId)}catch(_){} });
 cv.addEventListener("pointermove", e=>{ if(drag.on && e.pointerId===drag.id){ drag.x=e.clientX; drag.y=e.clientY; } });
 const endDrag = e=>{ if(e.pointerId===drag.id) drag.on=false; };
-cv.addEventListener("pointerup", endDrag); cv.addEventListener("pointercancel", endDrag);
+cv.addEventListener("pointerup", endDrag); cv.addEventListener("pointercancel", endDrag); cv.addEventListener("lostpointercapture", endDrag);
 
 // ================= 유틸 =================
 const rnd=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -998,7 +1004,7 @@ function startGame(){
   p:{x:0,y:0,r:14,hp:120,maxhp:120,spd:170,inv:0,face:{x:1,y:0},flip:false,regen:.6,walk:0},
   lvl:1, xp:0, need:xpNeed(1), pendingLv:0,
   weapons:{}, passives:{}, evolved:{},
-  enemies:[], shots:[], pools:[], gems:[], chests:[], fx:[], texts:[], bolts:[], ebullets:[],
+  enemies:[], shots:[], pools:[], gems:[], chests:[], fx:[], texts:[], bolts:[], ebullets:[], hazards:[],
   spawnAcc:0, chestTimer:25, nextBoss:BOSS_INTERVAL, bossSpawned:0, bossKilled:0,
   kills:0, quizRight:0, quizTotal:0, quizTime:0, wrongs:[], qpool:shuffle(p.slice()), qused:new Set(),
   cdmul:1, dmgmul:1, areamul:1, durmul:1, magnet:110, score:0, shake:0, cleared:false, over:false,
@@ -1161,7 +1167,7 @@ function killEnemy(e){
   G.bossKilled++; G.shake=.6;
   for(let i=0;i<40;i++) G.fx.push({kind:"spark",x:e.x,y:e.y,vx:rnd(-300,300),vy:rnd(-300,300),life:.9,T:.9,col:e.col});
   for(let i=0;i<12;i++) G.gems.push({x:e.x+rnd(-50,50),y:e.y+rnd(-50,50),v:5});
-  G.ebullets = [];
+  G.ebullets = []; G.hazards = G.hazards.filter(h=>h.boss!==e);
   queueQuiz("boss", e.k);
  } else {
   if(Math.random()<.02) SFX.kill();
@@ -1193,7 +1199,7 @@ function pickQuestion(kind){
  G.qused.add(q); return q;
 }
 let curQ=null, qAnswered=false;
-function openQuiz(item){
+function openQuiz(item){ clearKeys();
  G.mode="quiz"; drag.on=false;
  const q=pickQuestion(item.kind);
  // 보기 순서를 매번 섞는다
@@ -1381,24 +1387,31 @@ function fmtT(t){ const m=Math.floor(t/60), s=t-m*60; return `${m}:${s.toFixed(1
 const RANK = {
  online(){ return !!RANK_DB_URL; },
  url(q=""){ return `${RANK_DB_URL.replace(/\/$/,"")}/${RANK_PATH}.json${q}`; },
- async req(url, method="GET", body){ const ac=new AbortController(); const tm=setTimeout(()=>ac.abort(),7000);
+ async req(url, method="GET", body, ms=10000){ const ac=new AbortController(); const tm=setTimeout(()=>ac.abort(),ms);
   try{ const r=await fetch(url,{method,headers:body?{"Content-Type":"application/json"}:undefined,body:body?JSON.stringify(body):undefined,signal:ac.signal}); if(!r.ok) throw new Error("HTTP "+r.status); return await r.json(); } finally{ clearTimeout(tm); } },
  local(){ try{ return JSON.parse(localStorage.getItem("germ-ranks")||"[]"); }catch(e){ return []; } },
  saveLocal(rec){ const a=this.local(); a.push(rec); a.sort((x,y)=>x.time-y.time||y.acc-x.acc); try{ localStorage.setItem("germ-ranks",JSON.stringify(a.slice(0,200))); }catch(e){} },
+ pending(){ try{ return JSON.parse(localStorage.getItem("germ-pending")||"[]"); }catch(e){ return []; } },
+ setPending(a){ try{ localStorage.setItem("germ-pending",JSON.stringify(a.slice(-30))); }catch(e){} },
+ async post(rec){ let err; for(let i=0;i<2;i++){ try{ return await this.req(this.url(),"POST",rec,12000); }catch(e){ err=e; if(/HTTP 4/.test(e.message)) break; await new Promise(r=>setTimeout(r,800)); } } throw err; },
+ // 인터넷이 잠깐 끊겨 못 올린 기록은 이 기기에 남겨 두었다가 다음에 순위표를 열 때 다시 올려요.
+ async flush(){ const a=this.pending(); if(!a.length) return; const left=[]; for(const r of a){ try{ await this.post(r); }catch(e){ if(!/HTTP 4/.test(e.message)) left.push(r); } } this.setPending(left); },
  async add(rec){
   if(this.online()){
-   try{ await this.req(this.url(),"POST",rec); return {where:"online"}; }
-   catch(e){ this.saveLocal(rec); return {where:"local", err:true}; }
+   try{ await this.post(rec); return {where:"online"}; }
+   catch(e){ this.saveLocal(rec); if(!/HTTP 4/.test(e.message)){ const a=this.pending(); a.push(rec); this.setPending(a); } return {where:"local", err:true}; }
   }
   this.saveLocal(rec); return {where:"local"};
  },
  async list(){
   if(this.online()){
    try{
+    await this.flush().catch(()=>{});
     let data;
     try{ data=await this.req(this.url('?orderBy="time"&limitToFirst=300')); }
     catch(e){ data=await this.req(this.url()); }          // 색인(.indexOn)이 없을 때
     const rows=Object.values(data||{}).filter(r=>r&&typeof r.time==="number").map(r=>({cls:+r.cls||0,name:String(r.name||"?"),time:r.time,play:+r.play||0,qtime:+r.qtime||0,acc:+r.acc||0,stage:+r.stage||0,weapon:String(r.weapon||""),quiz:+r.quiz||0,at:String(r.at||""),grade:+r.grade||RANK_GRADE}));
+    for(const r of this.pending()) if(!rows.some(x=>x.at===r.at&&x.name===r.name)) rows.push(Object.assign({grade:RANK_GRADE},r,{wait:true}));   // 아직 못 올린 내 기록
     rows.sort((a,b)=>a.time-b.time||b.acc-a.acc);
     return {rows, where:"online"};
    } catch(e){ return {rows:this.local(), where:"local", err:true}; }
@@ -1409,9 +1422,10 @@ const RANK = {
   if(!rows.length) return `<div class="cnt" style="margin:14px 0">아직 등록된 기록이 없어요. 첫 번째 주인공이 되어 보세요!</div>`;
   return `<table class="ranks"><tr><th>순위</th><th>반</th><th>이름</th><th>클리어 타임</th><th>문제 풀이</th><th>정답률</th><th>스테이지</th><th>무기</th><th>날짜</th></tr>`+
    rows.map((r,i)=>{ const d=r.at?new Date(r.at):null; const ds=d&&!isNaN(d)?`${d.getMonth()+1}/${d.getDate()}`:""; const isMe=me&&r.at===me.at&&r.name===me.name;
-    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td>${r.cls?r.cls+"반":"-"}</td><td class="nm">${esc(r.name)}</td><td class="tm">${fmtT(r.time)}</td><td class="tm" style="color:var(--dim)">${r.qtime?fmtT(r.qtime):"-"}</td><td>${r.acc}%</td><td>${r.stage||"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
+    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td>${r.cls?r.cls+"반":"-"}</td><td class="nm">${esc(r.name)}${r.wait?' <small title="아직 못 올린 기록">⏳</small>':""}</td><td class="tm">${fmtT(r.time)}</td><td class="tm" style="color:var(--dim)">${r.qtime?fmtT(r.qtime):"-"}</td><td>${r.acc}%</td><td>${r.stage||"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
  },
- srcText(where, err){ return where==="online" ? "반 전체 온라인 순위표" : (err ? "온라인 순위표에 연결하지 못해 이 기기에 저장된 기록을 보여 줘요" : "이 기기(브라우저)에만 저장된 기록이에요 · 반 전체 순위표는 선생님이 온라인 설정을 하면 열려요"); },
+ srcText(where, err){ if(where!=="online" && !/github\.io$/.test(location.hostname)) return "이 화면(미리보기)에서는 공유 순위표에 연결되지 않아요 · idealjade7.github.io 홈페이지의 '과학 게임' 탭에서 하면 모든 기기에서 같은 순위표가 보여요";
+  return where==="online" ? "모든 기기에서 함께 보는 온라인 순위표" : (err ? "온라인 순위표에 연결하지 못해 이 기기에 저장된 기록을 보여 줘요 · 인터넷이 되면 다음에 순위표를 열 때 자동으로 다시 올려요" : "이 기기(브라우저)에만 저장된 기록이에요 · 반 전체 순위표는 선생님이 온라인 설정을 하면 열려요"); },
 };
 document.getElementById("rankSave").onclick=async ()=>{
  const inp=document.getElementById("rankName"), btn=document.getElementById("rankSave"), msg=document.getElementById("rankMsg");
@@ -1426,7 +1440,7 @@ document.getElementById("rankSave").onclick=async ()=>{
  const L=await RANK.list(); const same=x=>x.at===rec.at&&x.name===rec.name;
  const all=L.rows.filter(x=>(x.grade||RANK_GRADE)===rec.grade&&x.stage===rec.stage), rows=all.filter(x=>x.cls===cls);
  const pos=rows.findIndex(same), apos=all.findIndex(same);
- msg.textContent = (r.err?"온라인 등록에 실패해서 이 기기에 저장했어요. ":"등록 완료! ")+(pos>=0?`스테이지 ${rec.stage} · ${rec.grade}학년 ${cls}반 ${pos+1}위 (${rec.grade}학년 전체 ${apos+1}위)`:"");
+ msg.textContent = (r.err?(/github\.io$/.test(location.hostname)?"인터넷 연결이 불안정해 이 기기에 먼저 저장했어요(다음에 순위표를 열면 자동으로 다시 올려요). ":"미리보기 화면이라 이 기기에만 저장했어요. "):"등록 완료! ")+(pos>=0?`스테이지 ${rec.stage} · ${rec.grade}학년 ${cls}반 ${pos+1}위 (${rec.grade}학년 전체 ${apos+1}위)`:"");
  rankCls=cls; rankGrade=rec.grade;
  const top=rows.slice(0,10); if(pos>=10) top.push(rows[pos]);
  document.getElementById("rankMini").innerHTML=RANK.table(top, rec)+`<div class="src">${RANK.srcText(L.where,L.err)}</div>`;
@@ -1458,8 +1472,8 @@ function update(dt){
  G.t+=dt;
  // 이동
  let mx=0,my=0;
- if(keys["a"]||keys["arrowleft"]) mx-=1; if(keys["d"]||keys["arrowright"]) mx+=1;
- if(keys["w"]||keys["arrowup"]) my-=1; if(keys["s"]||keys["arrowdown"]) my+=1;
+ if(keys.KeyA||keys.ArrowLeft) mx-=1; if(keys.KeyD||keys.ArrowRight) mx+=1;
+ if(keys.KeyW||keys.ArrowUp) my-=1; if(keys.KeyS||keys.ArrowDown) my+=1;
  if(drag.on){ const dx=drag.x-drag.sx, dy=drag.y-drag.sy, L=Math.hypot(dx,dy); if(L>6){ mx=dx/Math.max(L,40); my=dy/Math.max(L,40); } }
  const ml=Math.hypot(mx,my); p.moving=ml>0; if(ml>0){ p.mvx=mx/ml; p.mvy=my/ml; }
  if(ml>0){ if(ml>1){mx/=ml;my/=ml;} p.x+=mx*p.spd*dt; p.y+=my*p.spd*dt; const fl=Math.hypot(mx,my); p.face={x:mx/fl,y:my/fl}; if(mx) p.flip=mx<0; p.walk+=dt*10; }
@@ -1483,14 +1497,19 @@ function update(dt){
   const a=Math.atan2(p.y-e.y,p.x-e.x);
   let sp=e.spd*(e.slow?.55:1); e.slow=Math.max(0,e.slow-dt);
   if(e.type==="boss"){ const dd=Math.hypot(p.x-e.x,p.y-e.y); if(dd>Math.min(VW,VH)*.42) sp=Math.max(sp, G.p.spd*1.08); }   // 멀어지면 빠르게 따라붙는다
+  if(e.type==="boss" && e.dash){ const D=e.dash; sp=0;
+   if(D.warn>0){ D.warn-=dt; if(D.warn<=0) SFX.dash(); }
+   else { e.x+=D.dx*D.spd*dt; e.y+=D.dy*D.spd*dt; D.t-=dt;
+    if(D.trail){ D.tAcc=(D.tAcc||0)+dt; if(D.tAcc>.07){ D.tAcc=0; const a=Math.atan2(D.dy,D.dx); eShot(e,a+Math.PI/2,90+e.k*6,{r:6,life:2.6}); eShot(e,a-Math.PI/2,90+e.k*6,{r:6,life:2.6}); } }
+    if(D.t<=0){ if(D.left>0) startDash(e, D.left-1); else e.dash=null; } } }
+  else if(e.type==="boss" && e.hold>0){ e.hold-=dt; sp*=.15; }
   e.x+=Math.cos(a)*sp*dt+e.kb.x*dt; e.y+=Math.sin(a)*sp*dt+e.kb.y*dt;
   e.kb.x*=.85; e.kb.y*=.85; e.hitT=Math.max(0,e.hitT-dt); if(e.shieldHit) e.shieldHit-=dt;
   if(G.bounds) e.y=clamp(e.y,G.bounds.y1+e.r,G.bounds.y2-e.r);
   // 너무 멀어진 적은 앞쪽으로 재배치
   if(e.type!=="boss" && (Math.abs(e.x-p.x)>VW*.9 || Math.abs(e.y-p.y)>VH*.9)){ e.dead=true; G.spawnAcc+=1; continue; }
   if(e.type==="boss"){
-   e.shootT-=dt;
-   if(e.shootT<=0){ const n=Math.round((5+e.k*1.5)*(G.stage.corridor?.55:1)); const off=Math.random()*6; for(let i=0;i<n;i++){ const b=off+i*Math.PI*2/n; G.ebullets.push({x:e.x,y:e.y,vx:Math.cos(b)*(130+e.k*8),vy:Math.sin(b)*(130+e.k*8),r:7,dmg:5+e.k*1.2,life:4,col:e.col}); } e.shootT=Math.max(1.8,4.8-e.k*.3); }
+   bossAttack(e, dt);
   }
   // 접촉 피해
   const rr=e.r+p.r-4;
@@ -1503,6 +1522,7 @@ function update(dt){
  // 적 탄
  for(const b of G.ebullets){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt; if(dist2(b,p)<(b.r+p.r-3)**2 && p.inv<=0){ damagePlayer(b.dmg); b.life=0; } }
  G.ebullets=G.ebullets.filter(b=>b.life>0);
+ hazardsUpdate(dt);
 
  // 투사체
  for(const s of G.shots){
@@ -1544,6 +1564,112 @@ function update(dt){
 
  if(p.hp<=0 && !G.over){ p.hp=0; loseGame(); return; }
  nextModal();
+}
+// ================= 보스 공격 패턴 =================
+// 라운드가 올라갈수록 새 패턴이 열리고, 위험한 공격(레이저·돌진·폭발)은 항상 미리 경고가 나와요.
+const BOSS_PATTERNS = [
+ {id:"ring",   from:1, w:3},   // 사방으로 퍼지는 탄
+ {id:"aim",    from:2, w:3},   // 나를 겨냥한 부채꼴 탄
+ {id:"spiral", from:3, w:2},   // 회전하며 뿌리는 나선 탄
+ {id:"laser",  from:4, w:3},   // 경고선 → 일직선 레이저
+ {id:"dash",   from:5, w:2},   // 경고선 → 돌진
+ {id:"bomb",   from:6, w:2},   // 발밑 경고 원 → 폭발
+ {id:"cross",  from:7, w:2},   // 십자·X자 레이저
+ {id:"seek",   from:8, w:2},   // 따라오는 유도탄
+];
+function bulletN(n){ return Math.max(3, Math.round(n*(G.stage.corridor?.55:1))); }
+function eShot(e, ang, spd, o={}){ G.ebullets.push(Object.assign({x:e.x,y:e.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,r:7,dmg:5+e.k*1.2,life:4,col:e.col},o)); }
+function bossAttack(e, dt){
+ const p=G.p, k=e.k, aim=Math.atan2(p.y-e.y,p.x-e.x);
+ // 진행 중인 나선 패턴
+ if(e.later&&e.later.length){ for(const L of e.later) L.t-=dt; for(const L of e.later.filter(L=>L.t<=0)) L.fn(); e.later=e.later.filter(L=>L.t>0); }
+ if(e.spiral){ const S=e.spiral; S.t-=dt; S.acc+=dt; while(S.acc>=S.gap){ S.acc-=S.gap; S.ang+=S.turn; for(let j=0;j<S.arms;j++) eShot(e, S.ang+j*Math.PI*2/S.arms, 120+k*7); } if(S.t<=0) e.spiral=null; return; }
+ if(e.dash) return;
+ e.shootT-=dt; if(e.shootT>0) return;
+ const fin=k===BOSS_ROUNDS;
+ let list=BOSS_PATTERNS.filter(q=>q.from<=k && q.id!==e.lastPat);
+ if(G.stage.corridor) list=list.filter(q=>q.id!=="spiral");
+ let r=Math.random()*list.reduce((a,q)=>a+q.w,0), pat=list[0].id; for(const q of list){ r-=q.w; if(r<=0){ pat=q.id; break; } }
+ // 새로 열린 패턴은 처음 한 번 꼭 보여 주기
+ const fresh=BOSS_PATTERNS.find(q=>q.from===k && !e.seen); if(fresh){ pat=fresh.id; e.seen=true; }
+ e.lastPat=pat;
+ const spd=130+k*8;
+ if(pat==="ring"){ const n=bulletN(5+k*1.5), off=Math.random()*6; for(let i=0;i<n;i++) eShot(e, off+i*Math.PI*2/n, spd); if(k>=6) (e.later=e.later||[]).push({t:.35, fn:()=>{ for(let i=0;i<n;i++) eShot(e, off+(i+.5)*Math.PI*2/n, spd*.8); }}); }
+ else if(pat==="aim"){ const n=Math.min(9, 3+Math.floor(k/2))|1, sp=.16; for(let w=0;w<(k>=7?2:1);w++) (e.later=e.later||[]).push({t:w*.42, fn:()=>{ const a=Math.atan2(G.p.y-e.y,G.p.x-e.x); for(let i=0;i<n;i++) eShot(e, a+(i-(n-1)/2)*sp, spd*1.25, {r:6}); }}); }
+ else if(pat==="spiral"){ e.spiral={t:1.6+k*.08, acc:0, gap:.11, ang:Math.random()*6, turn:(Math.random()<.5?1:-1)*.33, arms:k>=8?3:2}; }
+ else if(pat==="laser"){ const n=fin?3:(k>=8?2:1); for(let i=0;i<n;i++) addLaser(e, aim+(i-(n-1)/2)*.42, 1.0); e.hold=1.5; }
+ else if(pat==="cross"){ const off=Math.random()<.5?0:Math.PI/4; for(let i=0;i<4;i++) addLaser(e, off+i*Math.PI/2, 1.1, true); if(fin) for(let i=0;i<4;i++) addLaser(e, off+Math.PI/4+i*Math.PI/2, 1.6, true); e.hold=fin?2.2:1.7; }
+ else if(pat==="dash"){ startDash(e, k>=9?2:(k>=7?1:0)); }
+ else if(pat==="bomb"){ const n=fin?5:(k>=8?4:3); for(let i=0;i<n;i++){ const a=Math.random()*6, d=i===0?0:rnd(70,170); G.hazards.push({kind:"bomb",boss:e,x:p.x+Math.cos(a)*d+(p.moving?(p.mvx||0):0)*40,y:p.y+Math.sin(a)*d+(p.moving?(p.mvy||0):0)*40,r:62,warn:1.1+i*.12,T:1.1+i*.12,dmg:9+k*1.5}); } SFX.warn(); }
+ else if(pat==="seek"){ const n=fin?6:4; for(let i=0;i<n;i++) eShot(e, aim+(i-(n-1)/2)*.6+Math.PI, 150, {seek:2.6, r:8, life:6, dmg:6+k*1.2}); }
+ e.shootT = Math.max(fin?1.4:1.7, 4.4-k*.28) + (pat==="spiral"?1.2:0) + (pat==="cross"||pat==="laser"?.6:0) + (pat==="dash"?(k>=9?1.4:k>=7?.8:0):0);
+}
+// 돌진: 라운드가 높을수록 경고가 짧아지고, 빨라지고, 연속 돌진·탄 흔적·예측 조준이 붙어요.
+function startDash(e, left){
+ const p=G.p, k=e.k, lead=k>=8?.35:0;   // 8라운드부터는 내가 움직이는 쪽을 예측
+ const tx=p.x+(p.moving?(p.mvx||0)*p.spd*lead:0), ty=p.y+(p.moving?(p.mvy||0)*p.spd*lead:0);
+ const d=Math.hypot(tx-e.x,ty-e.y)||1, spd=Math.min(1250,520+k*45+d*.5), warn=Math.max(.5,.95-(k-5)*.07)*(left>0&&e.dash?.85:1);
+ e.dash={warn, t:.5, spd, dx:(tx-e.x)/d, dy:(ty-e.y)/d, len:spd*.5, left, trail:k>=8};
+ G.hazards.push({kind:"dashwarn",boss:e,life:warn,T:warn}); SFX.warn();
+}
+function addLaser(e, ang, warn, fixed){ G.hazards.push({kind:"laser",boss:e,ang,warn,T:warn,on:.4,len:1500,w:26,dmg:10+e.k*1.6,fixed,hit:false}); SFX.warn(); }
+function hazardsUpdate(dt){
+ const p=G.p;
+ for(const h of G.hazards){
+  if(h.boss && h.boss.dead){ h.life=0; h.on=0; h.warn=0; h.done=true; continue; }
+  if(h.kind==="laser"){
+   if(h.warn>0){ h.warn-=dt; if(!h.fixed && h.warn>h.T*.45) { const ta=Math.atan2(p.y-h.boss.y,p.x-h.boss.x), d=((ta-h.ang+Math.PI*3)%(Math.PI*2))-Math.PI; h.ang+=d*Math.min(1,dt*3); } if(h.warn<=0) SFX.laserBoss(); continue; }
+   h.on-=dt; if(h.on<=0){ h.done=true; continue; }
+   const bx=h.boss.x, by=h.boss.y, cx=Math.cos(h.ang), cy=Math.sin(h.ang), t=(p.x-bx)*cx+(p.y-by)*cy;
+   if(!h.hit && t>0 && t<h.len && Math.abs(-(p.x-bx)*cy+(p.y-by)*cx)<h.w/2+p.r-4 && p.inv<=0){ h.hit=true; damagePlayer(h.dmg); }
+  } else if(h.kind==="bomb"){
+   h.warn-=dt; if(h.warn<=0){ h.done=true; SFX.boom(); G.shake=Math.max(G.shake,.18);
+    for(let i=0;i<14;i++) G.fx.push({kind:"spark",x:h.x,y:h.y,vx:rnd(-220,220),vy:rnd(-220,220),life:.45,T:.45,col:h.boss.col});
+    G.fx.push({kind:"ring",x:h.x,y:h.y,r:10,R:h.r,life:.3,T:.3,col:"#ffb02e"});
+    if(Math.hypot(p.x-h.x,p.y-h.y)<h.r+p.r-4 && p.inv<=0) damagePlayer(h.dmg); }
+  } else if(h.kind==="dashwarn"){ h.life-=dt; if(h.life<=0) h.done=true; }
+ }
+ G.hazards=G.hazards.filter(h=>!h.done);
+ // 유도탄: 일정 시간 동안 나를 향해 방향을 튼다
+ for(const b of G.ebullets) if(b.seek>0){ b.seek-=dt; const a=Math.atan2(p.y-b.y,p.x-b.x), v=Math.hypot(b.vx,b.vy); let c=Math.atan2(b.vy,b.vx), d=((a-c+Math.PI*3)%(Math.PI*2))-Math.PI; c+=clamp(d,-2.2*dt,2.2*dt); b.vx=Math.cos(c)*v; b.vy=Math.sin(c)*v; }
+}
+// 경험치 금화: 빙글빙글 도는 픽셀 금화 (큰 금화일수록 경험치가 많아요)
+function drawCoin(g){
+ const R=g.v>=20?13:g.v>=5?10:8, ph=G.t*5+(g.x*.37+g.y*.13), c=Math.cos(ph), w=Math.max(.14,Math.abs(c)), bob=Math.sin(G.t*4+g.x*.1)*2, x=g.x, y=g.y+bob, rx=R*w;
+ ctx.save();
+ ctx.globalAlpha=.32+.12*Math.sin(G.t*6+g.x); ctx.fillStyle="#ffd84a"; ctx.beginPath(); ctx.arc(x,y,R+6,0,7); ctx.fill(); ctx.globalAlpha=1;
+ ctx.fillStyle="#5a3600"; ctx.beginPath(); ctx.ellipse(x,y,rx+2,R+2,0,0,7); ctx.fill();               // 테두리
+ ctx.fillStyle=c>0?"#e09b12":"#d48a0a"; ctx.beginPath(); ctx.ellipse(x,y,rx+.5,R,0,0,7); ctx.fill(); // 옆면
+ if(w>.3){ ctx.fillStyle="#ffcf2e"; ctx.beginPath(); ctx.ellipse(x-(c>0?.8:-.8),y,rx*.82,R*.82,0,0,7); ctx.fill();
+  ctx.strokeStyle="#c27c06"; ctx.lineWidth=1.4; ctx.beginPath(); ctx.ellipse(x,y,rx*.55,R*.55,0,0,7); ctx.stroke();
+  if(w>.55){ ctx.fillStyle="#b06f04"; ctx.fillRect(x-1,y-R*.38,2,R*.76); ctx.fillRect(x-rx*.25,y-R*.18,rx*.5,2); } // 가운데 무늬
+  ctx.fillStyle="rgba(255,255,255,.85)"; ctx.fillRect(x-rx*.5,y-R*.62,Math.max(1.5,rx*.28),2.5); }
+ else { ctx.fillStyle="#fff3a0"; ctx.fillRect(x-1,y-R+2,2,R*2-4); }                                    // 옆으로 선 순간 반짝
+ if(g.v>=20 && Math.sin(G.t*3+g.x)>.7){ ctx.fillStyle="#fff"; ctx.fillRect(x+R*.5,y-R-3,2,6); ctx.fillRect(x+R*.5-2,y-R-1,6,2); }
+ ctx.restore();
+}
+function drawHazards(){
+ for(const h of G.hazards){
+  if(h.kind==="laser"){
+   const bx=h.boss.x, by=h.boss.y, ex=bx+Math.cos(h.ang)*h.len, ey=by+Math.sin(h.ang)*h.len;
+   ctx.save(); ctx.lineCap="round";
+   if(h.warn>0){ const f=1-h.warn/h.T, blink=(Math.sin(G.t*30)>0)?1:.45;
+    ctx.globalAlpha=(.25+.5*f)*blink; ctx.strokeStyle="#ff3b3b"; ctx.lineWidth=2+f*4; ctx.setLineDash([14,10]); ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(ex,ey); ctx.stroke(); ctx.setLineDash([]);
+    ctx.globalAlpha=.12+.12*f; ctx.lineWidth=h.w; ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(ex,ey); ctx.stroke();
+   } else { const a=Math.max(0,h.on/.4);
+    ctx.globalAlpha=.7*a; ctx.strokeStyle="#ff3b3b"; ctx.lineWidth=h.w+16; ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(ex,ey); ctx.stroke();
+    ctx.globalAlpha=a; ctx.strokeStyle=h.boss.col; ctx.lineWidth=h.w*.75; ctx.stroke(); ctx.strokeStyle="#fff"; ctx.lineWidth=h.w*.35; ctx.stroke(); }
+   ctx.restore();
+  } else if(h.kind==="bomb"){ const f=1-h.warn/h.T;
+   ctx.save(); ctx.globalAlpha=.18+.22*f; ctx.fillStyle="#ff3b3b"; ctx.beginPath(); ctx.arc(h.x,h.y,h.r,0,7); ctx.fill();
+   ctx.globalAlpha=.9; ctx.strokeStyle="#ff6b4a"; ctx.lineWidth=2; ctx.setLineDash([8,6]); ctx.beginPath(); ctx.arc(h.x,h.y,h.r,0,7); ctx.stroke(); ctx.setLineDash([]);
+   ctx.globalAlpha=.55; ctx.fillStyle="#ffb02e"; ctx.beginPath(); ctx.arc(h.x,h.y,h.r*f,0,7); ctx.fill();
+   ctx.globalAlpha=1; ctx.fillStyle="#fff"; ctx.font="bold 18px 'Do Hyeon'"; ctx.textAlign="center"; ctx.fillText("!",h.x,h.y+6); ctx.restore();
+  } else if(h.kind==="dashwarn"){ const e=h.boss, D=e.dash; if(!D) continue; const f=1-h.life/h.T;
+   ctx.save(); ctx.globalAlpha=(.3+.4*f)*((Math.sin(G.t*28)>0)?1:.5); ctx.strokeStyle="#ffd84a"; ctx.lineWidth=e.r*1.6; ctx.lineCap="round";
+   ctx.beginPath(); ctx.moveTo(e.x,e.y); ctx.lineTo(e.x+D.dx*D.len,e.y+D.dy*D.len); ctx.stroke();
+   ctx.globalAlpha=.9; ctx.fillStyle="#ffd84a"; ctx.font="bold 30px 'Do Hyeon'"; ctx.textAlign="center"; ctx.fillText("!!",e.x,e.y-e.r-18); ctx.restore(); }
+ }
 }
 function damagePlayer(d){ const p=G.p; p.hp-=d; p.inv=.6; p.hurtT=.18; G.shake=.15; SFX.hurt(); G.texts.push({x:p.x,y:p.y-24,txt:"-"+Math.round(d),life:.6,col:"#ff6b6b"}); }
 function gainXp(v){ G.xp+=v; while(G.xp>=G.need){ G.xp-=G.need; G.lvl++; G.need=xpNeed(G.lvl); G.pendingLv++; } }
@@ -1746,6 +1872,12 @@ function drawLighting(camX,camY){
  for(const c of G.chests) hole(c.x,c.y,110,.9);
  for(const e of G.enemies) if(e.type==="boss") hole(e.x,e.y,e.r*3,.8);
  for(const b of G.bolts) if(b.big) hole(b.x2,b.y2,180,.9);
+ for(const h of G.hazards){
+  if(h.kind==="laser"){ const on=h.warn<=0, cx=Math.cos(h.ang), cy=Math.sin(h.ang); for(let d=40; d<Math.min(h.len,900); d+=80) hole(h.boss.x+cx*d,h.boss.y+cy*d,on?90:55,on?.9:.45); }
+  else if(h.kind==="bomb") hole(h.x,h.y,h.r*1.5,.75);
+ }
+ for(const b of G.ebullets) hole(b.x,b.y,30,.5);
+ { let n=0; for(const g of G.gems){ if(Math.abs(g.x-p.x)<VW*.6&&Math.abs(g.y-p.y)<VH*.6){ hole(g.x,g.y,g.v>=20?44:30,.55); if(++n>140) break; } } }
  for(const pl of G.pools) hole(pl.x,pl.y,pl.R*1.6,.7);
  for(const s of G.shots) if(s.kind!=="beaker") hole(s.x,s.y,50,.6);
  ctx.setTransform(1,0,0,1,0,0); ctx.imageSmoothingEnabled=true; ctx.drawImage(LM,0,0,w,h); ctx.imageSmoothingEnabled=false;
@@ -1773,7 +1905,7 @@ function draw(){
  const fw=W("field");
  if(fw&&fw.R){ const evo=G.evolved.field; ctx.save(); ctx.globalAlpha=.16; const g=ctx.createRadialGradient(p.x,p.y,fw.R*.2,p.x,p.y,fw.R); g.addColorStop(0,"rgba(120,180,255,0)"); g.addColorStop(1,evo?"rgba(200,120,255,1)":"rgba(90,170,255,1)"); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,fw.R,0,7); ctx.fill(); ctx.globalAlpha=.55; ctx.strokeStyle=evo?"#d8a0ff":"#7fc4ff"; ctx.lineWidth=2; ctx.setLineDash([8,10]); ctx.lineDashOffset=-G.t*40; ctx.beginPath(); ctx.arc(p.x,p.y,fw.R,0,7); ctx.stroke(); ctx.setLineDash([]); ctx.restore(); }
  // 보석
- for(const g of G.gems){ const c=g.heal?"#ff5d7a":g.v>=20?"#ff4f6a":g.v>=5?"#4fe38a":"#4fb8ff"; const s=g.heal?10:g.v>=20?13:g.v>=5?11:9; const bob=Math.sin(G.t*4+g.x*.1)*1.5; const gy=g.y+bob;
+ for(const g of G.gems){ if(!g.heal){ drawCoin(g); continue; } const c="#ff5d7a", s=10; const bob=Math.sin(G.t*4+g.x*.1)*1.5; const gy=g.y+bob;
   ctx.globalAlpha=.28; ctx.fillStyle=c; ctx.beginPath(); ctx.arc(g.x,gy,s+4,0,7); ctx.fill(); ctx.globalAlpha=1;
   ctx.fillStyle="#14101f"; ctx.beginPath(); ctx.moveTo(g.x,gy-s-3); ctx.lineTo(g.x+s+2,gy); ctx.lineTo(g.x,gy+s+3); ctx.lineTo(g.x-s-2,gy); ctx.fill();
   ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(g.x,gy-s-1); ctx.lineTo(g.x+s,gy); ctx.lineTo(g.x,gy+s+1); ctx.lineTo(g.x-s,gy); ctx.fill();
@@ -1805,6 +1937,8 @@ function draw(){
   else if(s.kind==="rocket"){ ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.ang); ctx.fillStyle="#ffb02e"; ctx.fillRect(-16,-3,8,6); ctx.fillStyle="#e8f1ff"; ctx.fillRect(-10,-5,16,10); ctx.fillStyle="#ff4b5c"; ctx.beginPath(); ctx.moveTo(6,-5); ctx.lineTo(12,0); ctx.lineTo(6,5); ctx.fill(); ctx.fillStyle="#5fb8ff"; ctx.fillRect(-4,-2,4,4); ctx.restore(); }
   else if(s.kind==="beaker"){ ctx.save(); ctx.translate(s.x,s.y-(s.h||0)); ctx.rotate(s.t*12); ctx.fillStyle="#d8ecff"; ctx.fillRect(-6,-8,12,16); ctx.fillStyle=s.evo?"#ff6af0":"#8dff5a"; ctx.fillRect(-6,0,12,8); ctx.restore(); }
  }
+ // 보스 위험 지대(경고·레이저·폭발)
+ drawHazards();
  // 적 탄
  for(const b of G.ebullets){ ctx.fillStyle=b.col; ctx.globalAlpha=.35; ctx.beginPath(); ctx.arc(b.x,b.y,b.r+5,0,7); ctx.fill(); ctx.globalAlpha=1; ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(b.x,b.y,b.r-2,0,7); ctx.fill(); ctx.strokeStyle=b.col; ctx.lineWidth=2; ctx.stroke(); }
  // 번개
