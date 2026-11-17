@@ -158,7 +158,7 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
   <div class="hint" id="weapDesc"></div>
   <div class="hint">
    ▸ <span class="y">무기 진화: 무기 Lv.5 + 짝 패시브 → 2분 30초 이후 진화</span><br>
-   <b>WASD·방향키·드래그</b> 이동 · 공격 자동 · <b>레벨업</b> 퀴즈: 정답 카드 3장, 오답 1장 · <b>보스</b> 퀴즈: 정답 3장, 오답 2장 · <b>보급 상자</b> 퀴즈: 특수 효과(공격력↑·이동 속도↑·전체 금화 흡수 중 하나) — 정답 15초, 오답 8초<br>
+   <b>WASD·방향키·드래그</b> 이동 · 공격 자동 · <b>레벨업</b> 퀴즈: 정답 카드 3장, 오답 1장 · <b>부활</b>: 처음 쓰러질 때 정답률 90%↑ 체력 30%, 80%↑ 체력 10%로 1번 부활 · <b>보스</b> 퀴즈: 정답 3장, 오답 2장 · <b>보급 상자</b> 퀴즈: 특수 효과(공격력↑·이동 속도↑·전체 금화 흡수 중 하나) — 정답 15초, 오답 8초<br>
    <b>1분마다 보스</b> 등장 · <b>10라운드 보스</b>까지 물리치면 클리어 · <span class="y">퀴즈를 많이 맞힐수록 공격력 UP · 최종 보스의 보호막도 약해져요</span>
   </div>
   <div class="warn" id="warn"></div>
@@ -1237,7 +1237,7 @@ function spawnBoss(k){
  const p=G.p, a=Math.random()*Math.PI*2;
  let x=p.x+Math.cos(a)*(VW/2), y=p.y+Math.sin(a)*(VH/2);
  if(G.stage.corridor){ x=p.x+(Math.random()<.5?-1:1)*(VW/2); y=0; }
- const hp = 150*Math.pow(k,1.45)*G.stage.hp*(k===BOSS_ROUNDS?2.4:1);   // 최종 보스는 더 단단하게
+ const hp = 150*Math.pow(k,1.45)*G.stage.hp*(k===BOSS_ROUNDS?2.4:1.12);   // 최종 보스는 더 단단하게
  if(k===BOSS_ROUNDS) G.finalAt=G.t;
  G.enemies.push({x,y,type:"boss",k,r:34+k*2,hp,maxhp:hp,spd:(64+k*3)*Math.min(1.15,G.stage.spd),dmg:7+k*3.5,xp:0,hitT:0,slow:0,kb:{x:0,y:0},shootT:4,phase:0,name:BOSS_NAMES[k-1],col:BOSS_COLORS[k-1]});
  const bb=document.getElementById("bossBanner"); bb.innerHTML=`ROUND ${k} BOSS<small>${BOSS_NAMES[k-1]} 등장!</small>`; bb.classList.remove("go"); void bb.offsetWidth; bb.classList.add("go");
@@ -1479,6 +1479,19 @@ function winGame(){
  setTimeout(()=>showResult(true), 2600);
  return false;
 }
+// 한 번 쓰러졌을 때 정답률에 따라 부활(게임당 1번): 90% 이상 → 체력 30%, 80% 이상 → 10%, 그 미만 → 게임 오버
+const REVIVE_RULES = [{acc:.9, hp:.3}, {acc:.8, hp:.1}];
+function tryRevive(){
+ if(G.revived || G.quizTotal<3) return false;
+ const acc=accNow(), r=REVIVE_RULES.find(x=>acc>=x.acc); if(!r) return false;
+ const p=G.p; G.revived=true; p.hp=Math.max(1,Math.round(p.maxhp*r.hp)); p.inv=3;
+ G.ebullets=[]; G.hazards=G.hazards.filter(h=>h.kind!=="bomb");
+ for(const e of G.enemies){ const d=Math.hypot(e.x-p.x,e.y-p.y); if(d<260){ if(e.type==="boss"){ const a=Math.atan2(e.y-p.y,e.x-p.x); e.x+=Math.cos(a)*(300-d); e.y+=Math.sin(a)*(300-d); e.dash=null; } else killEnemy(e); } }
+ G.enemies=G.enemies.filter(e=>!e.dead);
+ G.fx.push({kind:"ring",x:p.x,y:p.y,r:10,R:260,life:.7,T:.7,col:"#7dffb0"}); G.fx.push({kind:"ring",x:p.x,y:p.y,r:10,R:180,life:.5,T:.5,col:"#ffffff"}); G.shake=.4;
+ const bb=document.getElementById("buffBanner"); bb.innerHTML=`💚 부활!<small>정답률 ${Math.round(acc*100)}% → 체력 ${Math.round(r.hp*100)}%로 다시 일어났어요 (한 번만)</small>`; bb.style.color="#7dffb0"; bb.classList.remove("go"); void bb.offsetWidth; bb.classList.add("go");
+ SFX.lucky(); return true;
+}
 function loseGame(){ G.over=true; G.mode="end"; musicStop(1.2); SFX.bad(); setTimeout(()=>showResult(false), 900); }
 function showResult(win){
  document.getElementById("topbtns").classList.add("hidden");
@@ -1687,7 +1700,7 @@ function update(dt){
  for(const b of G.bolts) b.life-=dt; G.bolts=G.bolts.filter(b=>b.life>0);
  G.shake=Math.max(0,G.shake-dt);
 
- if(p.hp<=0 && !G.over){ p.hp=0; loseGame(); return; }
+ if(p.hp<=0 && !G.over){ if(tryRevive()) return; p.hp=0; loseGame(); return; }
  nextModal();
 }
 // ================= 보스 공격 패턴 =================
@@ -1718,8 +1731,8 @@ function bossAttack(e, dt){
  // 새로 열린 패턴은 처음 한 번 꼭 보여 주기
  const fresh=BOSS_PATTERNS.find(q=>q.from===k && !e.seen); if(fresh){ pat=fresh.id; e.seen=true; }
  e.lastPat=pat;
- const spd=130+k*8;
- if(pat==="ring"){ const n=bulletN(5+k*1.5), off=Math.random()*6; for(let i=0;i<n;i++) eShot(e, off+i*Math.PI*2/n, spd); if(k>=6) (e.later=e.later||[]).push({t:.35, fn:()=>{ for(let i=0;i<n;i++) eShot(e, off+(i+.5)*Math.PI*2/n, spd*.8); }}); }
+ const spd=(130+k*8)*(fin?1:1.1);   // 1~9라운드 보스 탄속 +10%
+ if(pat==="ring"){ const n=bulletN(7+k*1.6), off=Math.random()*6; for(let i=0;i<n;i++) eShot(e, off+i*Math.PI*2/n, spd); if(k>=6) (e.later=e.later||[]).push({t:.35, fn:()=>{ for(let i=0;i<n;i++) eShot(e, off+(i+.5)*Math.PI*2/n, spd*.8); }}); }
  else if(pat==="aim"){ const n=Math.min(9, 3+Math.floor(k/2))|1, sp=.16; for(let w=0;w<(k>=7?2:1);w++) (e.later=e.later||[]).push({t:w*.42, fn:()=>{ const a=Math.atan2(G.p.y-e.y,G.p.x-e.x); for(let i=0;i<n;i++) eShot(e, a+(i-(n-1)/2)*sp, spd*1.25, {r:6}); }}); }
  else if(pat==="spiral"){ e.spiral={t:1.6+k*.08, acc:0, gap:.11, ang:Math.random()*6, turn:(Math.random()<.5?1:-1)*.33, arms:k>=8?3:2}; }
  else if(pat==="laser"){ const n=fin?3:(k>=8?2:1); for(let i=0;i<n;i++) addLaser(e, aim+(i-(n-1)/2)*.42, 1.0); e.hold=1.5; }
@@ -1727,7 +1740,7 @@ function bossAttack(e, dt){
  else if(pat==="dash"){ startDash(e, k>=9?2:(k>=7?1:0)); }
  else if(pat==="bomb"){ const n=fin?5:(k>=8?4:3); for(let i=0;i<n;i++){ const a=Math.random()*6, d=i===0?0:rnd(70,170); G.hazards.push({kind:"bomb",boss:e,x:p.x+Math.cos(a)*d+(p.moving?(p.mvx||0):0)*40,y:p.y+Math.sin(a)*d+(p.moving?(p.mvy||0):0)*40,r:62,warn:1.1+i*.12,T:1.1+i*.12,dmg:9+k*1.5}); } SFX.warn(); }
  else if(pat==="seek"){ const n=fin?6:4; for(let i=0;i<n;i++) eShot(e, aim+(i-(n-1)/2)*.6+Math.PI, 150, {seek:2.6, r:8, life:6, dmg:6+k*1.2}); }
- e.shootT = Math.max(fin?1.4:1.7, 4.4-k*.28) + (pat==="spiral"?1.2:0) + (pat==="cross"||pat==="laser"?.6:0) + (pat==="dash"?(k>=9?1.4:k>=7?.8:0):0);
+ e.shootT = (fin?1:.85)*Math.max(fin?1.4:1.7, 4.4-k*.28) + (pat==="spiral"?1.2:0) + (pat==="cross"||pat==="laser"?.6:0) + (pat==="dash"?(k>=9?1.4:k>=7?.8:0):0);
 }
 // 돌진: 라운드가 높을수록 경고가 짧아지고, 빨라지고, 연속 돌진·탄 흔적·예측 조준이 붙어요.
 function startDash(e, left){
