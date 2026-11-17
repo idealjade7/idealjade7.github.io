@@ -90,6 +90,9 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 .rankform input{font-family:'Gowun Dodum';font-weight:700;font-size:17px;padding:8px 10px;background:#140f20;color:var(--text);border:2px solid var(--line);width:260px;outline:none}
 .rankform input:focus{border-color:var(--gold)}
 .rankform .btn{margin:0;font-size:18px;padding:6px 18px}
+.rankform select{font-family:'Do Hyeon';font-size:17px;padding:6px 8px;background:#140f20;color:var(--text);border:2px solid var(--line);outline:none}
+.rankform select:focus{border-color:var(--gold)}
+.tabs.cls .chip{font-size:13px;padding:4px 8px}
 .ranks{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
 .ranks th{font-family:'Do Hyeon';font-weight:400;color:var(--dim);border-bottom:2px solid var(--line);padding:5px 4px;text-align:center}
 .ranks td{padding:6px 4px;border-bottom:1px solid #33264a;text-align:center}
@@ -139,9 +142,9 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
   <div class="row" id="weapRow"></div>
   <div class="hint" id="weapDesc"></div>
   <div class="hint">
-   ▸ <span class="y">무기 진화: 무기 Lv.5 + 짝 패시브 → 4분 이후 진화</span><br>
+   ▸ <span class="y">무기 진화: 무기 Lv.5 + 짝 패시브 → 2분 30초 이후 진화</span><br>
    <b>WASD·방향키·드래그</b> 이동 · 공격 자동 · <b>레벨업</b> 퀴즈: 정답 카드 3장, 오답 1장 · <b>보급 상자·보스</b> 퀴즈: 정답 3장, 오답 2장<br>
-   <b>2분마다 보스</b> 등장 · <b>10라운드 보스</b>까지 물리치면 클리어 · <span class="y">퀴즈를 많이 맞힐수록 공격력 UP · 최종 보스의 보호막도 약해져요</span>
+   <b>1분마다 보스</b> 등장 · <b>10라운드 보스</b>까지 물리치면 클리어 · <span class="y">퀴즈를 많이 맞힐수록 공격력 UP · 최종 보스의 보호막도 약해져요</span>
   </div>
   <div class="warn" id="warn"></div>
   <div class="row" style="gap:18px;margin-top:6px"><div class="vol" style="margin:0">🎵 <input type="range" min="0" max="100" class="bgmVol" style="width:120px"><span class="pct"></span></div><div class="vol" style="margin:0">🔊 <input type="range" min="0" max="100" class="sfxVol" style="width:120px"><span class="pct"></span></div></div>
@@ -187,6 +190,7 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
  <div class="panel" style="max-width:640px">
   <div class="ctitle">🏆 명예의 전당</div>
   <div class="csub">10라운드를 클리어한 기록 · 클리어 타임이 빠른 순</div>
+  <div class="tabs cls" id="rankCls"></div>
   <div class="tabs" id="rankTabs"></div>
   <div id="rankFull"></div>
   <div class="src" id="rankSrc"></div>
@@ -202,7 +206,7 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
   <div class="stats" id="rStats"></div>
   <div id="rankBox" class="hidden">
    <div class="sec">🏆 클리어 기록 등록</div>
-   <div class="rankform"><input id="rankName" maxlength="12" placeholder="반-번호 이름 (예: 3-10 홍길동)" autocomplete="off"><button class="btn" id="rankSave">등록</button></div>
+   <div class="rankform"><select id="rankClass"></select><input id="rankName" maxlength="10" placeholder="번호 이름 (예: 7 홍길동)" autocomplete="off"><button class="btn" id="rankSave">등록</button></div>
    <div class="cnt" id="rankMsg"></div>
    <div id="rankMini"></div>
   </div>
@@ -228,17 +232,22 @@ const LVN = {1:"기초",2:"보통",3:"도전"};
 // 비워 두면 기록은 이 기기(브라우저)에만 저장됩니다.
 const RANK_DB_URL = "https://hkgms-820ff-default-rtdb.asia-southeast1.firebasedatabase.app";
 const RANK_PATH = "germ_ranks";
+const RANK_GRADE = 3;        // 학년
+const CLASS_COUNT = 12;      // 반 수 (반을 고르는 목록에 1반~이 숫자까지 나와요)
 
 // ================= 기본 설정 =================
-const BOSS_INTERVAL = 120;   // 2분마다 보스
+const BOSS_INTERVAL = 60;    // 1분마다 보스
+const PACE = 1.4;            // 몹이 강해지는 속도 배율
+const MOBMUL = 1.15;         // 몹 수 배율
+const XPMUL = .85;          // 레벨업에 필요한 경험치 배율
 const BOSS_ROUNDS = 10;      // 10라운드 보스까지 처치하면 클리어
-const EVO_TIME = 240;        // 4분 이후 진화 가능
+const EVO_TIME = 150;        // 2분 30초 이후 진화 가능
 const CLEAR_ACC = 0.8;       // 이 정답률 아래에서는 최종 보스에 보호막이 생긴다
 
 const STAGES = [
- {name:"1. 한밤의 과학실", desc:"기본 스테이지 · 사방에서 몰려온다", hp:1, spd:1, corridor:false, theme:"lab"},
- {name:"2. 표본 보관실", desc:"선반 사이 통로 · 좌우에서만 온다 · 체력 1.15배", hp:1.15, spd:1, corridor:true, theme:"store"},
- {name:"3. 화산 탐사 기지", desc:"용암 지대 · 몹이 빨라진다 · 체력 1.3배", hp:1.3, spd:1.2, corridor:false, theme:"lava"},
+ {name:"1. 한밤의 과학실", desc:"기본 스테이지 · 사방에서 몰려온다", hp:1, spd:1, mob:1, xp:1, corridor:false, theme:"lab"},
+ {name:"2. 표본 보관실", desc:"선반 사이 통로 · 좌우에서만 온다 · 체력 1.1배", hp:1.1, spd:1, mob:1, xp:1.1, corridor:true, theme:"store"},
+ {name:"3. 화산 탐사 기지", desc:"용암 지대 · 몹이 빨라진다 · 체력 1.3배", hp:1.3, spd:1.2, mob:1.2, xp:1.2, corridor:false, theme:"lava"},
 ];
 
 const WEAPONS = {
@@ -765,21 +774,21 @@ function startGame(){
  const st = STAGES[sel.stage];
  G = {
   mode:"play", t:0, stage:st, stageIdx:sel.stage,
-  p:{x:0,y:0,r:14,hp:100,maxhp:100,spd:170,inv:0,face:{x:1,y:0},flip:false,regen:.4,walk:0},
+  p:{x:0,y:0,r:14,hp:120,maxhp:120,spd:170,inv:0,face:{x:1,y:0},flip:false,regen:.6,walk:0},
   lvl:1, xp:0, need:xpNeed(1), pendingLv:0,
   weapons:{}, passives:{}, evolved:{},
   enemies:[], shots:[], pools:[], gems:[], chests:[], fx:[], texts:[], bolts:[], ebullets:[],
-  spawnAcc:0, chestTimer:35, nextBoss:BOSS_INTERVAL, bossSpawned:0, bossKilled:0,
+  spawnAcc:0, chestTimer:25, nextBoss:BOSS_INTERVAL, bossSpawned:0, bossKilled:0,
   kills:0, quizRight:0, quizTotal:0, wrongs:[], qpool:shuffle(p.slice()), qused:new Set(),
   cdmul:1, dmgmul:1, areamul:1, durmul:1, magnet:110, score:0, shake:0, cleared:false, over:false,
  };
  addWeapon(sel.weapon);
- if(st.corridor){ G.bounds = {y1:-250, y2:250}; }
+ if(st.corridor){ G.bounds = {y1:-290, y2:290}; }
  hideAll(); document.getElementById("topbtns").classList.remove("hidden");
  musicStart();
  last = performance.now();
 }
-function xpNeed(l){ return Math.floor(4 + l*3 + 0.06*Math.pow(l,3.2)); }
+function xpNeed(l){ return Math.max(3, Math.floor((4 + l*3 + 0.06*Math.pow(l,3.2))*XPMUL)); }
 function hideAll(){ ["menu","quizOv","cardOv","pauseOv","resultOv","rankOv"].forEach(id=>document.getElementById(id).classList.add("hidden")); }
 
 // ================= 무기 =================
@@ -792,14 +801,14 @@ function recalcPassives(){
  G.areamul = 1 + .10*lv("coil");
  G.p.spd = 170 * (1 + .08*lv("shoes"));
  G.durmul = 1 + .12*lv("capacitor");
- const newMax = 100 + 15*lv("vitamin");
+ const newMax = 120 + 15*lv("vitamin");
  if(newMax>G.p.maxhp){ G.p.hp += newMax-G.p.maxhp; }
- G.p.maxhp = newMax; G.p.regen = .4 + .3*lv("vitamin");
+ G.p.maxhp = newMax; G.p.regen = .6 + .3*lv("vitamin");
  G.magnet = 110 * (1 + .3*lv("magnet"));
 }
 function nearestEnemies(n, maxD=99999){
  const p=G.p; const arr=[];
- for(const e of G.enemies){ let d=dist2(e,p); if(d<maxD*maxD){ if(e.type==="boss") d*=.15; arr.push([d,e]); } }
+ for(const e of G.enemies){ let d=dist2(e,p); if(d<maxD*maxD){ if(e.type==="boss") d*=.03; arr.push([d,e]); } }
  arr.sort((a,b)=>a[0]-b[0]); return arr.slice(0,n).map(a=>a[1]);
 }
 function fireWeapons(dt){
@@ -826,16 +835,16 @@ function fireWeapons(dt){
   else if(k==="beaker"){
    if(w.cd<=0){
     const cnt = evo?4:(1 + (L>=2?1:0) + (L>=4?1:0));
-    const tg = shuffle(nearestEnemies(12, 420)).slice(0,cnt);
+    let tg = shuffle(nearestEnemies(12, 420)); const bi=tg.findIndex(e=>e.type==="boss"); if(bi>0){ const b0=tg[bi]; tg.splice(bi,1); tg.unshift(b0); } tg=tg.slice(0,cnt);
     for(let i=0;i<cnt;i++){
      const e = tg[i]; const tx = e?e.x:p.x+rnd(-200,200), ty = e?e.y:p.y+rnd(-150,150);
      G.shots.push({x:p.x,y:p.y,sx:p.x,sy:p.y,tx,ty,t:0,T:.55,kind:"beaker",evo});
     }
-    WSFX.throwB(); w.cd = (evo?1.6:2.3)*G.cdmul;
+    WSFX.throwB(); w.cd = (evo?1.5:1.9)*G.cdmul;
    }
   }
   else if(k==="field"){
-   const R = (evo?135:(62 + L*9))*G.areamul;
+   const R = (evo?135:(72 + L*9))*G.areamul;
    w.R = R;
    if(w.cd<=0){
     const dmg = (evo?18:(6+L*2.5))*G.dmgmul;
@@ -890,7 +899,7 @@ function strike(x,y,dmg){
 
 // ================= 적 =================
 function spawnEnemy(){
- const t=G.t, st=G.stage, p=G.p;
+ const t=G.t*PACE, st=G.stage, p=G.p;
  let x,y;
  if(st.corridor){ const side=Math.random()<.5?-1:1; x=p.x+side*(VW/2+40); y=rnd(G.bounds.y1+20,G.bounds.y2-20); }
  else { const a=Math.random()*Math.PI*2, R=Math.hypot(VW,VH)/2+40; x=p.x+Math.cos(a)*R; y=p.y+Math.sin(a)*R; }
@@ -899,15 +908,15 @@ function spawnEnemy(){
  if(t>150 && roll>.82) type="amoeba";
  const grow = 1 + t/200 + Math.pow(t/600,2);
  const base = {bact:{hp:14,spd:62,r:12,dmg:6,xp:1}, virus:{hp:11,spd:96,r:13,dmg:5,xp:1}, amoeba:{hp:55,spd:48,r:17,dmg:10,xp:5}}[type];
- G.enemies.push({x,y,type,seed:Math.random()*3,r:base.r,hp:base.hp*grow*st.hp,maxhp:base.hp*grow*st.hp,spd:base.spd*st.spd*(1+Math.min(.35,t/1200)),dmg:base.dmg*(1+t/500),xp:base.xp+(t>420&&type!=="amoeba"&&Math.random()<.25?4:0),hitT:0,slow:0,kb:{x:0,y:0}});
+ G.enemies.push({x,y,type,seed:Math.random()*3,r:base.r,hp:base.hp*grow*st.hp,maxhp:base.hp*grow*st.hp,spd:base.spd*st.spd*(1+Math.min(.35,t/1200)),dmg:base.dmg*(1+t/500),xp:(base.xp+(t>420&&type!=="amoeba"&&Math.random()<.25?4:0))*st.xp,hitT:0,slow:0,kb:{x:0,y:0}});
 }
 function spawnBoss(k){
  const p=G.p, a=Math.random()*Math.PI*2;
  let x=p.x+Math.cos(a)*(VW/2), y=p.y+Math.sin(a)*(VH/2);
  if(G.stage.corridor){ x=p.x+(Math.random()<.5?-1:1)*(VW/2); y=0; }
- const hp = 210*Math.pow(k,1.5)*G.stage.hp;
+ const hp = 150*Math.pow(k,1.45)*G.stage.hp*(k===BOSS_ROUNDS?2.4:1);   // 최종 보스는 더 단단하게
  if(k===BOSS_ROUNDS) G.finalAt=G.t;
- G.enemies.push({x,y,type:"boss",k,r:34+k*2,hp,maxhp:hp,spd:(64+k*3)*Math.min(1.15,G.stage.spd),dmg:12+k*3,xp:0,hitT:0,slow:0,kb:{x:0,y:0},shootT:4,phase:0,name:BOSS_NAMES[k-1],col:BOSS_COLORS[k-1]});
+ G.enemies.push({x,y,type:"boss",k,r:34+k*2,hp,maxhp:hp,spd:(64+k*3)*Math.min(1.15,G.stage.spd),dmg:7+k*3.5,xp:0,hitT:0,slow:0,kb:{x:0,y:0},shootT:4,phase:0,name:BOSS_NAMES[k-1],col:BOSS_COLORS[k-1]});
  const bb=document.getElementById("bossBanner"); bb.innerHTML=`ROUND ${k} BOSS<small>${BOSS_NAMES[k-1]} 등장!</small>`; bb.classList.remove("go"); void bb.offsetWidth; bb.classList.add("go");
  SFX.boss(); G.shake=.5;
 }
@@ -1130,7 +1139,7 @@ function showResult(win){
   wl.innerHTML = G.wrongs.map(w=>`<div class="wrong-item"><div>[${UNIT_SHORT[w.unit-1]}] ${esc(w.q)}</div><div class="x">내 답: ${esc(w.mine)}</div><div class="a">정답: ${esc(w.ans)}</div><div class="e">${esc(w.exp)}</div></div>`).join("");
  } else { document.getElementById("wrongHead").textContent= G.quizTotal? "오답 노트 — 틀린 문제가 없어요!":"오답 노트"; wl.innerHTML=""; }
  const rb=document.getElementById("rankBox");
- if(win){ rb.classList.remove("hidden"); document.getElementById("rankMsg").textContent=`클리어 타임 ${fmtT(G.t)} · 정답률 ${rate}% · 이름을 적고 등록하세요`; document.getElementById("rankMini").innerHTML=""; const inp=document.getElementById("rankName"); try{ inp.value=localStorage.getItem("germ-name")||""; }catch(e){} document.getElementById("rankSave").disabled=false; setTimeout(()=>inp.focus(),300); }
+ if(win){ rb.classList.remove("hidden"); document.getElementById("rankMsg").textContent=`클리어 타임 ${fmtT(G.t)} · 정답률 ${rate}% · 이름을 적고 등록하세요`; document.getElementById("rankMini").innerHTML=""; const inp=document.getElementById("rankName"); const cs=document.getElementById("rankClass"); cs.innerHTML=`<option value="">반 선택</option>`+Array.from({length:CLASS_COUNT},(_,i)=>`<option value="${i+1}">${RANK_GRADE}학년 ${i+1}반</option>`).join(""); try{ inp.value=localStorage.getItem("germ-name")||""; cs.value=localStorage.getItem("germ-class")||""; }catch(e){} document.getElementById("rankSave").disabled=false; setTimeout(()=>inp.focus(),300); }
  else { rb.classList.add("hidden"); }
  document.getElementById("resultOv").classList.remove("hidden");
 }
@@ -1157,7 +1166,7 @@ const RANK = {
     let data;
     try{ data=await this.req(this.url('?orderBy="time"&limitToFirst=300')); }
     catch(e){ data=await this.req(this.url()); }          // 색인(.indexOn)이 없을 때
-    const rows=Object.values(data||{}).filter(r=>r&&typeof r.time==="number").map(r=>({name:String(r.name||"?"),time:r.time,acc:+r.acc||0,stage:+r.stage||0,weapon:String(r.weapon||""),quiz:+r.quiz||0,at:String(r.at||"")}));
+    const rows=Object.values(data||{}).filter(r=>r&&typeof r.time==="number").map(r=>({cls:+r.cls||0,name:String(r.name||"?"),time:r.time,acc:+r.acc||0,stage:+r.stage||0,weapon:String(r.weapon||""),quiz:+r.quiz||0,at:String(r.at||"")}));
     rows.sort((a,b)=>a.time-b.time||b.acc-a.acc);
     return {rows, where:"online"};
    } catch(e){ return {rows:this.local(), where:"local", err:true}; }
@@ -1166,35 +1175,42 @@ const RANK = {
  },
  table(rows, me){
   if(!rows.length) return `<div class="cnt" style="margin:14px 0">아직 등록된 기록이 없어요. 첫 번째 주인공이 되어 보세요!</div>`;
-  return `<table class="ranks"><tr><th>순위</th><th>이름</th><th>클리어 타임</th><th>정답률</th><th>스테이지</th><th>무기</th><th>날짜</th></tr>`+
+  return `<table class="ranks"><tr><th>순위</th><th>반</th><th>이름</th><th>클리어 타임</th><th>정답률</th><th>스테이지</th><th>무기</th><th>날짜</th></tr>`+
    rows.map((r,i)=>{ const d=r.at?new Date(r.at):null; const ds=d&&!isNaN(d)?`${d.getMonth()+1}/${d.getDate()}`:""; const isMe=me&&r.at===me.at&&r.name===me.name;
-    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td class="nm">${esc(r.name)}</td><td class="tm">${fmtT(r.time)}</td><td>${r.acc}%</td><td>${r.stage||"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
+    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td>${r.cls?r.cls+"반":"-"}</td><td class="nm">${esc(r.name)}</td><td class="tm">${fmtT(r.time)}</td><td>${r.acc}%</td><td>${r.stage||"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
  },
  srcText(where, err){ return where==="online" ? "반 전체 온라인 순위표" : (err ? "온라인 순위표에 연결하지 못해 이 기기에 저장된 기록을 보여 줘요" : "이 기기(브라우저)에만 저장된 기록이에요 · 반 전체 순위표는 선생님이 온라인 설정을 하면 열려요"); },
 };
 document.getElementById("rankSave").onclick=async ()=>{
  const inp=document.getElementById("rankName"), btn=document.getElementById("rankSave"), msg=document.getElementById("rankMsg");
- const name=inp.value.trim().replace(/\s+/g," ").slice(0,12);
- if(!name){ msg.textContent="이름을 적어 주세요."; inp.focus(); return; }
+ const name=inp.value.trim().replace(/\s+/g," ").slice(0,10), cls=+document.getElementById("rankClass").value;
+ if(!cls){ msg.textContent="반을 골라 주세요."; document.getElementById("rankClass").focus(); return; }
+ if(!name){ msg.textContent="번호와 이름을 적어 주세요."; inp.focus(); return; }
  if(!G||!G.cleared||G.saved) return;
  btn.disabled=true; msg.textContent="등록하는 중…";
- try{ localStorage.setItem("germ-name",name); }catch(e){}
- const rec={name, time:Math.round(G.t*10)/10, acc:Math.round(accNow()*100), stage:G.stageIdx+1, weapon:sel.weapon, quiz:G.quizTotal, at:new Date().toISOString()};
+ try{ localStorage.setItem("germ-name",name); localStorage.setItem("germ-class",cls); }catch(e){}
+ const rec={cls, name, time:Math.round(G.t*10)/10, acc:Math.round(accNow()*100), stage:G.stageIdx+1, weapon:sel.weapon, quiz:G.quizTotal, at:new Date().toISOString()};
  const r=await RANK.add(rec); G.saved=true;
- const L=await RANK.list(); const rows=L.rows.filter(x=>x.stage===rec.stage);
- const pos=rows.findIndex(x=>x.at===rec.at&&x.name===rec.name);
- msg.textContent = (r.err?"온라인 등록에 실패해서 이 기기에 저장했어요. ":"등록 완료! ")+(pos>=0?`스테이지 ${rec.stage}에서 ${pos+1}위예요`:"");
+ const L=await RANK.list(); const same=x=>x.at===rec.at&&x.name===rec.name;
+ const all=L.rows.filter(x=>x.stage===rec.stage), rows=all.filter(x=>x.cls===cls);
+ const pos=rows.findIndex(same), apos=all.findIndex(same);
+ msg.textContent = (r.err?"온라인 등록에 실패해서 이 기기에 저장했어요. ":"등록 완료! ")+(pos>=0?`스테이지 ${rec.stage} · ${RANK_GRADE}학년 ${cls}반 ${pos+1}위 (전체 ${apos+1}위)`:"");
+ rankCls=cls;
  const top=rows.slice(0,10); if(pos>=10) top.push(rows[pos]);
  document.getElementById("rankMini").innerHTML=RANK.table(top, rec)+`<div class="src">${RANK.srcText(L.where,L.err)}</div>`;
 };
 document.getElementById("rankName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); document.getElementById("rankSave").click(); } });
-let rankTab=0;
+let rankTab=0, rankCls=0; try{ rankCls=+(localStorage.getItem("germ-class")||0); }catch(e){}
+let rankReq=0;
 async function openRanks(){
+ const my=++rankReq;
  document.getElementById("rankOv").classList.remove("hidden");
  const tabs=document.getElementById("rankTabs"); tabs.innerHTML="";
  ["전체",...STAGES.map(s=>s.name)].forEach((n,i)=>{ const b=document.createElement("button"); b.className="chip"+(rankTab===i?" on":""); b.textContent=n; b.onclick=()=>{ rankTab=i; openRanks(); }; tabs.appendChild(b); });
+ const ct=document.getElementById("rankCls"); ct.innerHTML="";
+ [0,...Array.from({length:CLASS_COUNT},(_,i)=>i+1)].forEach(c=>{ const b=document.createElement("button"); b.className="chip"+(rankCls===c?" on":""); b.textContent=c?`${c}반`:"전체 반"; b.onclick=()=>{ rankCls=c; openRanks(); }; ct.appendChild(b); });
  document.getElementById("rankFull").innerHTML=`<div class="cnt" style="margin:14px 0">불러오는 중…</div>`;
- const L=await RANK.list(); const rows=(rankTab?L.rows.filter(r=>r.stage===rankTab):L.rows).slice(0,30);
+ const L=await RANK.list(); if(my!==rankReq) return; const rows=L.rows.filter(r=>(!rankTab||r.stage===rankTab)&&(!rankCls||r.cls===rankCls)).slice(0,30);
  document.getElementById("rankFull").innerHTML=RANK.table(rows);
  document.getElementById("rankSrc").textContent=RANK.srcText(L.where,L.err);
 }
@@ -1218,10 +1234,10 @@ function update(dt){
 
  // 스폰
  const alive=G.enemies.length;
- const rate = Math.min(18, 0.6 + G.t/80 + Math.pow(G.t/300,2)) * (G.stage.corridor?1.1:1);
- if(alive<200){ G.spawnAcc+=rate*dt; while(G.spawnAcc>1){ G.spawnAcc--; spawnEnemy(); } }
+ const T=G.t*PACE; const rate = Math.min(20, (0.8 + T/70 + Math.pow(T/250,2)) * MOBMUL) * G.stage.mob;
+ if(alive<230){ G.spawnAcc+=rate*dt; while(G.spawnAcc>1){ G.spawnAcc--; spawnEnemy(); } }
  if(G.t>=G.nextBoss && G.bossSpawned<BOSS_ROUNDS){ G.bossSpawned++; spawnBoss(G.bossSpawned); G.nextBoss+=BOSS_INTERVAL; }
- G.chestTimer-=dt; if(G.chestTimer<=0){ if(G.chests.length<2) spawnChest(); G.chestTimer=rnd(50,65); }
+ G.chestTimer-=dt; if(G.chestTimer<=0){ if(G.chests.length<2) spawnChest(); G.chestTimer=rnd(45,58); }
 
  fireWeapons(dt);
 
@@ -1230,6 +1246,7 @@ function update(dt){
   if(e.dead) continue;
   const a=Math.atan2(p.y-e.y,p.x-e.x);
   let sp=e.spd*(e.slow?.55:1); e.slow=Math.max(0,e.slow-dt);
+  if(e.type==="boss"){ const dd=Math.hypot(p.x-e.x,p.y-e.y); if(dd>Math.min(VW,VH)*.42) sp=Math.max(sp, G.p.spd*1.08); }   // 멀어지면 빠르게 따라붙는다
   e.x+=Math.cos(a)*sp*dt+e.kb.x*dt; e.y+=Math.sin(a)*sp*dt+e.kb.y*dt;
   e.kb.x*=.85; e.kb.y*=.85; e.hitT=Math.max(0,e.hitT-dt); if(e.shieldHit) e.shieldHit-=dt;
   if(G.bounds) e.y=clamp(e.y,G.bounds.y1+e.r,G.bounds.y2-e.r);
@@ -1237,7 +1254,7 @@ function update(dt){
   if(e.type!=="boss" && (Math.abs(e.x-p.x)>VW*.9 || Math.abs(e.y-p.y)>VH*.9)){ e.dead=true; G.spawnAcc+=1; continue; }
   if(e.type==="boss"){
    e.shootT-=dt;
-   if(e.shootT<=0){ const n=5+e.k*1.5|0; const off=Math.random()*6; for(let i=0;i<n;i++){ const b=off+i*Math.PI*2/n; G.ebullets.push({x:e.x,y:e.y,vx:Math.cos(b)*(130+e.k*8),vy:Math.sin(b)*(130+e.k*8),r:7,dmg:5+e.k*1.2,life:4,col:e.col}); } e.shootT=Math.max(1.8,4.8-e.k*.3); }
+   if(e.shootT<=0){ const n=Math.round((5+e.k*1.5)*(G.stage.corridor?.55:1)); const off=Math.random()*6; for(let i=0;i<n;i++){ const b=off+i*Math.PI*2/n; G.ebullets.push({x:e.x,y:e.y,vx:Math.cos(b)*(130+e.k*8),vy:Math.sin(b)*(130+e.k*8),r:7,dmg:5+e.k*1.2,life:4,col:e.col}); } e.shootT=Math.max(1.8,4.8-e.k*.3); }
   }
   // 접촉 피해
   const rr=e.r+p.r-4;
@@ -1255,7 +1272,7 @@ function update(dt){
  for(const s of G.shots){
   if(s.kind==="beaker"){
    s.t+=dt; const k=Math.min(1,s.t/s.T); s.x=s.sx+(s.tx-s.sx)*k; s.y=s.sy+(s.ty-s.sy)*k; s.h=Math.sin(k*Math.PI)*60;
-   if(k>=1){ s.dead=true; WSFX.splash(s.evo); const L=W("beaker")?W("beaker").lv:1; G.pools.push({x:s.tx,y:s.ty,R:(s.evo?82:(44+L*6))*G.areamul,dps:(s.evo?34:(12+L*3))*G.dmgmul,life:(s.evo?3.2:(2.2+(L>=5?.8:0)))*G.durmul,tick:0,evo:s.evo}); }
+   if(k>=1){ s.dead=true; WSFX.splash(s.evo); const L=W("beaker")?W("beaker").lv:1; G.pools.push({x:s.tx,y:s.ty,R:(s.evo?82:(44+L*6))*G.areamul,dps:(s.evo?34:(15+L*3))*G.dmgmul,life:(s.evo?3.2:(2.2+(L>=5?.8:0)))*G.durmul,tick:0,evo:s.evo}); }
    continue;
   }
   s.x+=s.vx*dt; s.y+=s.vy*dt; s.life-=dt;
