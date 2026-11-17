@@ -335,6 +335,39 @@ function pulseWave(d){
  for(let n=1;n<N;n++){ re[n]=2*Math.sin(Math.PI*n*d)/(Math.PI*n); }
  return PULSE[d]=AC.createPeriodicWave(re,im);
 }
+// ================= 보스 공격 효과음 (경고 → 발사가 귀로도 구분되게) =================
+const BSFX_LAST={};
+function bsOk(id,gap=.09){ if(muted||!AC||SFXVOL<=0) return false; const t=AC.currentTime; if(BSFX_LAST[id] && t-BSFX_LAST[id]<gap) return false; BSFX_LAST[id]=t; return true; }
+function bsOut(vol){ const g=AC.createGain(); g.gain.value=vol*SFXVOL*1.4; g.connect(AC.destination); return g; }
+let DIST=null; function distCurve(){ if(DIST) return DIST; const n=1024, c=new Float32Array(n); for(let i=0;i<n;i++){ const x=i/n*2-1; c[i]=Math.tanh(x*4); } return DIST=c; }
+function bsNoise(t,dur,f0,f1,vol,type="lowpass",out){ const s=AC.createBufferSource(); s.buffer=noiseBuf(); const f=AC.createBiquadFilter(), g=AC.createGain(); f.type=type; f.frequency.setValueAtTime(f0,t); f.frequency.exponentialRampToValueAtTime(f1,t+dur); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+dur); s.connect(f); f.connect(g); g.connect(out); s.start(t,Math.random()*.4); s.stop(t+dur+.02); }
+function bsOsc(t,dur,type,f0,f1,vol,out,attack=.005){ const o=AC.createOscillator(), g=AC.createGain(); o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+attack); g.gain.exponentialRampToValueAtTime(.001,t+dur); o.connect(g); g.connect(out); o.start(t); o.stop(t+dur+.02); return o; }
+const BSFX = {
+ // 레이저 충전: 점점 높아지는 "위이이잉"
+ laserCharge(dur){ if(!bsOk("lc",.25)) return; try{ const t=AC.currentTime, out=bsOut(.05);
+  const o=bsOsc(t,dur,"square",240,1500,.6,out,dur*.6); const l=AC.createOscillator(), lg=AC.createGain(); l.frequency.value=18; lg.gain.value=40; l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t+dur);
+  bsOsc(t,dur,"sine",120,700,.5,out,dur*.7); }catch(e){} },
+ // 레이저 발사: "삐융~" + 빔 웅웅
+ laserFire(){ if(!bsOk("lf",.08)) return; try{ const t=AC.currentTime, out=bsOut(.075);
+  const o=bsOsc(t,.42,"square",2400,160,.75,out); const l=AC.createOscillator(), lg=AC.createGain(); l.frequency.value=32; lg.gain.value=120; l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t+.42);
+  bsOsc(t+.02,.38,"sawtooth",1800,120,.35,out);
+  const ws=AC.createWaveShaper(); ws.curve=distCurve(); ws.connect(out); bsOsc(t,.45,"sawtooth",95,70,.55,ws,.01);
+  bsNoise(t,.25,6000,800,.35,"bandpass",out); }catch(e){} },
+ // 돌진 예고: 낮게 으르렁거리는 소리
+ dashWarn(dur){ if(!bsOk("dw",.2)) return; try{ const t=AC.currentTime, out=bsOut(.07); const ws=AC.createWaveShaper(); ws.curve=distCurve(); ws.connect(out);
+  const o=bsOsc(t,dur+.05,"sawtooth",48,80,.7,ws,dur*.5); const l=AC.createOscillator(), lg=AC.createGain(); l.frequency.value=11; lg.gain.value=12; l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t+dur+.05);
+  bsNoise(t,dur,300,1400,.5,"lowpass",out); }catch(e){} },
+ // 돌진: "콰광!"
+ dash(){ if(!bsOk("dg",.1)) return; try{ const t=AC.currentTime, out=bsOut(.11); const ws=AC.createWaveShaper(); ws.curve=distCurve(); ws.connect(out);
+  bsNoise(t,.55,4200,140,1.0,"lowpass",out);              // 쾅 터지는 잡음
+  bsOsc(t,.4,"sine",170,32,1.0,out,.002);                   // 쿵 울리는 저음
+  bsOsc(t,.3,"square",110,40,.6,ws,.002);                   // 찌그러진 충격음
+  bsNoise(t+.06,.35,2200,300,.45,"bandpass",out);           // 뒤따르는 "광"
+  bsOsc(t+.05,.5,"sawtooth",70,38,.35,ws,.01); }catch(e){} },
+ // 폭발 장판
+ boom(){ if(!bsOk("bm",.07)) return; try{ const t=AC.currentTime, out=bsOut(.08); bsNoise(t,.4,3000,120,.9,"lowpass",out); bsOsc(t,.3,"sine",140,35,.9,out,.002); }catch(e){} },
+ bombWarn(){ if(!bsOk("bw",.2)) return; try{ const t=AC.currentTime, out=bsOut(.04); for(let i=0;i<3;i++) bsOsc(t+i*.13,.09,"square",1250,1250,.6,out,.003); }catch(e){} },
+};
 function noiseBuf(){
  if(NOISE) return NOISE;
  const b=AC.createBuffer(1,AC.sampleRate,AC.sampleRate), d=b.getChannelData(0);
@@ -1636,7 +1669,7 @@ function update(dt){
    else { e.st-=dt; if(e.st<=0 && dd<300 && dd>60){ const d=dd||1; e.ch={warn:.6, t:.38, spd:560, dx:(p.x-e.x)/d, dy:(p.y-e.y)/d}; } } }
   else if(e.type==="split" && !e.small){ e.st-=dt; if(e.st<=0){ const dd=Math.hypot(p.x-e.x,p.y-e.y); if(dd<480){ for(const o of [-.32,0,.32]) mobShot(e,a+o,140); } e.st=rnd(3,3.8); } }
   if(e.type==="boss" && e.dash){ const D=e.dash; sp=0;
-   if(D.warn>0){ D.warn-=dt; if(D.warn<=0) SFX.dash(); }
+   if(D.warn>0){ D.warn-=dt; if(D.warn<=0){ BSFX.dash(); G.shake=Math.max(G.shake,.22); } }
    else { e.x+=D.dx*D.spd*dt; e.y+=D.dy*D.spd*dt; D.t-=dt;
     if(D.trail){ D.tAcc=(D.tAcc||0)+dt; if(D.tAcc>.07){ D.tAcc=0; const a=Math.atan2(D.dy,D.dx); eShot(e,a+Math.PI/2,90+e.k*6,{r:6,life:2.6}); eShot(e,a-Math.PI/2,90+e.k*6,{r:6,life:2.6}); } }
     if(D.t<=0){ if(D.left>0) startDash(e, D.left-1); else e.dash=null; } } }
@@ -1738,7 +1771,7 @@ function bossAttack(e, dt){
  else if(pat==="laser"){ const n=fin?3:(k>=8?2:1); for(let i=0;i<n;i++) addLaser(e, aim+(i-(n-1)/2)*.42, 1.0); e.hold=1.5; }
  else if(pat==="cross"){ const off=Math.random()<.5?0:Math.PI/4; for(let i=0;i<4;i++) addLaser(e, off+i*Math.PI/2, 1.1, true); if(fin) for(let i=0;i<4;i++) addLaser(e, off+Math.PI/4+i*Math.PI/2, 1.6, true); e.hold=fin?2.2:1.7; }
  else if(pat==="dash"){ startDash(e, k>=9?2:(k>=7?1:0)); }
- else if(pat==="bomb"){ const n=fin?5:(k>=8?4:3); for(let i=0;i<n;i++){ const a=Math.random()*6, d=i===0?0:rnd(70,170); G.hazards.push({kind:"bomb",boss:e,x:p.x+Math.cos(a)*d+(p.moving?(p.mvx||0):0)*40,y:p.y+Math.sin(a)*d+(p.moving?(p.mvy||0):0)*40,r:62,warn:1.1+i*.12,T:1.1+i*.12,dmg:9+k*1.5}); } SFX.warn(); }
+ else if(pat==="bomb"){ const n=fin?5:(k>=8?4:3); for(let i=0;i<n;i++){ const a=Math.random()*6, d=i===0?0:rnd(70,170); G.hazards.push({kind:"bomb",boss:e,x:p.x+Math.cos(a)*d+(p.moving?(p.mvx||0):0)*40,y:p.y+Math.sin(a)*d+(p.moving?(p.mvy||0):0)*40,r:62,warn:1.1+i*.12,T:1.1+i*.12,dmg:9+k*1.5}); } BSFX.bombWarn(); }
  else if(pat==="seek"){ const n=fin?6:4; for(let i=0;i<n;i++) eShot(e, aim+(i-(n-1)/2)*.6+Math.PI, 150, {seek:2.6, r:8, life:6, dmg:6+k*1.2}); }
  e.shootT = (fin?1:.85)*Math.max(fin?1.4:1.7, 4.4-k*.28) + (pat==="spiral"?1.2:0) + (pat==="cross"||pat==="laser"?.6:0) + (pat==="dash"?(k>=9?1.4:k>=7?.8:0):0);
 }
@@ -1748,20 +1781,20 @@ function startDash(e, left){
  const tx=p.x+(p.moving?(p.mvx||0)*p.spd*lead:0), ty=p.y+(p.moving?(p.mvy||0)*p.spd*lead:0);
  const d=Math.hypot(tx-e.x,ty-e.y)||1, spd=Math.min(1250,520+k*45+d*.5), warn=Math.max(.5,.95-(k-5)*.07)*(left>0&&e.dash?.85:1);
  e.dash={warn, t:.5, spd, dx:(tx-e.x)/d, dy:(ty-e.y)/d, len:spd*.5, left, trail:k>=8};
- G.hazards.push({kind:"dashwarn",boss:e,life:warn,T:warn}); SFX.warn();
+ G.hazards.push({kind:"dashwarn",boss:e,life:warn,T:warn}); BSFX.dashWarn(warn);
 }
-function addLaser(e, ang, warn, fixed){ G.hazards.push({kind:"laser",boss:e,ang,warn,T:warn,on:.4,len:1500,w:26,dmg:10+e.k*1.6,fixed,hit:false}); SFX.warn(); }
+function addLaser(e, ang, warn, fixed){ G.hazards.push({kind:"laser",boss:e,ang,warn,T:warn,on:.4,len:1500,w:26,dmg:10+e.k*1.6,fixed,hit:false}); BSFX.laserCharge(warn); }
 function hazardsUpdate(dt){
  const p=G.p;
  for(const h of G.hazards){
   if(h.boss && h.boss.dead){ h.life=0; h.on=0; h.warn=0; h.done=true; continue; }
   if(h.kind==="laser"){
-   if(h.warn>0){ h.warn-=dt; if(!h.fixed && h.warn>h.T*.45) { const ta=Math.atan2(p.y-h.boss.y,p.x-h.boss.x), d=((ta-h.ang+Math.PI*3)%(Math.PI*2))-Math.PI; h.ang+=d*Math.min(1,dt*3); } if(h.warn<=0) SFX.laserBoss(); continue; }
+   if(h.warn>0){ h.warn-=dt; if(!h.fixed && h.warn>h.T*.45) { const ta=Math.atan2(p.y-h.boss.y,p.x-h.boss.x), d=((ta-h.ang+Math.PI*3)%(Math.PI*2))-Math.PI; h.ang+=d*Math.min(1,dt*3); } if(h.warn<=0){ BSFX.laserFire(); G.shake=Math.max(G.shake,.12); } continue; }
    h.on-=dt; if(h.on<=0){ h.done=true; continue; }
    const bx=h.boss.x, by=h.boss.y, cx=Math.cos(h.ang), cy=Math.sin(h.ang), t=(p.x-bx)*cx+(p.y-by)*cy;
    if(!h.hit && t>0 && t<h.len && Math.abs(-(p.x-bx)*cy+(p.y-by)*cx)<h.w/2+p.r-4 && p.inv<=0){ h.hit=true; damagePlayer(h.dmg); }
   } else if(h.kind==="bomb"){
-   h.warn-=dt; if(h.warn<=0){ h.done=true; SFX.boom(); G.shake=Math.max(G.shake,.18);
+   h.warn-=dt; if(h.warn<=0){ h.done=true; BSFX.boom(); G.shake=Math.max(G.shake,.18);
     for(let i=0;i<14;i++) G.fx.push({kind:"spark",x:h.x,y:h.y,vx:rnd(-220,220),vy:rnd(-220,220),life:.45,T:.45,col:h.boss.col});
     G.fx.push({kind:"ring",x:h.x,y:h.y,r:10,R:h.r,life:.3,T:.3,col:"#ffb02e"});
     if(Math.hypot(p.x-h.x,p.y-h.y)<h.r+p.r-4 && p.inv<=0) damagePlayer(h.dmg); }
