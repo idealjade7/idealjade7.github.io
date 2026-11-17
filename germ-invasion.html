@@ -790,8 +790,22 @@ const HEROES = [
  {id:"m2", name:"남학생 2", hair:"spiky", female:false, hc:["#17131f","#2a2433","#4a4058"], skin:["#f3c69a","#d99f74"], shirt:["#3fb37f","#2a7d58"], legs:["#3a3f4a","#262a33"]},
  {id:"f1", name:"여학생 1", hair:"pony",  female:true,  hc:["#17131f","#2a2433","#4a4058"], skin:["#fad6b4","#e5ae8a"], shirt:["#e04a6a","#a8304b"], legs:["#34406e","#232b4f"], tie:"#e04a6a"},
  {id:"f2", name:"여학생 2", hair:"bob",   female:true,  hc:["#6b3518","#93501f","#c07a3e"], skin:["#f9d3ab","#e2aa82"], shirt:["#9b6bff","#6f45c9"], legs:["#5a3b6e","#3e2850"], tie:"#ff7bd5", pin:"#ff9cf6"},
+ // 사진 속 캐릭터를 도트로 옮긴 선생님 캐릭터
+ {id:"sm", name:"상민", chibi:"sm", hair:"mop", lip:"#7a3b34", female:false, glasses:true, blush:true, collar:true, coat:["#cfe0ef","#b3c8dc","#8ea6bf"], hc:["#141018","#23202b","#3d3848"], skin:["#fbe3c4","#e8c29c"], shirt:["#ffffff","#e6ecf3"], legs:["#4a5568","#323a48"]},
+ {id:"sh", name:"소희", chibi:"sh", hair:"hime", female:false, lip:"#e0475a", coat:["#fbf6ea","#ece2cc","#cdbf9f"], neck:true, hc:["#120d10","#221a1e","#4a3a36"], skin:["#fde8dc","#ecc6b6"], shirt:["#fbf6ea","#ece2cc"], legs:["#3a3340","#27222c"]},
 ];
 const HC={W:"#f6f8fd",w:"#cfd6e8",v:"#98a2bd",F:"#2d3350",G:"#58d2ff",g:"#e6fdff",O:"#3a2a24",o:"#1f1613",m:"#c0605a",e:"#1a1426",b:"#f2a0a0",y:"#ffcf3f",C:"#d8f1ff",c:"#5ff0a0",x:"#2fbf74",sock:"#f2f2f7"};
+// 사진 캐릭터는 머리를 크게(16×15) 손으로 찍은 도트로 그려요.
+const HEAD_PIX={"sm": {"down": ["....hhhhhhhh....", "..hhHHHHHHHHhh..", ".hHHHLLLHHHHHHh.", "hHHHHHHLLHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHLHHHHh", "hHHHHHHSSSSSHHHh", "hHSGGGSSSSGGGSHh", "sSGSSWGGGGSSWGSs", "sSGSESGSSGSESGSs", ".SGSESGSSGSESGS.", ".SSGGGSSSSGGGSS.", ".SPPSSSSSSSSPPS.", "..sSSSMSSMSSSs..", "...sssSMMSsss..."], "dside": [".....hhhhhhhh...", "...hhHHHHHHHHh..", "..hHHHHLLLHHHHh.", ".hHHHHHHHLLHHHHh", ".hHHHHHHHHHHHHHh", "hHHHHHHHHHHHLHHh", "hHHHHHHHHSSSSSHh", "hHHHSSGGGSSSGGSh", "hHssSGSSWGGGSWG.", "hHssSGSESGSGESG.", "hHsSSGSESGSGESG.", ".hSSSSGGGSSSGGS.", ".hSSSPPSSSSSSPS.", "..sSSSSSMSSMSS..", "...sssSSSMMSs..."], "side": [".....hhhhhhh....", "...hhHHHHHHHh...", "..hHHHHLLLHHHh..", ".hHHHHHHHLLHHHh.", ".hHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHSSSSh", "hHHHHHHHSSSGGGS.", "hHHHHHssSSGSSWG.", "hHHHHHssSSGSESGS", ".hHHHHHSSSGSESG.", ".hHHHHSSSSSGGGS.", "..hHHSSSSSSSPSS.", "...sSSSSSSSSMSS.", "....sssSSSSMMs.."], "up": ["....hhhhhhhh....", "..hhHHHHHHHHhh..", ".hHHHHLLLHHHHHh.", "hHHHHHHLLHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "GHHHHHHHHHHHHHHG", "sHHHHHHHHHHHHHHs", ".hHHHHHHHHHHHHh.", ".hHHHHHHHHHHHHh.", "..hHHHHHHHHHHh..", "..ssHHHHHHHHss..", "...ssssssssss..."]}, "sh": {"down": ["....hhhhhhhh....", "..hhHHHHHHHHhh..", ".hHHHHLLLLHHHHh.", "hHHHHHHLLHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHhhhhhhhhhhHHh", "hHHSSSSSSSSSSHHh", "hHHSEESSSSEESHHh", "hHHSEWSSSSWESHHh", "hHHSSSSSSSSSSHHh", "hHHPPSSSSSSPPHHh", "hHHSSSSRRSSSSHHh", "hHHHsSSSSSSsHHHh", ".LHHHssssssHHHL."], "dside": [".....hhhhhhhh...", "...hhHHHHHHHHh..", "..hHHHHHLLLHHHh.", ".hHHHHHHHHLLHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHhhhhhhhhHh", "hHHHHHSSSSSSSSHh", "hHHHHSEESSSEESHh", "hHHHHSEWSSSWESHh", "hHHHHSSSSSSSSSHh", "hHHHHSPPSSSSPSHh", "hHHHHHSSSRRSSSh.", "hHHHHHHsSSSSsHh.", ".LHHHHHHssssHHL."], "side": [".....hhhhhhh....", "...hhHHHHHHHh...", "..hHHHHHLLLHHh..", ".hHHHHHHHHLLHHh.", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHhhhhhh", "hHHHHHHHHHSSSSS.", "hHHHHHHHHSSSEES.", "hHHHHHHHHSSSWES.", "hHHHHHHHHSSSSSSS", "hHHHHHHHHSSSSPS.", "hHHHHHHHHHSSSRS.", "hHHHHHHHHHHsSs..", ".LHHHHHHHHHL...."], "up": ["....hhhhhhhh....", "..hhHHHHHHHHhh..", ".hHHHHLLLLHHHHh.", "hHHHHHHLLHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", "hHHHHHHHHHHHHHHh", ".LHHHHHHHHHHHHL."]}};
+function stampHead(P, H, dir, y0, st){
+ const v = dir==="uside" ? "up" : dir; const rows = HEAD_PIX[H.chibi][v]; if(!rows) return;
+ const hc=H.hc, S=H.skin;
+ const pal={h:hc[0],H:hc[1],L:hc[2],S:S[0],s:S[1],E:"#1a1426",W:"#ffffff",G:"#1b1620",P:"#f59aa8",M:"#7a3b34",R:H.lip||"#e0475a"};
+ const x0 = dir==="dside"?5:(dir==="uside"?5:4);
+ rows.forEach((r,y)=>{ for(let x=0;x<16;x++){ let c=r[x]; if(c===".") continue;
+  if(st.blink && (c==="E"||c==="W") && (v==="down"||v==="dside"||v==="side")){ const below=rows[y+1]&&rows[y+1][x]; c = (below==="E"||below==="W") ? "S" : "E"; }
+  P.set(x0+x, y0+y, pal[c]); } });
+}
 function heroPix(H, dir, fr, st){
  const P=new Pix(24,31), S=H.skin, hc=H.hc, walking=fr>=0;
  const bob = walking ? ((fr===1||fr===3)?-1:0) : (st.breath?1:0);
@@ -816,7 +830,8 @@ function heroPix(H, dir, fr, st){
   // 앞다리
   R(pos[0],22-lift,3,5,legC[0]); if(H.female) R(pos[0],24-lift,3,3,HC.sock); shoe(pos[0],27-lift,4);
  }
- const T=13+bob;   // 어깨 높이
+ const T=(H.chibi?15:13)+bob;   // 어깨 높이
+ const CW=H.coat?H.coat[0]:HC.W, Cw=H.coat?H.coat[1]:HC.w, Cv=H.coat?H.coat[2]:HC.v;
  // ---------- 뒤쪽 머리(포니테일 등) ----------
  const swing = walking ? [1,0,-1,0][fr] : 0;
  if(H.hair==="pony"){
@@ -827,32 +842,38 @@ function heroPix(H, dir, fr, st){
  }
  // ---------- 몸통(가운) ----------
  if(!side){
-  R(6,T,12,9,HC.W); R(5,T+5,14,5,HC.W); R(5,T+9,14,1,HC.w);
-  R(15,T+1,2,8,HC.w); R(17,T+5,2,5,HC.v);
-  if(!back){
+  R(6,T,12,9,CW); R(5,T+5,14,5,CW); R(5,T+9,14,1,Cw);
+  R(15,T+1,2,8,Cw); R(17,T+5,2,5,Cv);
+  if(!back && H.coat){
+   if(H.collar){ R(8+o,T,3,2,"#ffffff"); R(13+o,T,3,2,"#ffffff"); D(10+o,T+2,"#ffffff"); D(13+o,T+2,"#ffffff"); D(11+o,T,Cv); D(12+o,T,Cv); }
+   if(H.neck){ R(10+o,T,4,1,H.skin[1]); R(9+o,T+1,6,1,Cw); }
+   R(6,T+8,12,1,Cw); for(let i=0;i<6;i++) D(7+i*2,T+9,Cv);   // 니트 밑단
+   if(q) R(5,T+1,2,8,Cw);
+  } else if(!back){
    if(H.female){ R(10+o,T,4,6,"#ffffff"); R(11+o,T,2,2,H.tie); D(10+o,T+1,H.tie); D(13+o,T+1,H.tie); R(7,T+7,10,3,H.legs[0]); R(7,T+9,10,1,H.legs[1]); for(let i=0;i<5;i++) D(8+i*2,T+8,H.legs[1]); }
    else { R(10+o,T,4,6,H.shirt[0]); R(11+o,T+1,2,5,H.shirt[1]); }
    R(9+o,T,1,6,HC.w); R(14+o,T,1,6,HC.w);        // 옷깃
    R(6,T+7,3,1,HC.w); if(!q) D(15,T+2,HC.y); else R(5,T+1,2,8,HC.w);   // 주머니, 배지 / ¾: 왼쪽 옆구리 그늘
-  } else { R(11+o,T+4,2,6,HC.w); R(6,T+6,12,1,HC.w); if(qu) R(16,T+1,2,8,HC.v); }
+  } else { if(!H.coat){ R(11+o,T+4,2,6,HC.w); R(6,T+6,12,1,HC.w); } else R(6,T+8,12,1,Cw); if(qu) R(16,T+1,2,8,Cv); }
  } else {
-  R(8,T,8,9,HC.W); R(7,T+5,10,5,HC.W); R(7,T+9,10,1,HC.w); R(14,T+1,2,8,HC.w); R(16,T+5,1,5,HC.v);
-  R(15,T,1,5,H.female?"#ffffff":H.shirt[0]); if(H.female){ R(8,T+7,8,3,H.legs[0]); }
+  R(8,T,8,9,CW); R(7,T+5,10,5,CW); R(7,T+9,10,1,Cw); R(14,T+1,2,8,Cw); R(16,T+5,1,5,Cv);
+  if(H.collar){ R(14,T,3,2,"#ffffff"); } else if(!H.coat) R(15,T,1,5,H.female?"#ffffff":H.shirt[0]); if(H.female){ R(8,T+7,8,3,H.legs[0]); }
  }
  // ---------- 팔 ----------
  const flask=(x,y)=>{ R(x,y,3,5,HC.C); R(x,y+2,3,3,HC.c); D(x,y+2,"#ffffff"); D(x+1,y-1,HC.C); };
  if(!side){
   const aL=back?-sw:sw, aR=-aL;
-  if(q){ R(5,T+2+aL,2,6,HC.w); R(5,T+8+aL,2,2,S[1]); }
-  else { R(4,T+1+aL,2,7,HC.W); R(4,T+1+aL,1,7,HC.w); R(4,T+8+aL,2,2,S[0]); }
-  R(18,T+1+aR,2,7,HC.W); R(19,T+1+aR,1,7,HC.v); R(18,T+8+aR,2,2,S[0]);
+  if(q){ R(5,T+2+aL,2,6,Cw); R(5,T+8+aL,2,2,S[1]); }
+  else { R(4,T+1+aL,2,7,CW); R(4,T+1+aL,1,7,Cw); R(4,T+8+aL,2,2,S[0]); }
+  R(18,T+1+aR,2,7,CW); R(19,T+1+aR,1,7,Cv); R(18,T+8+aR,2,2,S[0]);
   if(back) flask(q?2:1,T+6+aL); else flask(20,T+6+aR);
  } else {
   const fx=11+sw*2;                         // 아래팔 위치(앞뒤로 흔들림)
-  R(11,T+1,3,4,HC.W); R(fx,T+4,3,4,HC.W);
-  R(11,T+1,1,4,HC.v); R(fx,T+4,1,4,HC.v); R(13,T+1,1,3,HC.w); R(fx+2,T+4,1,4,HC.w);
+  R(11,T+1,3,4,CW); R(fx,T+4,3,4,CW);
+  R(11,T+1,1,4,Cv); R(fx,T+4,1,4,Cv); R(13,T+1,1,3,Cw); R(fx+2,T+4,1,4,Cw);
   R(fx,T+8,3,2,S[0]); flask(fx+3,T+5);
  }
+ if(H.chibi){ stampHead(P,H,dir,bob,st); } else {
  // ---------- 머리 ----------
  const hy=T-11;
  if(!side){
@@ -863,19 +884,20 @@ function heroPix(H, dir, fr, st){
   R(7,hy,10,10,S[0]); R(6,hy+1,12,8,S[0]); R(18,hy+5,1,2,S[0]); R(17,hy+6,2,1,S[1]);   // 코
  }
  // ---------- 얼굴 ----------
+ const MC=H.lip||HC.m, BC=H.blush?"#f59aa8":HC.b;
  if(!back){
   const ey=hy+5;
   if(qd){
    if(st.blink){ R(10,ey+1,2,1,HC.e); R(15,ey+1,2,1,HC.e); }
    else { R(10,ey,2,2,HC.e); R(15,ey,2,2,HC.e); D(10,ey,"#ffffff"); D(15,ey,"#ffffff"); }
-   D(9,ey+2,HC.b); D(17,ey+2,HC.b); R(13,ey+3,2,1,HC.m); R(7,ey,2,2,S[1]);   // 귀
+   D(9,ey+2,BC); D(17,ey+2,BC);  R(13,ey+3,2,1,MC); R(7,ey,2,2,S[1]);   // 귀
   } else if(!side){
    if(st.blink){ R(8,ey+1,2,1,HC.e); R(14,ey+1,2,1,HC.e); }
    else { R(8,ey,2,2,HC.e); R(14,ey,2,2,HC.e); D(8,ey,"#ffffff"); D(14,ey,"#ffffff"); }
-   D(7,ey+2,HC.b); D(16,ey+2,HC.b); R(11,ey+3,2,1,HC.m);
+   D(7,ey+2,BC); D(16,ey+2,BC);  R(11,ey+3,2,1,MC); if(H.blush){ D(10,ey+3,MC); D(13,ey+3,MC); R(11,ey+4,2,1,MC); R(11,ey+3,2,1,S[0]); }
   } else {
    if(st.blink) R(14,ey+1,2,1,HC.e); else { R(14,ey,2,2,HC.e); D(14,ey,"#ffffff"); }
-   D(16,ey+2,HC.b); R(16,ey+3,2,1,HC.m); R(10,ey,2,2,S[1]);    // 귀
+   D(16,ey+2,BC); R(16,ey+3,2,1,MC); R(10,ey,2,2,S[1]);    // 귀
   }
  }
  // ---------- 머리카락 ----------
@@ -902,12 +924,39 @@ function heroPix(H, dir, fr, st){
   if(H.hair==="spiky") for(const x of [7,10,13]) R(x,hy-2,2,1,hc[1]);
   if(H.hair==="bob"){ R(6,hy+3,5,7,hc[1]); D(12,hy+2,H.pin); }
  }
+ // ---------- 사진 캐릭터 전용 머리 ----------
+ if(H.hair==="mop"){   // 상민: 둥근 바가지 머리 + 옆으로 넘긴 앞머리 한 가닥
+  R(6,hy-2,12,1,hc[1]); R(5,hy-1,14,4,hc[1]); R(8,hy-2,4,1,hc[2]);
+  if(back){ R(5,hy+3,14,6,hc[1]); R(5,hy+3,1,5,hc[0]); R(18,hy+3,1,5,hc[0]); R(7,hy,3,2,hc[2]); }
+  else if(qd){ R(6,hy+3,9,1,hc[1]); R(6,hy+4,3,3,hc[1]); R(14,hy+3,2,2,hc[1]); R(17,hy+2,2,3,hc[1]); R(9,hy,4,1,hc[2]); }
+  else if(!side){ R(5,hy+3,9,1,hc[1]); R(5,hy+4,2,3,hc[1]); R(17,hy+3,2,3,hc[1]); R(13,hy+3,2,2,hc[1]); R(8,hy,4,1,hc[2]); D(14,hy+3,hc[2]); }
+  else { R(5,hy+3,8,4,hc[1]); R(6,hy+7,4,2,hc[1]); R(13,hy+3,5,1,hc[1]); R(17,hy+4,1,1,hc[1]); R(7,hy,3,1,hc[2]); }
+ }
+ if(H.hair==="hime"){   // 소희: 일자 앞머리 + 어깨까지 오는 단발, 끝이 살짝 바깥으로
+  R(6,hy-2,12,1,hc[1]); R(5,hy-1,14,4,hc[1]); R(9,hy-1,4,1,hc[2]);
+  if(back){ R(4,hy+3,16,9,hc[1]); R(4,hy+3,1,9,hc[0]); R(19,hy+3,1,9,hc[0]); D(4,hy+11,hc[2]); D(19,hy+11,hc[2]); R(6,hy+12,12,1,hc[1]); }
+  else if(qd){ R(7,hy+3,11,2,hc[1]); R(4,hy+3,4,9,hc[1]); R(4,hy+3,1,9,hc[0]); D(4,hy+11,hc[2]); R(17,hy+3,3,8,hc[1]); D(19,hy+10,hc[2]); R(10,hy+3,5,1,hc[0]); }
+  else if(!side){ R(6,hy+3,12,2,hc[1]); R(7,hy+4,10,1,hc[0]); R(4,hy+3,3,9,hc[1]); R(17,hy+3,3,9,hc[1]); R(4,hy+3,1,9,hc[0]); R(19,hy+3,1,9,hc[0]); D(4,hy+11,hc[2]); D(19,hy+11,hc[2]); }
+  else { R(4,hy+3,9,9,hc[1]); R(4,hy+3,1,9,hc[0]); D(4,hy+11,hc[2]); R(13,hy+3,5,2,hc[1]); R(14,hy+4,4,1,hc[0]); }
+ }
+ // ---------- 안경 ----------
+ if(H.glasses && !back){ const ey=hy+5, G0="#1b1620", L0="rgba(220,240,255,.0)";
+  // 동그란 안경 안에 세로로 긴 눈(키링 캐릭터처럼)
+  const lens=(x,ex)=>{ R(x+1,ey-1,2,1,G0); R(x+1,ey+2,2,1,G0); R(x,ey,1,2,G0); R(x+3,ey,1,2,G0); R(x+1,ey,2,2,"#fff6ea");
+   if(st.blink) R(x+1,ey+1,2,1,HC.e); else { R(ex,ey,1,2,HC.e); } };
+  if(qd){ lens(9,11); lens(14,15); D(13,ey,G0); R(7,ey,2,1,G0); }
+  else if(!side){ lens(7,9); lens(13,14); R(11,ey,2,1,G0); R(5,ey,2,1,G0); R(17,ey,2,1,G0); }
+  else { lens(13,15); R(10,ey,3,1,G0); }
+ }
  // ---------- 고글(이마 위) ----------
  const gy=hy+1;
+ if(!H.glasses && !H.coat){
  if(back){ R(5,gy+1,14,1,HC.F); if(qu){ R(17,gy,2,3,HC.F); D(18,gy+1,HC.G); } }
  else if(qd){ R(5,gy+1,14,1,HC.F); R(9,gy,4,3,HC.F); R(14,gy,4,3,HC.F); R(10,gy+1,2,1,HC.G); R(15,gy+1,2,1,HC.G); D(10,gy+1,HC.g); D(15,gy+1,HC.g); }
  else if(!side){ R(5,gy+1,14,1,HC.F); R(7,gy,4,3,HC.F); R(13,gy,4,3,HC.F); R(8,gy+1,2,1,HC.G); R(14,gy+1,2,1,HC.G); D(8,gy+1,HC.g); D(14,gy+1,HC.g); }
  else { R(6,gy+1,12,1,HC.F); R(13,gy,4,3,HC.F); R(14,gy+1,2,1,HC.G); D(14,gy+1,HC.g); }
+ }
+ }
  outline(P,K_OUT);
  return P;
 }
@@ -1983,6 +2032,12 @@ function drawHero(){
  const img = hurt ? (H.red.get(fr)||fr) : fr;
  ctx.drawImage(img, -24 + (hurt?(Math.random()<.5?-1:1):0), -32);
  ctx.globalAlpha=1; ctx.restore();
+ // 머리 위 체력바
+ const W=34, hpR=Math.max(0,Math.min(1,p.hp/p.maxhp)), bx=Math.round(p.x-W/2), by=Math.round(p.y-40);
+ ctx.fillStyle="rgba(10,6,18,.85)"; ctx.fillRect(bx-1,by-1,W+2,6);
+ ctx.fillStyle="#3a1f2a"; ctx.fillRect(bx,by,W,4);
+ ctx.fillStyle = hpR>.5?"#4fe38a":hpR>.25?"#ffcf3f":"#ff4f5e"; ctx.fillRect(bx,by,Math.round(W*hpR),4);
+ ctx.fillStyle="rgba(255,255,255,.35)"; ctx.fillRect(bx,by,Math.round(W*hpR),1);
 }
 function drawBoss(e){
  const r=e.r, t=G.t, B=bossFrames(e.k), fi=Math.floor(t*3)%2, img=e.hitT>0?B.hit[fi]:B.n[fi];
