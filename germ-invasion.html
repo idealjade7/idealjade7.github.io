@@ -781,15 +781,16 @@ function heroPix(H, dir, fr, st){
  const bob = walking ? ((fr===1||fr===3)?-1:0) : (st.breath?1:0);
  const sw = walking ? [1,0,-1,0][fr] : 0;             // 팔 흔들기
  const R=(x,y,w,h,c)=>P.rect(x,y,w,h,c), D=(x,y,c)=>P.set(x,y,c);
- const side=dir==="side", back=dir==="up";
+ const side=dir==="side", qd=dir==="dside", qu=dir==="uside", back=dir==="up"||qu, q=qd||qu, o=q?2:0;   // o: ¾ 방향일 때 얼굴·옷 앞섶을 오른쪽으로 옮기는 양
  // ---------- 다리 ----------
  const shoe=(x,y,w)=>{ R(x,y,w,2,HC.O); R(x,y+1,w,1,HC.o); };
  if(!side){
   const liftL = walking&&fr===2?1:0, liftR = walking&&fr===0?1:0;
+  const lx = 8 + (q&&walking&&fr===2?1:0), rx = 13 + (q?1:0) + (q&&walking&&fr===0?1:0);
   if(H.female){
-   R(8,22-liftL,3,5,S[0]); R(13,22-liftR,3,5,S[0]); R(8,24-liftL,3,3,HC.sock); R(13,24-liftR,3,3,HC.sock);
-  } else { R(8,22-liftL,3,5,H.legs[0]); R(13,22-liftR,3,5,H.legs[0]); R(10,22-liftL,1,5,H.legs[1]); R(15,22-liftR,1,5,H.legs[1]); }
-  shoe(7,27-liftL,4); shoe(13,27-liftR,4);
+   R(lx,22-liftL,3,5,S[0]); R(rx,22-liftR,3,5,S[0]); R(lx,24-liftL,3,3,HC.sock); R(rx,24-liftR,3,3,HC.sock);
+  } else { R(lx,22-liftL,3,5,H.legs[0]); R(rx,22-liftR,3,5,H.legs[0]); R(lx+2,22-liftL,1,5,H.legs[1]); R(rx+2,22-liftR,1,5,H.legs[1]); }
+  shoe(lx-1+(q?1:0),27-liftL,4); shoe(rx+(q?1:0),27-liftR,4);
  } else {
   const pos=[[13,7],[11,10],[7,13],[10,11]][walking?fr:1].map(v=>v+0);   // 앞다리 x, 뒷다리 x
   const lift = walking&&(fr===1||fr===3)?1:0;
@@ -804,6 +805,7 @@ function heroPix(H, dir, fr, st){
  const swing = walking ? [1,0,-1,0][fr] : 0;
  if(H.hair==="pony"){
   if(back){}
+  else if(qd){ R(2+swing,T-8,4,3,hc[1]); R(2+swing,T-5,3,4,hc[1]); R(3+swing,T-7,1,3,hc[2]); R(5,T-8,2,2,H.tie); }
   else if(side){ R(2+swing,T-8,5,4,hc[1]); R(1+swing,T-5,4,5,hc[1]); R(2+swing,T-7,2,3,hc[2]); R(6,T-8,2,2,H.tie); }
   else { R(17+(swing>0?1:0),T-7,2,7,hc[0]); }
  }
@@ -812,11 +814,11 @@ function heroPix(H, dir, fr, st){
   R(6,T,12,9,HC.W); R(5,T+5,14,5,HC.W); R(5,T+9,14,1,HC.w);
   R(15,T+1,2,8,HC.w); R(17,T+5,2,5,HC.v);
   if(!back){
-   if(H.female){ R(10,T,4,6,"#ffffff"); R(11,T,2,2,H.tie); D(10,T+1,H.tie); D(13,T+1,H.tie); R(7,T+7,10,3,H.legs[0]); R(7,T+9,10,1,H.legs[1]); for(let i=0;i<5;i++) D(8+i*2,T+8,H.legs[1]); }
-   else { R(10,T,4,6,H.shirt[0]); R(11,T+1,2,5,H.shirt[1]); }
-   R(9,T,1,6,HC.w); R(14,T,1,6,HC.w);        // 옷깃
-   R(6,T+7,3,1,HC.w); D(15,T+2,HC.y);         // 주머니, 배지
-  } else { R(11,T+4,2,6,HC.w); R(6,T+6,12,1,HC.w); }
+   if(H.female){ R(10+o,T,4,6,"#ffffff"); R(11+o,T,2,2,H.tie); D(10+o,T+1,H.tie); D(13+o,T+1,H.tie); R(7,T+7,10,3,H.legs[0]); R(7,T+9,10,1,H.legs[1]); for(let i=0;i<5;i++) D(8+i*2,T+8,H.legs[1]); }
+   else { R(10+o,T,4,6,H.shirt[0]); R(11+o,T+1,2,5,H.shirt[1]); }
+   R(9+o,T,1,6,HC.w); R(14+o,T,1,6,HC.w);        // 옷깃
+   R(6,T+7,3,1,HC.w); if(!q) D(15,T+2,HC.y); else R(5,T+1,2,8,HC.w);   // 주머니, 배지 / ¾: 왼쪽 옆구리 그늘
+  } else { R(11+o,T+4,2,6,HC.w); R(6,T+6,12,1,HC.w); if(qu) R(16,T+1,2,8,HC.v); }
  } else {
   R(8,T,8,9,HC.W); R(7,T+5,10,5,HC.W); R(7,T+9,10,1,HC.w); R(14,T+1,2,8,HC.w); R(16,T+5,1,5,HC.v);
   R(15,T,1,5,H.female?"#ffffff":H.shirt[0]); if(H.female){ R(8,T+7,8,3,H.legs[0]); }
@@ -825,9 +827,10 @@ function heroPix(H, dir, fr, st){
  const flask=(x,y)=>{ R(x,y,3,5,HC.C); R(x,y+2,3,3,HC.c); D(x,y+2,"#ffffff"); D(x+1,y-1,HC.C); };
  if(!side){
   const aL=back?-sw:sw, aR=-aL;
-  R(4,T+1+aL,2,7,HC.W); R(4,T+1+aL,1,7,HC.w); R(4,T+8+aL,2,2,S[0]);
+  if(q){ R(5,T+2+aL,2,6,HC.w); R(5,T+8+aL,2,2,S[1]); }
+  else { R(4,T+1+aL,2,7,HC.W); R(4,T+1+aL,1,7,HC.w); R(4,T+8+aL,2,2,S[0]); }
   R(18,T+1+aR,2,7,HC.W); R(19,T+1+aR,1,7,HC.v); R(18,T+8+aR,2,2,S[0]);
-  if(back) flask(1,T+6+aL); else flask(20,T+6+aR);
+  if(back) flask(q?2:1,T+6+aL); else flask(20,T+6+aR);
  } else {
   const fx=11+sw*2;                         // 아래팔 위치(앞뒤로 흔들림)
   R(11,T+1,3,4,HC.W); R(fx,T+4,3,4,HC.W);
@@ -838,14 +841,19 @@ function heroPix(H, dir, fr, st){
  const hy=T-11;
  if(!side){
   R(7,hy,10,10,S[0]); R(6,hy+1,12,8,S[0]); R(16,hy+2,1,7,S[1]); R(8,hy+9,8,1,S[1]);
-  if(!back){ R(5,hy+5,1,2,S[1]); R(18,hy+5,1,2,S[1]); }
+  if(!back&&!q){ R(5,hy+5,1,2,S[1]); R(18,hy+5,1,2,S[1]); }
+  if(qd){ R(18,hy+5,1,2,S[0]); }
  } else {
   R(7,hy,10,10,S[0]); R(6,hy+1,12,8,S[0]); R(18,hy+5,1,2,S[0]); R(17,hy+6,2,1,S[1]);   // 코
  }
  // ---------- 얼굴 ----------
  if(!back){
   const ey=hy+5;
-  if(!side){
+  if(qd){
+   if(st.blink){ R(10,ey+1,2,1,HC.e); R(15,ey+1,2,1,HC.e); }
+   else { R(10,ey,2,2,HC.e); R(15,ey,2,2,HC.e); D(10,ey,"#ffffff"); D(15,ey,"#ffffff"); }
+   D(9,ey+2,HC.b); D(17,ey+2,HC.b); R(13,ey+3,2,1,HC.m); R(7,ey,2,2,S[1]);   // 귀
+  } else if(!side){
    if(st.blink){ R(8,ey+1,2,1,HC.e); R(14,ey+1,2,1,HC.e); }
    else { R(8,ey,2,2,HC.e); R(14,ey,2,2,HC.e); D(8,ey,"#ffffff"); D(14,ey,"#ffffff"); }
    D(7,ey+2,HC.b); D(16,ey+2,HC.b); R(11,ey+3,2,1,HC.m);
@@ -861,7 +869,13 @@ function heroPix(H, dir, fr, st){
   if(H.hair==="bob"||H.hair==="pony") { R(5,hy+8,14,2,hc[1]); }
   else R(8,hy+9,8,1,S[1]);
   if(H.hair==="spiky") for(const x of [7,10,13,16]) R(x,hy-2,2,1,hc[1]);
- if(H.hair==="pony"){ const px=10+swing; R(10,T-7,4,2,H.tie); R(px,T-5,4,3,hc[1]); R(px+1,T-2,3,3,hc[1]); R(px+1,T+1,2,2,hc[0]); R(px+1,T-5,1,4,hc[2]); }
+  if(qu){ R(17,hy+4,2,4,S[0]); R(18,hy+5,1,2,S[1]); D(16,hy+5,S[1]); if(H.hair==="bob") R(17,hy+3,2,4,hc[1]); }
+ if(H.hair==="pony"){ const px=(qu?8:10)+swing; R(px,T-7,4,2,H.tie); R(px,T-5,4,3,hc[1]); R(px+1,T-2,3,3,hc[1]); R(px+1,T+1,2,2,hc[0]); R(px+1,T-5,1,4,hc[2]); }
+ } else if(qd){
+  hairTop(); R(6,hy+3,3,4,hc[1]); R(6,hy+7,2,2,hc[1]); R(9,hy+3,3,1,hc[1]); R(16,hy+3,2,1,hc[1]); R(18,hy+3,1,2,hc[1]);
+  if(H.hair==="spiky"){ for(const x of [7,10,13,16]) R(x,hy-2,2,1,hc[1]); }
+  if(H.hair==="bob"){ R(5,hy+3,3,7,hc[1]); R(5,hy+3,1,7,hc[0]); R(17,hy+3,2,6,hc[1]); R(10,hy+3,6,1,hc[1]); D(17,hy+3,H.pin); D(18,hy+2,H.pin); }
+  if(H.hair==="pony"){ R(6,hy+3,2,6,hc[1]); R(17,hy+3,2,4,hc[1]); }
  } else if(!side){
   hairTop(); R(7,hy+3,3,1,hc[1]); R(14,hy+3,3,1,hc[1]); R(6,hy+3,1,3,hc[1]); R(17,hy+3,1,3,hc[1]);
   if(H.hair==="spiky"){ for(const x of [7,10,13,16]) R(x,hy-2,2,1,hc[1]); R(11,hy+3,2,1,hc[1]); }
@@ -874,7 +888,8 @@ function heroPix(H, dir, fr, st){
  }
  // ---------- 고글(이마 위) ----------
  const gy=hy+1;
- if(back){ R(5,gy+1,14,1,HC.F); }
+ if(back){ R(5,gy+1,14,1,HC.F); if(qu){ R(17,gy,2,3,HC.F); D(18,gy+1,HC.G); } }
+ else if(qd){ R(5,gy+1,14,1,HC.F); R(9,gy,4,3,HC.F); R(14,gy,4,3,HC.F); R(10,gy+1,2,1,HC.G); R(15,gy+1,2,1,HC.G); D(10,gy+1,HC.g); D(15,gy+1,HC.g); }
  else if(!side){ R(5,gy+1,14,1,HC.F); R(7,gy,4,3,HC.F); R(13,gy,4,3,HC.F); R(8,gy+1,2,1,HC.G); R(14,gy+1,2,1,HC.G); D(8,gy+1,HC.g); D(14,gy+1,HC.g); }
  else { R(6,gy+1,12,1,HC.F); R(13,gy,4,3,HC.F); R(14,gy+1,2,1,HC.G); D(14,gy+1,HC.g); }
  outline(P,K_OUT);
@@ -884,10 +899,10 @@ function buildHeroSet(H){
  const mk=(dir,fr,st={})=>heroPix(H,dir,fr,st).canvas(2);
  const tint=(src)=>{ const c=document.createElement("canvas"); c.width=src.width; c.height=src.height; const x=c.getContext("2d"); x.drawImage(src,0,0); x.globalCompositeOperation="source-atop"; x.fillStyle="rgba(255,70,70,.7)"; x.fillRect(0,0,c.width,c.height); return c; };
  const set={};
- for(const dir of ["down","up","side"]){
+ for(const dir of ["down","dside","side","uside","up"]){
   set[dir]={walk:[0,1,2,3].map(f=>mk(dir,f)), idle:[mk(dir,-1,{}),mk(dir,-1,{breath:1})], blink:mk(dir,-1,{blink:1})};
  }
- set.red=new Map(); for(const dir of ["down","up","side"]) for(const c of [...set[dir].walk,...set[dir].idle,set[dir].blink]) set.red.set(c,tint(c));
+ set.red=new Map(); for(const dir of ["down","dside","side","uside","up"]) for(const c of [...set[dir].walk,...set[dir].idle,set[dir].blink]) set.red.set(c,tint(c));
  return set;
 }
 const HERO_SETS={};
@@ -1786,9 +1801,12 @@ function draw(){
 function drawHero(){
  const p=G.p, H=heroSet(sel.hero);
  if(p.moving){
-  const ax=Math.abs(p.mvx||0), ay=Math.abs(p.mvy||0);
-  if(ax>ay*1.15) p.dir="side"; else if(ay>ax*1.15) p.dir=(p.mvy<0?"up":"down");
-  if(p.dir==="side" && ax>.1) p.flipS = p.mvx<0;
+  // 8방향: 이동 각도를 45°씩 나누고, 경계 근처에서는 이전 방향을 유지해 깜빡임을 막는다
+  const ang=Math.atan2(p.mvy||0,p.mvx||0), sec=((Math.round(ang/(Math.PI/4))%8)+8)%8;
+  const center=(p.sec??sec)*Math.PI/4; let dif=Math.abs(((ang-center+Math.PI*3)%(Math.PI*2))-Math.PI);
+  if(p.sec===undefined || dif>Math.PI/8+.12) p.sec=sec;
+  const MAP=[["side",0],["dside",0],["down",0],["dside",1],["side",1],["uside",1],["up",0],["uside",0]];
+  p.dir=MAP[p.sec][0]; p.flipS=!!MAP[p.sec][1];
  }
  const dir=p.dir||"down", set=H[dir];
  let fr, step=-1;
@@ -1799,7 +1817,7 @@ function drawHero(){
  const fade = p.inv>0 && !hurt && Math.floor(G.t*16)%2;
  ctx.save(); ctx.translate(Math.round(p.x),Math.round(p.y));
  ctx.fillStyle="rgba(0,0,0,.38)"; ctx.beginPath(); ctx.ellipse(0,26,13,4,0,0,7); ctx.fill();
- if(dir==="side" && p.flipS) ctx.scale(-1,1);
+ if(p.flipS && dir!=="down" && dir!=="up") ctx.scale(-1,1);
  ctx.globalAlpha = fade ? .45 : 1;
  const img = hurt ? (H.red.get(fr)||fr) : fr;
  ctx.drawImage(img, -24 + (hurt?(Math.random()<.5?-1:1):0), -32);
