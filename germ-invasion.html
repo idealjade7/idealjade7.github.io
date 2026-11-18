@@ -1318,13 +1318,13 @@ function spawnEnemy(){
  const grow = 1 + t/200 + Math.pow(t/600,2);
  const base = {bact:{hp:14,spd:62,r:12,dmg:6,xp:1}, virus:{hp:11,spd:96,r:13,dmg:5,xp:1}, amoeba:{hp:55,spd:48,r:17,dmg:10,xp:5},
    spore:{hp:24,spd:58,r:13,dmg:6,xp:3}, phage:{hp:36,spd:74,r:14,dmg:9,xp:4}, split:{hp:70,spd:44,r:17,dmg:10,xp:6}}[type];
- G.enemies.push({x,y,type,seed:Math.random()*3,r:base.r,hp:base.hp*grow*st.hp,maxhp:base.hp*grow*st.hp,spd:base.spd*st.spd*(1+Math.min(.35,t/1200)),dmg:base.dmg*(1+t/500),xp:(base.xp+(t>420&&type!=="amoeba"&&Math.random()<.25?4:0))*st.xp,hitT:0,slow:0,kb:{x:0,y:0}, st:rnd(1.5,3)});
+ G.enemies.push({x,y,type,seed:Math.random()*3,r:base.r,hp:base.hp*grow*st.hp*HP_TUNE,maxhp:base.hp*grow*st.hp*HP_TUNE,spd:base.spd*st.spd*(1+Math.min(.35,t/1200)),dmg:base.dmg*(1+t/500),xp:(base.xp+(t>420&&type!=="amoeba"&&Math.random()<.25?4:0))*st.xp,hitT:0,slow:0,kb:{x:0,y:0}, st:rnd(1.5,3)});
 }
 function spawnBoss(k){
  const p=G.p, a=Math.random()*Math.PI*2;
  let x=p.x+Math.cos(a)*(VW/2), y=p.y+Math.sin(a)*(VH/2);
  if(G.stage.corridor){ x=p.x+(Math.random()<.5?-1:1)*(VW/2); y=0; }
- const hp = 150*Math.pow(k,1.45)*G.stage.hp*(k===BOSS_ROUNDS?2.4:1.12);   // 최종 보스는 더 단단하게
+ const hp = 150*Math.pow(k,1.45)*G.stage.hp*(k===BOSS_ROUNDS?2.4:1.12)*HP_TUNE;   // 최종 보스는 더 단단하게
  if(k===BOSS_ROUNDS) G.finalAt=G.t;
  G.enemies.push({x,y,type:"boss",k,r:34+k*2,hp,maxhp:hp,spd:(64+k*3)*Math.min(1.15,G.stage.spd),dmg:7+k*3.5,xp:0,hitT:0,slow:0,kb:{x:0,y:0},shootT:4,phase:0,name:BOSS_NAMES[k-1],col:BOSS_COLORS[k-1]});
  const bb=document.getElementById("bossBanner"); bb.innerHTML=`ROUND ${k} BOSS<small>${BOSS_NAMES[k-1]} 등장!</small>`; bb.classList.remove("go"); void bb.offsetWidth; bb.classList.add("go");
@@ -1335,11 +1335,13 @@ function accMul(){ return G.quizTotal<3 ? 1 : clamp(.55+.55*accNow(), .55, 1.1);
 function shielded(e){ return e.type==="boss" && e.k===BOSS_ROUNDS && accNow()<CLEAR_ACC; }
 // 정답률이 낮을수록 보호막이 단단해진다 (50% 이하 0.15배 ~ 79% 약 0.6배)
 function shieldFactor(){ return clamp(.15+1.5*(accNow()-.5), .15, .6); }
+// 치명타 1.5배·12% → 평균 화력이 약 6% 오르므로, 몹·보스 체력도 HP_TUNE만큼 올려 난이도를 맞춰요
+const CRIT_MUL = 1.5, HP_TUNE = 1.06;
 function hurtEnemy(e,dmg,kb,src){
  if(e.dead) return;
  dmg*=accMul(); if(G.buffs&&G.buffs.atk>0) dmg*=1.6; if(shielded(e)){ dmg*=shieldFactor(); e.shieldHit=.15; }
- // 치명타: 12% 확률로 1.8배
- const crit = Math.random()<.12; if(crit) dmg*=1.8;
+ // 치명타: 12% 확률로 1.5배
+ const crit = Math.random()<.12; if(crit) dmg*=CRIT_MUL;
  e.hp-=dmg; const fresh=!(e.hitT>0); e.hitT=.12; e.squash=.14;
  if(kb && e.type!=="boss"){ const s=src||G.p; const a=Math.atan2(e.y-s.y,e.x-s.x), f=crit?240:170; e.kb.x+=Math.cos(a)*f; e.kb.y+=Math.sin(a)*f; }
  // 맞는 순간 작은 불꽃 + 섬광 + 톡 소리
