@@ -1357,7 +1357,7 @@ function hurtEnemy(e,dmg,kb,src){
 const MOB_COL={virus:"#c98bff",amoeba:"#7cc0ff",spore:"#f29a45",phage:"#8fd3df",split:"#f07bc0"};
 function mobShot(e,ang,spd,o={}){ if(G.ebullets.length>140 || G.mobShots>45) return; G.mobShots=(G.mobShots||0)+1; G.ebullets.push(Object.assign({x:e.x,y:e.y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,r:6,dmg:e.dmg*.8,life:3.2,col:MOB_COL[e.type]||"#fff",mob:true},o)); }
 function showDmg(e){ const v=Math.round(e.dmgAcc||0); e.dmgAcc=0; e.dmgT=.12; if(v<=0) return; const c=e.critHit; e.critHit=false;
- G.texts.push({x:e.x+rnd(-10,10),y:e.y-e.r-rnd(0,6),txt:c?v+"!":v,life:c?.8:.6,T:c?.8:.6,dmg:true,crit:c,vx:rnd(-25,25),col:c?"#ffd84a":v>40?"#ffe9a6":"#fff"}); if(G.texts.length>160) G.texts.splice(0,G.texts.length-160); }
+ G.texts.push({x:e.x+rnd(-10,10),y:e.y-e.r-rnd(0,6),txt:v,life:c?.8:.6,T:c?.8:.6,dmg:true,crit:c,vx:rnd(-25,25),col:c?"#ffd84a":v>40?"#ffe9a6":"#fff"}); if(G.texts.length>160) G.texts.splice(0,G.texts.length-160); }
 function killEnemy(e){
  e.dead=true; G.kills++; G.score+=e.type==="boss"?1000*e.k:10;
  { const col=e.type==="boss"?e.col:(MOB_COL[e.type]||"#7ff59a"), big=e.r>=16;
