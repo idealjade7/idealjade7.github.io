@@ -81,6 +81,9 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 .slotWin.done .slotMark{animation:slotFlash .5s ease-out 3}
 @keyframes slotFlash{0%{background:rgba(255,216,74,.55)}100%{background:rgba(255,216,74,0)}}
 #slotRes{min-height:46px;font-family:'Do Hyeon';font-size:18px;color:#fff3c4}
+.mapTag{display:flex;align-items:center;gap:10px;justify-content:center;margin:4px 0 8px;font-family:'Do Hyeon';font-size:17px}
+.mapTag canvas{width:120px;height:56px;border:2px solid var(--line);image-rendering:pixelated}
+.ranks td.map{white-space:nowrap;font-size:13px}
 .guide h3{font-family:'Do Hyeon';color:var(--gold);margin:14px 0 6px;font-size:19px;font-weight:400}
 .guide .it{display:flex;gap:12px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line)}
 .guide .it canvas,.guide .it .ic{width:44px;height:44px;flex:0 0 44px;image-rendering:pixelated;display:flex;align-items:center;justify-content:center;font-size:26px}
@@ -152,6 +155,16 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 #buffBanner{position:fixed;left:50%;top:30%;transform:translateX(-50%);z-index:15;pointer-events:none;font-family:'Do Hyeon';font-size:40px;color:#ffd84a;text-shadow:3px 3px 0 #5a3600,0 0 22px rgba(255,216,74,.8);opacity:0;text-align:center;white-space:nowrap}
 #buffBanner small{display:block;font-size:22px;color:#fff3c4}
 #buffBanner.go{animation:bb 2.2s ease-out}
+#reviveFx{position:fixed;inset:0;z-index:16;pointer-events:none;opacity:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 50%,rgba(125,255,176,.55),rgba(20,80,50,.35) 45%,rgba(0,0,0,0) 75%)}
+#reviveFx.go{animation:rvBg 2.4s ease-out}
+#reviveFx .rv-txt{font-family:'Do Hyeon';font-size:96px;color:#eafff2;text-shadow:0 0 12px #7dffb0,0 0 40px #2bd66f,5px 5px 0 #0d4a2a;letter-spacing:4px;text-align:center;transform:scale(.4)}
+#reviveFx .rv-txt small{display:block;font-size:26px;letter-spacing:0;color:#fff;text-shadow:2px 2px 0 #0d4a2a}
+#reviveFx.go .rv-txt{animation:rvTxt 2.4s cubic-bezier(.2,1.6,.4,1)}
+#reviveFx .rv-ring{position:absolute;width:40px;height:40px;border:6px solid #b6ffd3;border-radius:50%;box-shadow:0 0 30px #7dffb0}
+#reviveFx.go .rv-ring{animation:rvRing 1.1s ease-out}
+@keyframes rvBg{0%{opacity:0}8%{opacity:1}70%{opacity:.8}100%{opacity:0}}
+@keyframes rvTxt{0%{transform:scale(.3)}18%{transform:scale(1.15)}30%{transform:scale(1)}80%{transform:scale(1);opacity:1}100%{transform:scale(1.1);opacity:0}}
+@keyframes rvRing{0%{transform:scale(.5);opacity:1}100%{transform:scale(40);opacity:0}}
 #bossBanner.go{animation:bb 2.6s ease-out}
 @keyframes bb{0%{opacity:0;transform:translateX(-50%) scale(1.6)}12%{opacity:1;transform:translateX(-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
 </style>
@@ -162,6 +175,7 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 <div id="successSign">성공!</div>
 <div id="bossBanner"></div>
 <div id="buffBanner"></div>
+<div id="reviveFx"><div class="rv-ring"></div><div class="rv-txt">REVIVE!<small></small></div></div>
 <div class="credit">made by 한광여중 이상민</div>
 <div class="topbtns hidden" id="topbtns"><button class="ibtn" id="bgmBtn" title="배경음악">🎵</button><button class="ibtn" id="muteBtn" title="효과음">🔊</button><button class="ibtn" id="pauseBtn">일시정지 (P)</button></div>
 
@@ -267,6 +281,7 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
   <div class="stats" id="rStats"></div>
   <div id="rankBox" class="hidden">
    <div class="sec">🏆 클리어 기록 등록</div>
+   <div class="mapTag" id="rankMap"></div>
    <div class="rankform"><select id="rankClass"></select><input id="rankName" maxlength="10" placeholder="번호 이름 (예: 7 홍길동)" autocomplete="off"><button class="btn" id="rankSave">등록</button></div>
    <div class="cnt" id="rankMsg"></div>
    <div id="rankMini"></div>
@@ -356,6 +371,7 @@ function beep(freq=440, dur=.08, type="square", vol=.05, slide=0){
 const SFX = {
  hit:(c)=>{ const t=performance.now(); if(t-(SFX._h||0)<45 && !c) return; SFX._h=t; beep(c?1400:900+Math.random()*200,.025,"square",c?.04:.018,-300); if(c) setTimeout(()=>beep(1900,.04,"square",.03),25); },
  pop:()=>{ const t=performance.now(); if(t-(SFX._p||0)<40) return; SFX._p=t; beep(320+Math.random()*80,.06,"triangle",.035,-200); },
+ revive:()=>{ [523,659,784,1047,1319,1568].forEach((f,i)=>setTimeout(()=>{ beep(f,.35,"triangle",.06); beep(f*2,.2,"square",.02); },i*85)); setTimeout(()=>{ for(const f of [1047,1319,1568,2093]) beep(f,.9,"triangle",.035); },560); },
  bigCoin:()=>{ [1047,1319,1568,2093].forEach((f,i)=>setTimeout(()=>beep(f,.09,"square",.03),i*45)); setTimeout(()=>beep(2637,.18,"triangle",.04),190); },
  gem:()=>{ beep(1320+Math.random()*120,.035,"square",.022); setTimeout(()=>beep(1760,.04,"square",.018),35); },
  lvl:()=>{beep(523,.1,"square",.05);setTimeout(()=>beep(659,.1,"square",.05),90);setTimeout(()=>beep(784,.16,"square",.05),180)},
@@ -1404,6 +1420,7 @@ function killEnemy(e){
   for(let i=0;i<40;i++) G.fx.push({kind:"spark",x:e.x,y:e.y,vx:rnd(-300,300),vy:rnd(-300,300),life:.9,T:.9,col:e.col});
   for(let i=0;i<12;i++) G.gems.push({x:e.x+rnd(-50,50),y:e.y+rnd(-50,50),v:5});
   G.ebullets = []; G.hazards = G.hazards.filter(h=>h.boss!==e);
+  if(e.k>=BOSS_ROUNDS){ winGame(); return; }   // 최종 보스는 보상 퀴즈 없이 바로 클리어
   const cd=rollBossCard(); if(cd) G.drops.push({x:e.x,y:e.y,id:cd,t:0});
   queueQuiz("boss", e.k);
  } else {
@@ -1726,9 +1743,11 @@ function tryRevive(){
  G.ebullets=[]; G.hazards=G.hazards.filter(h=>h.kind!=="bomb");
  for(const e of G.enemies){ const d=Math.hypot(e.x-p.x,e.y-p.y); if(d<260){ if(e.type==="boss"){ const a=Math.atan2(e.y-p.y,e.x-p.x); e.x+=Math.cos(a)*(300-d); e.y+=Math.sin(a)*(300-d); e.dash=null; } else killEnemy(e); } }
  G.enemies=G.enemies.filter(e=>!e.dead);
- G.fx.push({kind:"ring",x:p.x,y:p.y,r:10,R:260,life:.7,T:.7,col:"#7dffb0"}); G.fx.push({kind:"ring",x:p.x,y:p.y,r:10,R:180,life:.5,T:.5,col:"#ffffff"}); G.shake=.4;
- const bb=document.getElementById("buffBanner"); bb.innerHTML=`💚 부활!<small>정답률 ${Math.round(acc*100)}% → 체력 ${Math.round(r.hp*100)}%로 다시 일어났어요 (한 번만)</small>`; bb.style.color="#7dffb0"; bb.classList.remove("go"); void bb.offsetWidth; bb.classList.add("go");
- SFX.lucky(); return true;
+ for(let i=0;i<3;i++) G.fx.push({kind:"ring",x:p.x,y:p.y,r:10,R:220+i*120,life:.6+i*.25,T:.6+i*.25,col:i===1?"#ffffff":"#7dffb0"});
+ for(let i=0;i<40;i++){ const a=i/40*Math.PI*2, v=rnd(160,420); G.fx.push({kind:"spark",x:p.x,y:p.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.9,T:.9,col:i%3?"#7dffb0":"#ffffff"}); }
+ G.revFx=2.6; G.shake=.5;   // 2.6초 동안 캐릭터 위로 빛기둥과 올라가는 빛 알갱이
+ const rf=document.getElementById("reviveFx"); rf.querySelector("small").textContent=`정답률 ${Math.round(acc*100)}% · 체력 ${Math.round(r.hp*100)}%로 부활`; rf.classList.remove("go"); void rf.offsetWidth; rf.classList.add("go");
+ SFX.revive(); return true;
 }
 function loseGame(){ G.over=true; G.mode="end"; musicStop(1.2); SFX.bad(); setTimeout(()=>showResult(false), 900); }
 function showResult(win){
@@ -1743,7 +1762,10 @@ function showResult(win){
   wl.innerHTML = G.wrongs.map(w=>`<div class="wrong-item"><div>[${shortOf(G.grade, w.unit)}] ${esc(w.q)}</div><div class="x">내 답: ${esc(w.mine)}</div><div class="a">정답: ${esc(w.ans)}</div><div class="e">${esc(w.exp)}</div></div>`).join("");
  } else { document.getElementById("wrongHead").textContent= G.quizTotal? "오답 노트 — 틀린 문제가 없어요!":"오답 노트"; wl.innerHTML=""; }
  const rb=document.getElementById("rankBox");
- if(win){ rb.classList.remove("hidden"); document.getElementById("rankMsg").textContent=`클리어 타임 ${fmtT(totalT())} (문제 풀이 ${fmtT(G.quizTime)} 포함) · 정답률 ${rate}% · 반과 이름을 적고 등록하세요`; document.getElementById("rankMini").innerHTML=""; const inp=document.getElementById("rankName"); const cs=document.getElementById("rankClass"); cs.innerHTML=`<option value="">반 선택</option>`+Array.from({length:CLASS_COUNT},(_,i)=>`<option value="${i+1}">${G.grade}학년 ${i+1}반</option>`).join(""); try{ inp.value=localStorage.getItem("germ-name")||""; cs.value=localStorage.getItem("germ-class")||""; }catch(e){} document.getElementById("rankSave").disabled=false; setTimeout(()=>inp.focus(),300); }
+ if(win){ const mt=document.getElementById("rankMap"); mt.innerHTML="";
+  try{ const c=document.createElement("canvas"); c.width=240; c.height=112; const x=c.getContext("2d"); const cx=Math.floor(G.p.x/CHUNK), cy=Math.floor(G.p.y/CHUNK), ch=getChunk(cx,cy), sx=((G.p.x%CHUNK)+CHUNK)%CHUNK, sy=((G.p.y%CHUNK)+CHUNK)%CHUNK; x.drawImage(ch.cv, 16, 144, 480,224, 0,0,240,112); mt.appendChild(c); }catch(e){}
+  const sp=document.createElement("span"); sp.innerHTML=`🗺️ 맵: <b style="color:var(--gold)">${esc(G.stage.name.replace(/^\d+\.\s*/,""))}</b>`; mt.appendChild(sp);
+  rb.classList.remove("hidden"); document.getElementById("rankMsg").textContent=`클리어 타임 ${fmtT(totalT())} (문제 풀이 ${fmtT(G.quizTime)} 포함) · 정답률 ${rate}% · 반과 이름을 적고 등록하세요`; document.getElementById("rankMini").innerHTML=""; const inp=document.getElementById("rankName"); const cs=document.getElementById("rankClass"); cs.innerHTML=`<option value="">반 선택</option>`+Array.from({length:CLASS_COUNT},(_,i)=>`<option value="${i+1}">${G.grade}학년 ${i+1}반</option>`).join(""); try{ inp.value=localStorage.getItem("germ-name")||""; cs.value=localStorage.getItem("germ-class")||""; }catch(e){} document.getElementById("rankSave").disabled=false; setTimeout(()=>inp.focus(),300); }
  else { rb.classList.add("hidden"); }
  document.getElementById("resultOv").classList.remove("hidden");
 }
@@ -1787,9 +1809,9 @@ const RANK = {
  },
  table(rows, me){
   if(!rows.length) return `<div class="cnt" style="margin:14px 0">아직 등록된 기록이 없어요. 첫 번째 주인공이 되어 보세요!</div>`;
-  return `<table class="ranks"><tr><th>순위</th><th>반</th><th>이름</th><th>클리어 타임</th><th>문제 풀이</th><th>정답률</th><th>스테이지</th><th>무기</th><th>날짜</th></tr>`+
+  return `<table class="ranks"><tr><th>순위</th><th>반</th><th>이름</th><th>클리어 타임</th><th>문제 풀이</th><th>정답률</th><th>맵</th><th>무기</th><th>날짜</th></tr>`+
    rows.map((r,i)=>{ const d=r.at?new Date(r.at):null; const ds=d&&!isNaN(d)?`${d.getMonth()+1}/${d.getDate()}`:""; const isMe=me&&r.at===me.at&&r.name===me.name;
-    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td>${r.cls?r.cls+"반":"-"}</td><td class="nm">${esc(r.name)}${r.wait?' <small title="아직 못 올린 기록">⏳</small>':""}</td><td class="tm">${fmtT(r.time)}</td><td class="tm" style="color:var(--dim)">${r.qtime?fmtT(r.qtime):"-"}</td><td>${r.acc}%</td><td>${r.stage||"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
+    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td>${r.cls?r.cls+"반":"-"}</td><td class="nm">${esc(r.name)}${r.wait?' <small title="아직 못 올린 기록">⏳</small>':""}</td><td class="tm">${fmtT(r.time)}</td><td class="tm" style="color:var(--dim)">${r.qtime?fmtT(r.qtime):"-"}</td><td>${r.acc}%</td><td class="map">${STAGES[(r.stage||1)-1]?STAGES[(r.stage||1)-1].name.replace(/^\d+\.\s*/,""):"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
  },
  srcText(where, err){ if(where!=="online" && !/github\.io$/.test(location.hostname)) return "이 화면(미리보기)에서는 공유 순위표에 연결되지 않아요 · idealjade7.github.io 홈페이지의 '과학 게임' 탭에서 하면 모든 기기에서 같은 순위표가 보여요";
   return where==="online" ? "모든 기기에서 함께 보는 온라인 순위표" : (err ? "온라인 순위표에 연결하지 못해 이 기기에 저장된 기록을 보여 줘요 · 인터넷이 되면 다음에 순위표를 열 때 자동으로 다시 올려요" : "이 기기(브라우저)에만 저장된 기록이에요 · 반 전체 순위표는 선생님이 온라인 설정을 하면 열려요"); },
@@ -1807,7 +1829,7 @@ document.getElementById("rankSave").onclick=async ()=>{
  const L=await RANK.list(); const same=x=>x.at===rec.at&&x.name===rec.name;
  const all=L.rows.filter(x=>(x.grade||RANK_GRADE)===rec.grade&&x.stage===rec.stage), rows=all.filter(x=>x.cls===cls);
  const pos=rows.findIndex(same), apos=all.findIndex(same);
- msg.textContent = (r.err?(/github\.io$/.test(location.hostname)?"인터넷 연결이 불안정해 이 기기에 먼저 저장했어요(다음에 순위표를 열면 자동으로 다시 올려요). ":"미리보기 화면이라 이 기기에만 저장했어요. "):"등록 완료! ")+(pos>=0?`스테이지 ${rec.stage} · ${rec.grade}학년 ${cls}반 ${pos+1}위 (${rec.grade}학년 전체 ${apos+1}위)`:"");
+ msg.textContent = (r.err?(/github\.io$/.test(location.hostname)?"인터넷 연결이 불안정해 이 기기에 먼저 저장했어요(다음에 순위표를 열면 자동으로 다시 올려요). ":"미리보기 화면이라 이 기기에만 저장했어요. "):"등록 완료! ")+(pos>=0?`${STAGES[rec.stage-1].name.replace(/^\d+\.\s*/,"")} · ${rec.grade}학년 ${cls}반 ${pos+1}위 (${rec.grade}학년 전체 ${apos+1}위)`:"");
  rankCls=cls; rankGrade=rec.grade;
  const top=rows.slice(0,10); if(pos>=10) top.push(rows[pos]);
  document.getElementById("rankMini").innerHTML=RANK.table(top, rec)+`<div class="src">${RANK.srcText(L.where,L.err)}</div>`;
@@ -1863,6 +1885,7 @@ function update(dt){
  G.t+=dt;
  for(const b in G.buffs) G.buffs[b]=Math.max(0,G.buffs[b]-dt);
  if(G.p.blockT>0) G.p.blockT-=dt;
+ if(G.revFx>0){ G.revFx-=dt; const p=G.p; if(Math.random()<.8) G.fx.push({kind:"spark",x:p.x+rnd(-26,26),y:p.y+rnd(-10,30),vx:rnd(-10,10),vy:rnd(-180,-90),life:.7,T:.7,col:Math.random()<.5?"#7dffb0":"#eafff2"}); }
  for(const c of G.drops){ c.t+=dt; const p=G.p, d=Math.hypot(p.x-c.x,p.y-c.y);
   if(c.t>.9 && d>1){ const v=Math.min(d, 520*dt); c.x+=(p.x-c.x)/d*v; c.y+=(p.y-c.y)/d*v; }   // 잠깐 뒤 내게 날아와요
   if(c.t>.9 && Math.hypot(p.x-c.x,p.y-c.y)<p.r+10){ c.dead=true; G.items[c.id]++; SFX.lucky(); G.texts.push({x:p.x,y:p.y-34,txt:`${QCARDS[c.id].name} +1`,life:1.2,col:QCARDS[c.id].col}); } }
@@ -2406,6 +2429,8 @@ function drawHero(){
  if(p.moving && step!==p.lastStep){ p.lastStep=step; if(step===0||step===2){ G.fx.push({kind:"puff",x:p.x+(dir==="side"?(p.flipS?6:-6):(step===0?-5:5)),y:p.y+25,vx:-(p.mvx||0)*25,vy:-6,life:.35,T:.35,r:4}); } }
  const hurt=p.hurtT>0; if(hurt) p.hurtT-=1/60;
  const fade = p.inv>0 && !hurt && Math.floor(G.t*16)%2;
+ if(G.revFx>0){ const a=Math.min(1,G.revFx/1.2); ctx.save(); ctx.globalAlpha=.35*a; const gr=ctx.createLinearGradient(0,p.y-260,0,p.y+30); gr.addColorStop(0,"rgba(125,255,176,0)"); gr.addColorStop(.7,"rgba(125,255,176,.9)"); gr.addColorStop(1,"rgba(255,255,255,1)"); ctx.fillStyle=gr; const w=44+10*Math.sin(G.t*12); ctx.fillRect(p.x-w/2,p.y-260,w,290);
+   ctx.globalAlpha=.6*a; ctx.strokeStyle="#b6ffd3"; ctx.lineWidth=3; ctx.beginPath(); ctx.ellipse(p.x,p.y+22,36+8*Math.sin(G.t*10),12,0,0,7); ctx.stroke(); ctx.restore(); }
  if(G.buffs.inv>0){ ctx.save(); const a=.35+.15*Math.sin(G.t*10)*(G.buffs.inv<2?2:1); ctx.globalAlpha=a; ctx.strokeStyle="#9be7ff"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(p.x,p.y-4,34,0,7); ctx.stroke(); ctx.globalAlpha=a*.35; ctx.fillStyle="#9be7ff"; ctx.fill(); ctx.restore(); }
  if(G.buffs.rapid>0||G.buffs.coin2>0){ ctx.save(); ctx.globalAlpha=.22+.1*Math.sin(G.t*9); ctx.fillStyle=G.buffs.rapid>0?BUFFS.rapid.col:BUFFS.coin2.col; ctx.beginPath(); ctx.ellipse(p.x,p.y+18,24,8,0,0,7); ctx.fill(); ctx.restore(); }
  if(G.buffs.atk>0||G.buffs.spd>0){ ctx.save(); ctx.globalAlpha=.25+.12*Math.sin(G.t*8); ctx.fillStyle=G.buffs.atk>0?BUFFS.atk.col:BUFFS.spd.col; ctx.beginPath(); ctx.ellipse(p.x,p.y+4,22,30,0,0,7); ctx.fill(); ctx.restore();
