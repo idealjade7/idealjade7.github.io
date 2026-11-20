@@ -1994,8 +1994,8 @@ function update(dt){
   if(d<p.r+8){ g.dead=true; if(g.heal){ p.hp=Math.min(p.maxhp,p.hp+30); G.texts.push({x:p.x,y:p.y-20,txt:"+30",life:.8,col:"#7ff59a"}); } else { const xv=g.v*(G.buffs.coin2>0?2:1); gainXp(xv); if(g.v>=20){ SFX.bigCoin(); G.fx.push({kind:"ring",x:p.x,y:p.y,r:8,R:70,life:.35,T:.35,col:"#ffd84a"}); for(let i=0;i<10;i++) G.fx.push({kind:"spark",x:p.x,y:p.y,vx:rnd(-160,160),vy:rnd(-160,160),life:.4,T:.4,col:i%2?"#ffd84a":"#fff3a0"}); G.texts.push({x:p.x,y:p.y-30,txt:"+"+xv+" XP",life:.8,col:"#ffd84a"}); } else SFX.gem(); } }
  }
  G.gems=G.gems.filter(g=>!g.dead);
- if(G.gems.length>450){ // 너무 많으면 합치기
-  const keep=G.gems.slice(-300), extra=G.gems.slice(0,-300); let v=0; extra.forEach(g=>v+=g.v); keep.push({x:p.x+rnd(-80,80),y:p.y+rnd(-80,80),v}); G.gems=keep;
+ if(G.gems.length>320){ // 너무 많으면 합치기
+  const keep=G.gems.slice(-220), extra=G.gems.slice(0,-220); let v=0; extra.forEach(g=>v+=g.v); keep.push({x:p.x+rnd(-80,80),y:p.y+rnd(-80,80),v}); G.gems=keep;
  }
  // 상자
  for(const c of G.chests){ c.t+=dt; if(dist2(c,p)<(p.r+18)**2){ c.dead=true; SFX.chest(); queueQuiz("chest"); } }
@@ -2037,6 +2037,9 @@ function bossAttack(e, dt){
  const fin=k===BOSS_ROUNDS;
  let list=BOSS_PATTERNS.filter(q=>q.from<=k && q.id!==e.lastPat);
  if(G.stage.corridor) list=list.filter(q=>q.id!=="spiral");
+ // 1라운드처럼 쓸 수 있는 패턴이 하나뿐이면 같은 패턴을 반복해요(빈 목록이면 게임이 멈추던 문제)
+ if(!list.length) list=BOSS_PATTERNS.filter(q=>q.from<=k && !(G.stage.corridor&&q.id==="spiral"));
+ if(!list.length) list=[BOSS_PATTERNS[0]];
  let r=Math.random()*list.reduce((a,q)=>a+q.w,0), pat=list[0].id; for(const q of list){ r-=q.w; if(r<=0){ pat=q.id; break; } }
  // 새로 열린 패턴은 처음 한 번 꼭 보여 주기
  const fresh=BOSS_PATTERNS.find(q=>q.from===k && !e.seen); if(fresh){ pat=fresh.id; e.seen=true; }
@@ -2082,10 +2085,21 @@ function hazardsUpdate(dt){
  for(const b of G.ebullets) if(b.seek>0){ b.seek-=dt; const a=Math.atan2(p.y-b.y,p.x-b.x), v=Math.hypot(b.vx,b.vy); let c=Math.atan2(b.vy,b.vx), d=((a-c+Math.PI*3)%(Math.PI*2))-Math.PI; c+=clamp(d,-2.2*dt,2.2*dt); b.vx=Math.cos(c)*v; b.vy=Math.sin(c)*v; }
 }
 // 경험치 금화: 빙글빙글 도는 픽셀 금화 (큰 금화일수록 경험치가 많아요)
-function drawCoin(g, X=ctx, T=(G?G.t:0)){
- const R=g.v>=20?26:g.v>=5?12:7, ph=T*5+(g.x*.37+g.y*.13), c=Math.cos(ph), w=Math.max(.14,Math.abs(c)), bob=Math.sin(T*4+g.x*.1)*2, x=g.x, y=g.y+bob, rx=R*w;
+// 금화는 회전 단계별 그림을 미리 그려 두고 붙여요(금화가 수백 개여도 가볍게)
+const COIN_CACHE=new Map(), COIN_PH=20;
+function drawCoin(g, X=ctx, T=(G?G.t:0), fast=false){
+ if(fast){
+  const R=g.v>=20?26:g.v>=5?12:7, ph=T*5+(g.x*.37+g.y*.13), bob=Math.sin(T*4+g.x*.1)*2;
+  const pi=((Math.round((((ph%(Math.PI*2))+Math.PI*2)%(Math.PI*2))/(Math.PI*2)*COIN_PH))%COIN_PH);
+  const tw=g.v>=20?Math.round((Math.sin(T*4+g.x)+1)*1.5):0, Sx=Math.max(1,Math.round(fast*2)/2);
+  const key=R+"|"+pi+"|"+tw+"|"+Sx; let im=COIN_CACHE.get(key);
+  if(!im){ const half=R+12, c=document.createElement("canvas"); c.width=c.height=Math.ceil(half*2*Sx); const cx=c.getContext("2d"); cx.scale(Sx,Sx);
+   drawCoin({x:half,y:half,v:g.v,__ph:pi/COIN_PH*Math.PI*2,__tw:tw/3}, cx, 0); im={c,half}; COIN_CACHE.set(key,im); }
+  X.drawImage(im.c, g.x-im.half, g.y+bob-im.half, im.half*2, im.half*2); return;
+ }
+ const R=g.v>=20?26:g.v>=5?12:7, ph=g.__ph!==undefined?g.__ph:T*5+(g.x*.37+g.y*.13), c=Math.cos(ph), w=Math.max(.14,Math.abs(c)), bob=g.__ph!==undefined?0:Math.sin(T*4+g.x*.1)*2, x=g.x, y=g.y+bob, rx=R*w;
  X.save();
- X.globalAlpha=.32+.12*Math.sin(T*6+g.x); X.fillStyle="#ffd84a"; X.beginPath(); X.arc(x,y,R+6,0,7); X.fill(); X.globalAlpha=1;
+ X.globalAlpha=g.__ph!==undefined?.38:.32+.12*Math.sin(T*6+g.x); X.fillStyle="#ffd84a"; X.beginPath(); X.arc(x,y,R+6,0,7); X.fill(); X.globalAlpha=1;
  X.fillStyle="#5a3600"; X.beginPath(); X.ellipse(x,y,rx+2,R+2,0,0,7); X.fill();               // 테두리
  X.fillStyle=c>0?"#e09b12":"#d48a0a"; X.beginPath(); X.ellipse(x,y,rx+.5,R,0,0,7); X.fill(); // 옆면
  if(w>.3){ X.fillStyle="#ffcf2e"; X.beginPath(); X.ellipse(x-(c>0?.8:-.8),y,rx*.82,R*.82,0,0,7); X.fill();
@@ -2093,7 +2107,7 @@ function drawCoin(g, X=ctx, T=(G?G.t:0)){
   if(w>.55){ X.fillStyle="#b06f04"; X.fillRect(x-1,y-R*.38,2,R*.76); X.fillRect(x-rx*.25,y-R*.18,rx*.5,2); } // 가운데 무늬
   X.fillStyle="rgba(255,255,255,.85)"; X.fillRect(x-rx*.5,y-R*.62,Math.max(1.5,rx*.28),2.5); }
  else { X.fillStyle="#fff3a0"; X.fillRect(x-1,y-R+2,2,R*2-4); }                                    // 옆으로 선 순간 반짝
- if(g.v>=20){ const tw=(Math.sin(T*4+g.x)+1)/2; X.globalAlpha=.4+.6*tw; X.fillStyle="#fff"; for(const [sx,sy,k] of [[.7,-1.05,1],[-.95,-.4,.7],[.8,.75,.6]]){ const px=x+R*sx, py=y+R*sy, L=Math.round(5*k*(.6+.4*tw)); X.fillRect(px-1,py-L,2,L*2); X.fillRect(px-L,py-1,L*2,2); } X.globalAlpha=1; }
+ if(g.v>=20){ const tw=g.__tw!==undefined?g.__tw:(Math.sin(T*4+g.x)+1)/2; X.globalAlpha=.4+.6*tw; X.fillStyle="#fff"; for(const [sx,sy,k] of [[.7,-1.05,1],[-.95,-.4,.7],[.8,.75,.6]]){ const px=x+R*sx, py=y+R*sy, L=Math.round(5*k*(.6+.4*tw)); X.fillRect(px-1,py-L,2,L*2); X.fillRect(px-L,py-1,L*2,2); } X.globalAlpha=1; }
  X.restore();
 }
 function drawHazards(){
@@ -2306,6 +2320,8 @@ function ambientDraw(){
 // ---------- 조명 ----------
 const LM=document.createElement("canvas"), lmc=LM.getContext("2d");
 const DARK={lab:"rgba(4,6,18,.5)", store:"rgba(10,6,2,.55)", lava:"rgba(18,4,2,.45)"};
+// 빛 구멍은 둥근 그라데이션 하나를 미리 그려 두고 크기만 바꿔 붙여요(매 프레임 그라데이션을 새로 만들지 않게)
+const HOLE=(()=>{ const c=document.createElement("canvas"); c.width=c.height=128; const x=c.getContext("2d"), g=x.createRadialGradient(64,64,0,64,64,64); g.addColorStop(0,"rgba(0,0,0,1)"); g.addColorStop(.55,"rgba(0,0,0,.6)"); g.addColorStop(1,"rgba(0,0,0,0)"); x.fillStyle=g; x.fillRect(0,0,128,128); return c; })();
 function drawLighting(camX,camY){
  const w=cv.width, h=cv.height, S=SCALE*DPR, q=.4;
  if(LM.width!==Math.ceil(w*q)||LM.height!==Math.ceil(h*q)){ LM.width=Math.ceil(w*q); LM.height=Math.ceil(h*q); }
@@ -2313,7 +2329,7 @@ function drawLighting(camX,camY){
  lmc.globalCompositeOperation="source-over"; lmc.clearRect(0,0,LM.width,LM.height);
  lmc.fillStyle=DARK[G.stage.theme]; lmc.fillRect(0,0,LM.width,LM.height);
  lmc.globalCompositeOperation="destination-out";
- const hole=(x,y,r,a=1)=>{ const [sx,sy]=toS(x,y), rr=r*S*q; if(sx<-rr||sy<-rr||sx>LM.width+rr||sy>LM.height+rr) return; const g=lmc.createRadialGradient(sx,sy,0,sx,sy,rr); g.addColorStop(0,`rgba(0,0,0,${a})`); g.addColorStop(.55,`rgba(0,0,0,${a*.6})`); g.addColorStop(1,"rgba(0,0,0,0)"); lmc.fillStyle=g; lmc.beginPath(); lmc.arc(sx,sy,rr,0,7); lmc.fill(); };
+ const hole=(x,y,r,a=1)=>{ const [sx,sy]=toS(x,y), rr=r*S*q; if(sx<-rr||sy<-rr||sx>LM.width+rr||sy>LM.height+rr) return; lmc.globalAlpha=Math.min(1,a); lmc.drawImage(HOLE,sx-rr,sy-rr,rr*2,rr*2); lmc.globalAlpha=1; };
  const p=G.p; hole(p.x,p.y,300,1); hole(p.x,p.y,120,1);
  const lights=[]; for(const ch of (G._chs||[])) for(const l of ch.lights) lights.push(l);
  for(const l of lights){ const fl=l.f?(.85+.15*Math.sin(G.t*(l.small?9:3)+l.x)):1; hole(l.x,l.y,l.r*fl,.9); }
@@ -2368,7 +2384,8 @@ function draw(){
   ctx.globalAlpha=.9; ctx.fillStyle=evo?"#f3dcff":"#e4f6ff"; for(let i=0;i<(evo?10:6);i++){ const a=Math.random()*7, rr=R*rnd(.9,1.04); ctx.fillRect(p.x+Math.cos(a)*rr-1,p.y+Math.sin(a)*rr-1,3,3); }
   ctx.restore(); }
  // 보석
- for(const g of G.gems){ if(!g.heal){ drawCoin(g); continue; } const c="#ff5d7a", s=10; const bob=Math.sin(G.t*4+g.x*.1)*1.5; const gy=g.y+bob;
+ const vx0=camX-w/2/S-40, vx1=camX+w/2/S+40, vy0=camY-h/2/S-40, vy1=camY+h/2/S+40;
+ for(const g of G.gems){ if(g.x<vx0||g.x>vx1||g.y<vy0||g.y>vy1) continue; if(!g.heal){ drawCoin(g,ctx,G.t,S); continue; } const c="#ff5d7a", s=10; const bob=Math.sin(G.t*4+g.x*.1)*1.5; const gy=g.y+bob;
   ctx.globalAlpha=.28; ctx.fillStyle=c; ctx.beginPath(); ctx.arc(g.x,gy,s+4,0,7); ctx.fill(); ctx.globalAlpha=1;
   ctx.fillStyle="#14101f"; ctx.beginPath(); ctx.moveTo(g.x,gy-s-3); ctx.lineTo(g.x+s+2,gy); ctx.lineTo(g.x,gy+s+3); ctx.lineTo(g.x-s-2,gy); ctx.fill();
   ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(g.x,gy-s-1); ctx.lineTo(g.x+s,gy); ctx.lineTo(g.x,gy+s+1); ctx.lineTo(g.x-s,gy); ctx.fill();
@@ -2535,13 +2552,29 @@ function drawHUD(){
 
 // ================= 메인 루프 =================
 let last=performance.now();
+// 한 프레임에서 오류가 나도 게임 전체가 멈추지 않게: 다음 프레임 예약을 먼저 하고, 오류는 기록만 해요
+let loopErrs=0;
+function logErr(where,e){ loopErrs++; try{ const L=JSON.parse(localStorage.getItem("germ-errlog")||"[]"); L.push({at:new Date().toISOString(),where,msg:String(e&&e.stack||e).slice(0,400)}); localStorage.setItem("germ-errlog",JSON.stringify(L.slice(-20))); }catch(_){} if(loopErrs<5) console.error(where,e); }
+window.addEventListener("error",ev=>logErr("window",ev.error||ev.message));
 function loop(now){
+ requestAnimationFrame(loop);
+ try{ loopBody(now); }catch(e){ logErr("loop",e); }
+}
+function loopBody(now){
  let dt=(now-last)/1000; last=now; dt=Math.max(0,Math.min(dt,.05));   // 음수 시간 방지
- if(G && G.mode==="play") update(dt);
+ if(G && G.mode==="play"){ try{ update(dt); }catch(e){ logErr("update",e); } }
+ if(G) try{ watchdog(dt); }catch(e){ logErr("watchdog",e); }
  if(G && MUSIC.playing && G.cleared){ MUSIC.want="victory"; if(MUSIC.duck!==1){ MUSIC.duck=1; musicVol(); } }
  else if(G && MUSIC.playing){ const bs=G.enemies.filter(e=>e.type==="boss"); MUSIC.want = bs.some(e=>e.k===BOSS_ROUNDS) ? "final" : bs.length ? "boss" : (G.bossKilled>=5 ? "main2" : "main"); const d = G.mode==="play"?1:(G.mode==="pause"?0:.45); if(d!==MUSIC.duck){ MUSIC.duck=d; musicVol(); } }
- draw();
- requestAnimationFrame(loop);
+ try{ draw(); }catch(e){ logErr("draw",e); }
+}
+// 퀴즈·카드·슬롯 상태인데 해당 창이 안 보이는 채로 1.5초가 지나면 게임을 다시 진행시켜요(멈춤 방지)
+const MODE_OV={quiz:"quizOv", cards:"cardOv", slot:"slotOv", pause:"pauseOv"};
+function watchdog(dt){
+ const id=MODE_OV[G.mode]; const hidden = id ? document.getElementById(id).classList.contains("hidden") : false;
+ if(!hidden){ G.__stuck=0; return; }
+ G.__stuck=(G.__stuck||0)+dt;
+ if(G.__stuck>1.5){ logErr("stuck",G.mode); G.__stuck=0; if(G.mode==="slot"&&slot){ slot.done=true; closeSlot(); return; } G.mode="play"; clearKeys(); last=performance.now(); nextModal(); }
 }
 // 시작
 buildSprites(); buildMenu();
