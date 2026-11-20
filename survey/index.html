@@ -154,6 +154,7 @@ footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8
         <h2><span class="n">3</span>마무리</h2>
         <div class="field"><label for="hardship">어려움을 겪고 이겨 낸 경험</label><p class="hint">공부, 친구 관계, 생활 습관 등 무엇이든 괜찮아요. 어떻게 이겨 냈는지 적어 주세요</p><textarea id="hardship" name="hardship"></textarea></div>
         <div class="field"><label for="change">작년과 비교해 가장 달라진 점</label><textarea id="change" name="change"></textarea></div>
+        <div class="field"><label for="careerHope">진로 희망</label><p class="hint">아직 정하지 못했다면 관심 있는 분야나 하고 싶은 일을 적어도 괜찮아요</p><input id="careerHope" name="careerHope" maxlength="80" placeholder="예) 동물 관련 일, 디자이너, 아직 고민 중(관심: 외국어)"></div>
         <div class="field"><label for="interest">관심 분야와 키우고 싶은 능력</label><p class="hint">직업 이름보다 어떤 능력을 키우고 싶은지 적어 주세요. 예) 사람들의 이야기를 잘 들어 주는 능력</p><textarea id="interest" name="interest"></textarea></div>
         <div class="field"><label for="toTeacher">선생님께 하고 싶은 말</label><textarea id="toTeacher" name="toTeacher"></textarea></div>
       </section>
@@ -197,7 +198,7 @@ const [grade, ban] = CLASS.split("-");
 const classLabel = grade && ban ? `${grade}학년 ${ban}반` : CLASS;
 document.getElementById("metaLine").textContent = `${YEAR}학년도 · ${classLabel}`;
 
-const FIELDS = ["num","name","role","roleWork","words","strength","effort","praise","sports","festival","cleaning","service","study","hardship","change","interest","toTeacher"];
+const FIELDS = ["num","name","role","roleWork","words","strength","effort","praise","sports","festival","cleaning","service","study","hardship","change","careerHope","interest","toTeacher"];
 const form = document.getElementById("f");
 const DRAFT_KEY = `hs-draft-${YEAR}-${CLASS}`;
 const $ = id => document.getElementById(id);
