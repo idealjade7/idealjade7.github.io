@@ -2034,7 +2034,7 @@ function update(dt){
  for(const g of G.gems){
   const d=Math.sqrt(dist2(g,p));
   if(d<G.magnet || g.pull){ g.pull=true; const a=Math.atan2(p.y-g.y,p.x-g.x), sp=Math.max(260,520-d); g.x+=Math.cos(a)*sp*dt; g.y+=Math.sin(a)*sp*dt; }
-  if(d<p.r+8){ g.dead=true; if(g.heal){ p.hp=Math.min(p.maxhp,p.hp+30); G.texts.push({x:p.x,y:p.y-20,txt:"+30",life:.8,col:"#7ff59a"}); } else { const xv=g.v*(G.buffs.coin2>0?2:1); gainXp(xv); if(g.v>=20){ SFX.bigCoin(); G.fx.push({kind:"ring",x:p.x,y:p.y,r:8,R:70,life:.35,T:.35,col:"#ffd84a"}); for(let i=0;i<10;i++) G.fx.push({kind:"spark",x:p.x,y:p.y,vx:rnd(-160,160),vy:rnd(-160,160),life:.4,T:.4,col:i%2?"#ffd84a":"#fff3a0"}); G.texts.push({x:p.x,y:p.y-30,txt:"+"+xv+" XP",life:.8,col:"#ffd84a"}); } else SFX.gem(); } }
+  if(d<p.r+8){ g.dead=true; if(g.heal){ p.hp=Math.min(p.maxhp,p.hp+30); G.texts.push({x:p.x,y:p.y-20,txt:"+30",life:.8,col:"#7ff59a"}); } else { const xv=g.v*(G.buffs.coin2>0?2:1); gainXp(xv); if(g.v>=20){ /* 큰 금화를 연달아 먹으면 숫자 하나에 합쳐서 보여 줘요 */ const xt=G.texts.find(t=>t.xpSum && t.life>.3); if(xt){ xt.xpSum+=xv; xt.txt="+"+xt.xpSum+" XP"; xt.life=xt.T=.8; xt.x=p.x; xt.y=p.y-30; } else { SFX.bigCoin(); G.fx.push({kind:"ring",x:p.x,y:p.y,r:8,R:70,life:.35,T:.35,col:"#ffd84a"}); for(let i=0;i<10;i++) G.fx.push({kind:"spark",x:p.x,y:p.y,vx:rnd(-160,160),vy:rnd(-160,160),life:.4,T:.4,col:i%2?"#ffd84a":"#fff3a0"}); G.texts.push({x:p.x,y:p.y-30,txt:"+"+xv+" XP",life:.8,T:.8,col:"#ffd84a",xpSum:xv}); } } else SFX.gem(); } }
  }
  G.gems=G.gems.filter(g=>!g.dead);
  if(G.gems.length>320){ // 너무 많으면 합치기
