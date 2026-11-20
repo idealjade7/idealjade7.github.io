@@ -118,7 +118,7 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
   길은 두 갈래! <b>왼쪽 오개념 길</b>에서는 탐구대원 1명과 오개념 1명이 맞바꿔 사라지고, 숫자 붙은 거인은 그 수만큼 필요해요<br>
   <b>오른쪽 보급로</b>: 실험 보급 상자 → <b>대포 강화 + 팩트 폭탄</b> · 황금 트로피 → 맞힐 때마다 <b>💰금화</b>, 부수면 대박 금화!<br>
   라운드를 깨면 <b>실험실 상점</b>에서 금화로 연사 속도·대원 체력·증식 문·방어막을 강화해요<br>
-  파란 문(+, ×)을 지나면 대원이 늘어나요 · 퀴즈 게이지가 차면 문제 → 정답이면 <b>팩폭 타임</b><br>
+  파란 문(+, ×)을 지나면 대원이 늘어나요 · 퀴즈 게이지가 차면 문제 → 정답이면 <b>팩폭 타임</b>과 대마왕 체력 깎기, 오답이면 대마왕이 회복해요<br>
   💣 팩트 폭탄 버튼(스페이스): 잡몹을 모두 지우고 거인·대왕을 뒤로 날려 기절시켜요</div>
   <button class="btn" id="helpBack">돌아가기 <span class="kbd">Esc</span></button>
  </div>
@@ -626,7 +626,7 @@ const MAX_ROUND=10;
 // 라운드: 보스를 잡으면 다음 라운드(대포 강화·T세포는 그대로)
 function startRound(n){
  const prevSt=G.round?bgStage():-1; G.round=n; if(bgStage()!==prevSt) BGC=null; const k=1+.22*(n-1), fin=n===MAX_ROUND;
- const hp=Math.round(1200*Math.pow(1.32,n-1)*(fin?1.25:1)/10)*10;
+ const hp=Math.round(800*Math.pow(1.36,n-1)*(fin?1.25:1)/10)*10;
  G.boss={x:-104,y:L-10,hp,max:hp,r:fin?54:46,fin,sp:7+Math.min(4,(n-1)*.7),hit:0,boss:true,giant:true,ph:0,stomp:0};
  G.enemies=[G.boss]; G.units=[]; G.parts=[]; G.coins=[]; G.decals=[]; G.fx=[];
  G.waveK=k; G.rt=0; G.roundQ=0; G.roundC=0; G.spawnT=2; G.giantT=14; G.giantN=0;
@@ -696,7 +696,7 @@ function update(dt){
  G.cx+=(G.tx-G.cx)*Math.min(1,dt*14);
  // 자동 발사
  G.fireT-=dt;
- if(G.fireT<=0){ const rate=(G.rush>0?14:7)*(1+.2*G.up.rate); G.fireT=1/rate; const n=G.lvl;
+ if(G.fireT<=0){ const rate=(G.rush>0?11.2:7)*(1+.2*G.up.rate); G.fireT=1/rate; const n=G.lvl;
   for(let i=0;i<n;i++){ const gold=Math.random()<.03+.015*(G.up.goldu||0); addUnit(G.cx+(n>1?(i-(n-1)/2)*16:rnd(-3,3)), 44, gold?{gold:true,hp:3+G.up.hp,mult:false}:{}); if(gold){ SFX.gold(); } } G.recoil=.07; SFX.shot(); if(G.fx.length<260) G.fx.push({k:"puff",x:G.cx,y:60,life:.25,T:.25,c:"#e8dcff"}); }
  if(G.rush>0) G.rush-=dt; if(G.recoil>0) G.recoil-=dt; if(G.spCD>0) G.spCD-=dt;
  // 적
@@ -808,7 +808,7 @@ addEventListener("keydown",e=>{ if(e.code==="Space"||e.code==="KeyQ"){ e.prevent
 // ================= 실험실 상점(라운드 사이) =================
 const SHOP=[
  {id:"rate",   icon:"🔫", name:"연사 속도", desc:"대포가 20% 더 빨리 쏴요", max:8, cost:l=>Math.round(400*Math.pow(1.75,l)/10)*10},
- {id:"gate",   icon:"✖️", name:"증식 문 강화", desc:"+ 문 숫자 +1 (3단계에서 × 문도 ×3)", max:3, cost:l=>[800,1800,3600][l]},
+ {id:"gate",   icon:"✖️", name:"증식 문 강화", desc:"+ 문 숫자 +1 (+4까지, 3단계에서 × 문도 ×3)", max:3, cost:l=>[800,1800,3600][l]},
  {id:"newgate",icon:"🚪", name:"증식 문 추가", desc:"길에 움직이는 + 문을 하나 더 설치해요", max:2, cost:l=>[1400,3200][l]},
  {id:"barrel", icon:"💥", name:"포신 추가", desc:"보급 상자로 강화할 수 있는 포신 한도 +1 (최대 5연발)", max:2, cost:l=>[1800,4200][l]},
  {id:"start",  icon:"🔥", name:"선제 팩폭", desc:"라운드 시작마다 팩폭 타임 3초 (단계마다 +3초)", max:3, cost:l=>[700,1600,3000][l]},
@@ -818,7 +818,12 @@ const SHOP=[
  {id:"bomb",   icon:"💣", name:"팩트 폭탄", desc:"잡몹 전부 소탕 + 거인·대왕 밀쳐내기", max:5, cost:()=>350, once:true},
  {id:"shield", icon:"🛡️", name:"방어막", desc:"방어선이 뚫릴 때 한 번 막아 줘요", max:3, cost:()=>600, once:true},
 ];
-function gateVal(g){ return g.op==="x"? g.v+(G.up.gate>=3?1:0) : g.v+G.up.gate; }   // 강화: + 문은 단계마다 +1, × 문은 3단계에서만 ×3
+// 오답 벌칙: 오개념이 퍼져 대마왕이 최대 체력의 일부를 회복해요
+function wrongHeal(){ const b=G.boss; if(!b||b.hp<=0) return 0; const h=Math.min(b.max-b.hp,Math.round(b.max*WRONG_HEAL/10)*10); if(h>0){ b.hp+=h; b.hit=.3; G.fx.push({k:"ring",x:b.x,y:b.y,life:.7,T:.7,c:"#c78bff"}); } return h; }
+const WRONG_HEAL=.12, RIGHT_HIT=.10;
+// 정답 보상: 팩트 폭격으로 대마왕에게 최대 체력의 일부만큼 피해
+function rightHit(){ const b=G.boss; if(!b||b.hp<=0) return 0; const d=Math.min(b.hp-1,Math.round(b.max*RIGHT_HIT/10)*10); if(d>0){ b.hp-=d; b.hit=.3; G.shake=Math.max(G.shake,.25); G.fx.push({k:"ring",x:b.x,y:b.y,life:.7,T:.7,c:"#ffd23f"}); } return d; }
+function gateVal(g){ return g.op==="x"? g.v+(G.up.gate>=3?1:0) : Math.min(g.v+G.up.gate,Math.max(4,g.v)); }   // 강화: + 문은 단계마다 +1, × 문은 3단계에서만 ×3
 function addShopGate(n){
  if(n===1) G.gates.push({id:4,y:235,x:0,w:96,op:"+",v:3,dir:1,sp:75,min:-180,max:180});
  if(n===2) G.gates.push({id:5,y:730,x:-104,w:70,op:"+",v:3,dir:-1,sp:40,min:LANE.L0,max:LANE.L1});
@@ -846,7 +851,7 @@ function openQuiz(){
  G.mode="quiz"; drag=null; const q=pickQ(G.quizN); G.quizN++;
  const order=[0,1,2,3].sort(()=>Math.random()-.5);
  curQ={q,order,done:false,t0:performance.now()};
- $("qTag").textContent=`문제 ${G.quizN} · 맞히면 팩폭 타임!`; $("qQ").textContent=q[2]; $("qExp").textContent="";
+ $("qTag").textContent=`문제 ${G.quizN} · 맞히면 팩폭 타임! 틀리면 대마왕 회복`; $("qQ").textContent=q[2]; $("qExp").textContent="";
  const box=$("qC"); box.innerHTML="";
  order.forEach((i,k)=>{ const b=document.createElement("button"); b.className="choice"; b.innerHTML=`<span class="kn">${k+1}</span>`; b.appendChild(document.createTextNode(q[3][i])); b.onclick=()=>answer(i,b); box.appendChild(b); });
  $("quiz").classList.remove("hidden");
@@ -858,11 +863,11 @@ function answer(i,btn){
  if(ok){ G.correct++; G.roundC=(G.roundC||0)+1; G.combo=(G.combo||0)+1; G.maxCombo=Math.max(G.maxCombo||0,G.combo);
   const coin=40*Math.min(G.combo,4)*(fast?2:1); addCoin(coin); SFX.good(); if(G.combo>=2) setTimeout(()=>SFX.combo(G.combo),180);
   const rushT=Math.min(8,5+(G.combo-1)+(G.up.rushx||0)); G.pendRush=rushT;
-  $("qExp").innerHTML=`<b style="color:#4fe39a">정답!</b> 팩폭 타임 ${rushT}초 + 💣 1개 + 💰${coin}`+(G.combo>=2?` · <b style="color:#ffd23f">${G.combo} COMBO 🔥</b>`:"")+(fast?` · <b style="color:#7dd8ff">⚡ 번개 정답 ×2</b>`:"");
+  $("qExp").innerHTML=`<b style="color:#4fe39a">정답!</b> 팩폭 타임 ${rushT}초 + 대마왕 체력 -10% + 💣 1개 + 💰${coin}`+(G.combo>=2?` · <b style="color:#ffd23f">${G.combo} COMBO 🔥</b>`:"")+(fast?` · <b style="color:#7dd8ff">⚡ 번개 정답 ×2</b>`:"");
   if(G.combo>=2) bigPop(`${G.combo} COMBO! 🔥`,"#ffd23f"); else if(fast) bigPop("⚡ 번개 정답!","#7dd8ff"); }
- else { btn.classList.add("no"); SFX.bad(); G.wrong.push(q); const had=G.combo||0; G.combo=0; $("qExp").innerHTML=(had>=2?`<b style="color:#ff8a96">${had} COMBO 끊김…</b> `:"")+"아쉬워요! "+(q[5]||""); }
+ else { btn.classList.add("no"); SFX.bad(); G.wrong.push(q); const had=G.combo||0; G.combo=0; const heal=wrongHeal(); $("qExp").innerHTML=(had>=2?`<b style="color:#ff8a96">${had} COMBO 끊김…</b> `:"")+(heal?`<b style="color:#c78bff">오개념이 퍼져 대마왕 체력 +${heal}</b><br>`:"")+"아쉬워요! "+(q[5]||""); }
  setTimeout(()=>{ $("quiz").classList.add("hidden"); G.mode="play"; G.gauge=0; G.gaugeMax=Math.min(1100,G.gaugeMax+70); G.quizPending=false; last=performance.now();
-  if(ok){ G.rush=G.pendRush||8; G.sp=Math.min(5,G.sp+1); toast("🔥 팩폭 타임!"); } updHUD(); }, ok?1300:2600);
+  if(ok){ G.rush=G.pendRush||8; G.sp=Math.min(5,G.sp+1); const d=rightHit(); toast(d?`🔥 팩폭 타임! 대마왕 -${d}`:"🔥 팩폭 타임!"); } updHUD(); }, ok?1300:2600);
 }
 
 function endGame(win){
@@ -1251,7 +1256,7 @@ buildMenu();
 $("startBtn").onclick=()=>{ au(); newGame(); };
 $("againBtn").onclick=()=>{ showTitle(); };
 $("muteBtn").onclick=()=>{ au(); toggleMusic(); }; $("muteBtn").textContent=MUS.on?"🔊":"🔇";
-window.__CAN={get G(){return G}, draw, setBg:t=>{BG_THEME=t;BGC=null;}, RUN, fireSpecial, newGame, update, startRound, keys, setFire:()=>{}, MUS};
+window.__CAN={get G(){return G}, draw, setBg:t=>{BG_THEME=t;BGC=null;}, RUN, fireSpecial, newGame, update, startRound, wrongHeal, rightHit, keys, setFire:()=>{}, MUS};
 })();
 </script>
 </body>
