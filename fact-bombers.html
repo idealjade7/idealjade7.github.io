@@ -803,14 +803,14 @@ addEventListener("keydown",e=>{ if(e.code==="Space"||e.code==="KeyQ"){ e.prevent
 // ================= 실험실 상점(라운드 사이) =================
 const SHOP=[
  {id:"rate",   icon:"🔫", name:"연사 속도", desc:"대포가 20% 더 빨리 쏴요", max:5, cost:l=>Math.round(400*Math.pow(1.75,l)/10)*10},
- {id:"gate",   icon:"✖️", name:"증식 문 강화", desc:"+ 문은 단계마다 +2, × 문은 ×3으로", max:3, cost:l=>[1000,2400,4800][l]},
+ {id:"gate",   icon:"✖️", name:"증식 문 강화", desc:"+ 문 숫자 +1 (3단계에서 × 문도 ×3)", max:3, cost:l=>[800,1800,3600][l]},
  {id:"newgate",icon:"🚪", name:"증식 문 추가", desc:"길에 움직이는 + 문을 하나 더 설치해요", max:2, cost:l=>[1400,3200][l]},
  {id:"barrel", icon:"💥", name:"포신 추가", desc:"보급 상자로 강화할 수 있는 포신 한도 +1 (최대 5연발)", max:2, cost:l=>[1800,4200][l]},
  {id:"start",  icon:"🔥", name:"선제 팩폭", desc:"라운드 시작마다 팩폭 타임 5초 (단계마다 +5초)", max:3, cost:l=>[700,1600,3000][l]},
  {id:"bomb",   icon:"💣", name:"팩트 폭탄", desc:"잡몹 전부 소탕 + 거인·대왕 밀쳐내기", max:5, cost:()=>350, once:true},
  {id:"shield", icon:"🛡️", name:"방어막", desc:"방어선이 뚫릴 때 한 번 막아 줘요", max:3, cost:()=>600, once:true},
 ];
-function gateVal(g){ return g.op==="x"? g.v+Math.min(1,G.up.gate) : g.v+G.up.gate*2; }   // 강화: × 문은 +1(최대 ×3), + 문은 단계마다 +2
+function gateVal(g){ return g.op==="x"? g.v+(G.up.gate>=3?1:0) : g.v+G.up.gate; }   // 강화: + 문은 단계마다 +1, × 문은 3단계에서만 ×3
 function addShopGate(n){
  if(n===1) G.gates.push({id:4,y:235,x:0,w:96,op:"+",v:3,dir:1,sp:75,min:-180,max:180});
  if(n===2) G.gates.push({id:5,y:730,x:-104,w:70,op:"+",v:3,dir:-1,sp:40,min:LANE.L0,max:LANE.L1});
