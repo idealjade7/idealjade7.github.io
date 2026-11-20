@@ -958,12 +958,13 @@ function bossFrames(k){
  const fr=[0,1].map(f=>makeBoss(k,f));
  return BOSS_CACHE[k]={n:fr.map(p=>p.canvas(3)), hit:fr.map(p=>p.canvas(3,"#ffffff")), body:13, size:56};
 }
-// ================= 주인공 캐릭터 (3방향 걷기, 캐릭터 4종) =================
+// ================= 주인공 캐릭터 (3방향 걷기) =================
 const HEROES = [
- {id:"m1", name:"민준", hair:"short", female:false, hc:["#3b2418","#5c3a26","#8f5e3c"], skin:["#f9d3ab","#e2aa82"], shirt:["#4a86e0","#2f5fae"], legs:["#34406e","#232b4f"]},
- {id:"m2", name:"현우", hair:"spiky", female:false, hc:["#17131f","#2a2433","#4a4058"], skin:["#f3c69a","#d99f74"], shirt:["#3fb37f","#2a7d58"], legs:["#3a3f4a","#262a33"]},
- {id:"f1", name:"서연", hair:"pony",  female:true,  hc:["#17131f","#2a2433","#4a4058"], skin:["#fad6b4","#e5ae8a"], shirt:["#e04a6a","#a8304b"], legs:["#34406e","#232b4f"], tie:"#e04a6a"},
- {id:"f2", name:"지아", hair:"bob",   female:true,  hc:["#6b3518","#93501f","#c07a3e"], skin:["#f9d3ab","#e2aa82"], shirt:["#9b6bff","#6f45c9"], legs:["#5a3b6e","#3e2850"], tie:"#ff7bd5", pin:"#ff9cf6"},
+ {id:"m1", name:"재경", hair:"short", female:false, hc:["#3b2418","#5c3a26","#8f5e3c"], skin:["#f9d3ab","#e2aa82"], shirt:["#4a86e0","#2f5fae"], legs:["#34406e","#232b4f"]},
+ {id:"m2", name:"성근", hair:"spiky", female:false, hc:["#17131f","#2a2433","#4a4058"], skin:["#f3c69a","#d99f74"], shirt:["#3fb37f","#2a7d58"], legs:["#3a3f4a","#262a33"]},
+ {id:"f1", name:"지연", hair:"pony",  female:true,  hc:["#17131f","#2a2433","#4a4058"], skin:["#fad6b4","#e5ae8a"], shirt:["#e04a6a","#a8304b"], legs:["#34406e","#232b4f"], tie:"#e04a6a"},
+ {id:"f2", name:"여림", hair:"bob",   female:true,  hc:["#6b3518","#93501f","#c07a3e"], skin:["#f9d3ab","#e2aa82"], shirt:["#9b6bff","#6f45c9"], legs:["#5a3b6e","#3e2850"], tie:"#ff7bd5", pin:"#ff9cf6"},
+ {id:"f3", name:"호선", hair:"long",  female:true,  hc:["#2a1810","#4a2a1a","#7a4a2c"], skin:["#fbdcc0","#e8b892"], shirt:["#ff9a3c","#d0701e"], legs:["#2f4a5e","#1f3342"], band:"#5fe0c8"},
  // 사진 속 캐릭터를 도트로 옮긴 선생님 캐릭터
  {id:"sm", name:"상민", chibi:"sm", hair:"mop", lip:"#7a3b34", female:false, glasses:true, blush:true, collar:true, coat:["#cfe0ef","#b3c8dc","#8ea6bf"], hc:["#141018","#23202b","#3d3848"], skin:["#fbe3c4","#e8c29c"], shirt:["#ffffff","#e6ecf3"], legs:["#4a5568","#323a48"]},
  {id:"sh", name:"소희", chibi:"sh", hair:"hime", female:false, lip:"#e0475a", coat:["#fbf6ea","#ece2cc","#cdbf9f"], neck:true, hc:["#120d10","#221a1e","#4a3a36"], skin:["#fde8dc","#ecc6b6"], shirt:["#fbf6ea","#ece2cc"], legs:["#3a3340","#27222c"]},
@@ -1097,6 +1098,12 @@ function heroPix(H, dir, fr, st){
   hairTop(); R(6,hy+3,6,4,hc[1]); R(6,hy+7,4,2,hc[1]); R(12,hy+3,5,1,hc[1]); R(7,hy+3,2,2,hc[2]);
   if(H.hair==="spiky") for(const x of [7,10,13]) R(x,hy-2,2,1,hc[1]);
   if(H.hair==="bob"){ R(6,hy+3,5,7,hc[1]); D(12,hy+2,H.pin); }
+ }
+ if(H.hair==="long"){   // 호선: 허리까지 오는 긴 생머리 + 머리띠
+  if(back){ R(5,hy+3,14,13,hc[1]); R(5,hy+3,1,13,hc[0]); R(18,hy+3,1,13,hc[0]); R(9,hy+4,1,9,hc[2]); R(14,hy+5,1,7,hc[2]); R(6,hy+16,12,1,hc[0]); R(6,hy,12,1,H.band); }
+  else if(qd){ R(5,hy+3,3,12,hc[1]); R(5,hy+3,1,12,hc[0]); R(6,hy+5,1,7,hc[2]); R(17,hy+3,2,11,hc[1]); R(18,hy+4,1,10,hc[0]); R(9,hy+3,4,1,hc[1]); R(7,hy,11,1,H.band); }
+  else if(!side){ R(4,hy+3,3,12,hc[1]); R(17,hy+3,3,12,hc[1]); R(4,hy+3,1,12,hc[0]); R(19,hy+3,1,12,hc[0]); R(5,hy+5,1,7,hc[2]); R(18,hy+5,1,7,hc[2]); R(8,hy+3,3,1,hc[1]); R(6,hy,12,1,H.band); }
+  else { R(5,hy+3,6,13,hc[1]); R(5,hy+3,1,13,hc[0]); R(7,hy+5,1,8,hc[2]); R(6,hy,11,1,H.band); }
  }
  // ---------- 사진 캐릭터 전용 머리 ----------
  if(H.hair==="mop"){   // 상민: 둥근 바가지 머리 + 옆으로 넘긴 앞머리 한 가닥
