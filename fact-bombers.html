@@ -43,6 +43,8 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
 .trow{display:flex;gap:8px}
 #pauseBtn{position:fixed;left:10px;top:10px;z-index:12;width:40px;height:40px;border-radius:50%;border:2px solid #4b4390;background:rgba(20,16,44,.85);color:#fff;font-size:16px;cursor:pointer}
 @media (max-width:600px){ #pauseBtn{top:auto;bottom:24px;left:58px} }
+.kn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:10px;border-radius:7px;background:#ffd23f;color:#2a1d00;font-size:14px;font-weight:900;vertical-align:1px}
+.kbd{display:inline-block;padding:1px 6px;border-radius:5px;background:rgba(255,255,255,.18);font-size:11px;font-weight:800;margin-left:4px}
 .label{font-size:13px;color:var(--sub);margin-top:6px}
 .how{font-size:13px;color:#dfe6ff;line-height:1.6;margin-top:12px;background:#181d44;border-radius:12px;padding:10px}
 .credit{position:fixed;right:10px;bottom:6px;font-size:11px;color:rgba(255,255,255,.45);z-index:20;pointer-events:none}
@@ -96,8 +98,8 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
  <div class="tbox">
   <div class="logo"><div class="logo-top">💥 FACT BOMBERS 💥</div><h1 class="logo-main">팩트 폭격대</h1><div class="logo-sub">오개념 군단을 막아라!</div></div>
   <div class="tstory">과학실 책상에서 우주 끝까지,<br>정답의 힘으로 오개념 대마왕 10마리를 무찌르자!</div>
-  <button class="btn big" id="goSetup">▶ 게임 시작</button>
-  <div class="trow"><button class="btn sub2" id="goHelp">📖 게임 방법</button></div>
+  <button class="btn big" id="goSetup">▶ 게임 시작 <span class="kbd">Enter</span></button>
+  <div class="trow"><button class="btn sub2" id="goHelp">📖 게임 방법 <span class="kbd">H</span></button></div>
  </div>
 </div>
 <div class="ov hidden" id="help">
@@ -109,16 +111,16 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
   라운드를 깨면 <b>실험실 상점</b>에서 금화로 연사 속도·대원 체력·증식 문·방어막을 강화해요<br>
   파란 문(+, ×)을 지나면 대원이 늘어나요 · 퀴즈 게이지가 차면 문제 → 정답이면 <b>팩폭 타임</b><br>
   💣 팩트 폭탄 버튼(스페이스): 잡몹을 모두 지우고 거인·대왕을 뒤로 날려 기절시켜요</div>
-  <button class="btn" id="helpBack">돌아가기</button>
+  <button class="btn" id="helpBack">돌아가기 <span class="kbd">Esc</span></button>
  </div>
 </div>
 <div class="ov hidden" id="pauseOv">
  <div class="panel">
   <h1>⏸ 일시정지</h1>
   <div class="sub" id="pauseInfo"></div>
-  <button class="btn" id="resumeBtn">▶ 계속하기</button>
-  <button class="btn sub2" id="restartBtn">🔄 처음부터 다시</button>
-  <button class="btn sub2" id="homeBtn">🏠 메인 화면으로</button>
+  <button class="btn" id="resumeBtn">▶ 계속하기 <span class="kbd">Esc</span></button>
+  <button class="btn sub2" id="restartBtn">🔄 처음부터 다시 <span class="kbd">R</span></button>
+  <button class="btn sub2" id="homeBtn">🏠 메인 화면으로 <span class="kbd">M</span></button>
   <div class="label" style="margin-top:10px">ESC 키로도 일시정지·계속하기를 할 수 있어요</div>
  </div>
 </div>
@@ -126,11 +128,11 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
 <div class="ov hidden" id="menu">
  <div class="panel">
   <h1 style="font-size:30px">출동 준비</h1>
-  <div class="sub">학년과 단원을 고르면 그 범위에서 문제가 나와요</div>
+  <div class="sub">학년과 단원을 고르면 그 범위에서 문제가 나와요<br><small>키보드: 학년 <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span> · 단원 <span class="kbd">←</span><span class="kbd">→</span> · 출동 <span class="kbd">Enter</span></small></div>
   <div class="label">학년</div><div class="row" id="gradeRow"></div>
   <div class="label">단원</div><div class="row" id="unitRow"></div>
-  <button class="btn" id="startBtn">출동!</button>
-  <button class="btn sub2" id="setupBack">← 뒤로</button>
+  <button class="btn" id="startBtn">출동! <span class="kbd">Enter</span></button>
+  <button class="btn sub2" id="setupBack">← 뒤로 <span class="kbd">Esc</span></button>
  </div>
 </div>
 
@@ -163,7 +165,7 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
    <div><b id="rTime">0</b><span>도달 라운드</span></div>
   </div>
   <div id="wrongList"></div>
-  <button class="btn" id="againBtn">🏠 메인 화면으로</button>
+  <button class="btn" id="againBtn">🏠 메인 화면으로 <span class="kbd">Enter</span></button>
  </div>
 </div>
 <button id="muteBtn" title="배경음악 켜기/끄기">🔊</button>
@@ -789,16 +791,16 @@ function addShopGate(n){
 }
 function shopLevel(it){ if(it.id==="bomb") return G.sp; if(it.id==="shield") return G.shield; return G.up[it.id]; }
 function openShop(){
- G.mode="shop"; $("shopRound").textContent=`ROUND ${G.round} 클리어!`; $("nextBtn").textContent=`ROUND ${G.round+1} 출동! ▶`;
+ G.mode="shop"; $("shopRound").textContent=`ROUND ${G.round} 클리어!`; $("nextBtn").innerHTML=`ROUND ${G.round+1} 출동! ▶ <span class="kbd">Enter</span>`;
  renderShop(); $("shop").classList.remove("hidden"); playMusic("title");
 }
 function renderShop(){
  $("shopCoin").textContent=G.coin; const box=$("shopList"); box.innerHTML="";
- for(const it of SHOP){ const lv=shopLevel(it), maxed=lv>=it.max, cost=maxed?0:it.cost(lv), can=!maxed&&G.coin>=cost;
+ SHOP.forEach((it,idx)=>{ const lv=shopLevel(it), maxed=lv>=it.max, cost=maxed?0:it.cost(lv), can=!maxed&&G.coin>=cost;
   const d=document.createElement("button"); d.className="shopItem"+(can?"":" off")+(maxed?" max":"");
-  d.innerHTML=`<span class="si">${it.icon}</span><b>${it.name}</b><small>${it.desc}</small><em>${it.id==="bomb"?"보유 "+G.sp+"/5":(it.id==="shield"?"보유 "+G.shield+"/3":"Lv "+lv+"/"+it.max)}</em><i>${maxed?"MAX":"💰 "+cost}</i>`;
+  d.innerHTML=`<span class="kn" style="position:absolute;right:8px;top:8px;margin:0">${idx+1}</span><span class="si">${it.icon}</span><b>${it.name}</b><small>${it.desc}</small><em>${it.id==="bomb"?"보유 "+G.sp+"/5":(it.id==="shield"?"보유 "+G.shield+"/3":"Lv "+lv+"/"+it.max)}</em><i>${maxed?"MAX":"💰 "+cost}</i>`;
   d.onclick=()=>{ if(!can) { SFX.bad(); return; } G.coin-=cost; if(it.id==="bomb") G.sp++; else if(it.id==="shield") G.shield++; else { G.up[it.id]++; if(it.id==="newgate") addShopGate(G.up.newgate); } SFX.good(); renderShop(); updHUD(); };
-  box.appendChild(d); }
+  box.appendChild(d); });
 }
 $("nextBtn").onclick=()=>{ $("shop").classList.add("hidden"); startRound(G.round+1); last=performance.now(); };
 
@@ -810,7 +812,7 @@ function openQuiz(){
  curQ={q,order,done:false};
  $("qTag").textContent=`문제 ${G.quizN} · 맞히면 팩폭 타임!`; $("qQ").textContent=q[2]; $("qExp").textContent="";
  const box=$("qC"); box.innerHTML="";
- order.forEach(i=>{ const b=document.createElement("button"); b.className="choice"; b.textContent=q[3][i]; b.onclick=()=>answer(i,b); box.appendChild(b); });
+ order.forEach((i,k)=>{ const b=document.createElement("button"); b.className="choice"; b.innerHTML=`<span class="kn">${k+1}</span>`; b.appendChild(document.createTextNode(q[3][i])); b.onclick=()=>answer(i,b); box.appendChild(b); });
  $("quiz").classList.remove("hidden");
 }
 function answer(i,btn){
@@ -1178,6 +1180,23 @@ $("restartBtn").onclick=()=>{ $("pauseOv").classList.add("hidden"); stopMusic(.2
 $("homeBtn").onclick=()=>{ stopMusic(.2); showTitle(); };
 addEventListener("keydown",e=>{ if(e.code==="Escape"||e.code==="KeyP"){ if(!G) return; if(G.mode==="play") pauseGame(); else if(G.mode==="pause") resumeGame(); } });
 document.addEventListener("visibilitychange",()=>{ if(document.hidden) pauseGame(); });
+// ---------- 키보드만으로 조작 ----------
+const vis=id=>!$(id).classList.contains("hidden");
+addEventListener("keydown",e=>{
+ const k=e.key, d=/^[1-9]$/.test(k)?+k:0;
+ if(vis("quiz")){ if(d>=1&&d<=4){ const b=$("qC").children[d-1]; if(b){ e.preventDefault(); b.click(); } } return; }
+ if(vis("shop")){ if(d>=1){ const b=$("shopList").children[d-1]; if(b){ e.preventDefault(); b.click(); } } else if(k==="Enter"){ e.preventDefault(); $("nextBtn").click(); } return; }
+ if(vis("result")){ if(k==="Enter"){ e.preventDefault(); $("againBtn").click(); } return; }
+ if(vis("help")){ if(k==="Escape"||k==="Enter"){ e.preventDefault(); $("helpBack").click(); } return; }
+ if(vis("menu")){
+  if(d>=1&&d<=3){ sel.grade=d; sel.unit=-1; buildMenu(); }
+  else if(k==="ArrowRight"||k==="ArrowLeft"){ e.preventDefault(); const n=QDATA[sel.grade].short.length; sel.unit=((sel.unit+1+(k==="ArrowRight"?1:-1))%(n+1)+n+1)%(n+1)-1; buildMenu(); }
+  else if(k==="Enter"){ e.preventDefault(); $("startBtn").click(); }
+  else if(k==="Escape"){ $("setupBack").click(); }
+  return; }
+ if(vis("title")){ if(k==="Enter"||k===" "){ e.preventDefault(); $("goSetup").click(); } else if(k==="h"||k==="H"){ $("goHelp").click(); } return; }
+ if(vis("pauseOv")){ if(k==="r"||k==="R") $("restartBtn").click(); else if(k==="m"||k==="M") $("homeBtn").click(); return; }
+});
 showTitle();
 buildMenu();
 $("startBtn").onclick=()=>{ au(); newGame(); };
