@@ -45,6 +45,14 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
 @media (max-width:600px){ #pauseBtn{top:auto;bottom:24px;left:58px} }
 .kn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:10px;border-radius:7px;background:#ffd23f;color:#2a1d00;font-size:14px;font-weight:900;vertical-align:1px}
 .kbd{display:inline-block;padding:1px 6px;border-radius:5px;background:rgba(255,255,255,.18);font-size:11px;font-weight:800;margin-left:4px}
+#bigPop{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%) scale(0);z-index:7;font-size:clamp(40px,12vw,84px);font-weight:900;white-space:nowrap;pointer-events:none;text-shadow:0 5px 0 #2a1060,0 0 26px rgba(255,180,60,.8);opacity:0}
+#bigPop.go{animation:bp 1.1s cubic-bezier(.2,1.8,.4,1) forwards}
+@keyframes bp{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-8deg)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(3deg)}35%{transform:translate(-50%,-50%) scale(1) rotate(0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%) scale(1)}}
+.flycoin{position:fixed;z-index:9;font-size:20px;pointer-events:none;transition:left .7s cubic-bezier(.5,0,.8,.4),top .7s cubic-bezier(.3,.9,.6,1),transform .7s;}
+.stars{font-size:46px;letter-spacing:6px;margin:6px 0 2px;height:56px}
+.stars span{display:inline-block;opacity:.18;filter:grayscale(1);transform:scale(.6);transition:all .35s cubic-bezier(.2,1.8,.4,1)}
+.stars span.on{opacity:1;filter:none;transform:scale(1)}
+.starWhy{font-size:12px;color:var(--sub);margin-bottom:4px}
 .label{font-size:13px;color:var(--sub);margin-top:6px}
 .how{font-size:13px;color:#dfe6ff;line-height:1.6;margin-top:12px;background:#181d44;border-radius:12px;padding:10px}
 .credit{position:fixed;right:10px;bottom:6px;font-size:11px;color:rgba(255,255,255,.45);z-index:20;pointer-events:none}
@@ -90,6 +98,7 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
  <div class="bar" id="gaugeBar"><i></i></div>
 </div>
 <button id="spBtn" class="hidden" disabled><b>💣</b>팩트 폭탄<br><span id="spN">0</span></button>
+<div id="bigPop"></div>
 <div id="toast" style="opacity:0"></div>
 <div id="flash"></div>
 <div id="success">성공!</div>
@@ -148,6 +157,7 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
 <div class="ov hidden" id="shop">
  <div class="panel">
   <div class="logo-sub" id="shopRound">ROUND 1 클리어!</div>
+  <div class="stars" id="stars"><span>⭐</span><span>⭐</span><span>⭐</span></div><div class="starWhy" id="starWhy"></div>
   <h1 style="margin-top:8px">🧪 실험실 상점</h1>
   <div class="sub">트로피와 오개념을 물리쳐 모은 금화로 강화하세요 · 보유 💰 <b id="shopCoin" style="color:#ffd23f;font-size:20px">0</b></div>
   <div id="shopList"></div>
@@ -202,6 +212,10 @@ const SFX={
   const o1=(type,f0,f1,dur,vol,dl=0)=>{ const o=a.createOscillator(), g=a.createGain(), t=t0+dl; o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.004); g.gain.exponentialRampToValueAtTime(.0001,t+dur); o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur+.02); };
   o1("sine",rnd(140,180),55,.08,.28*v); const p=rnd(800,1100); o1("sine",p,p*.4,.05,.08*v,.008); },70); },
  thump(){ tone(70,.12,"sine",.25,-30); tone(120,.06,"square",.05,-60); },
+ combo(n){ const base=523*Math.pow(1.06,Math.min(n,8)); [1,1.26,1.5,2].forEach((m,i)=>tone(base*m,.12,"square",.06,0,i*.05)); },
+ kill(){ [392,523,659,784,1047].forEach((f,i)=>tone(f,.1,"square",.06,0,i*.04)); tone(1568,.3,"triangle",.06,0,.22); },
+ star(){ tone(1046,.12,"square",.07); tone(1568,.25,"triangle",.07,0,.06); },
+ gold(){ tone(1318,.08,"triangle",.06); tone(1760,.12,"triangle",.05,0,.05); },
  alarm(){ tone(440,.15,"square",.06,0); tone(330,.2,"square",.06,0,.16); },
 };
 // ================= 배경음악(8비트) =================
@@ -607,21 +621,26 @@ const MAX_ROUND=10;
 // 라운드: 보스를 잡으면 다음 라운드(대포 강화·T세포는 그대로)
 function startRound(n){
  const prevSt=G.round?bgStage():-1; G.round=n; if(bgStage()!==prevSt) BGC=null; const k=1+.22*(n-1), fin=n===MAX_ROUND;
- const hp=Math.round(1100*(1+.6*(n-1))*(fin?1.25:1)/10)*10;
+ const hp=Math.round(1200*Math.pow(1.4,n-1)*(fin?1.25:1)/10)*10;
  G.boss={x:-104,y:L-10,hp,max:hp,r:fin?54:46,fin,sp:7+Math.min(4,(n-1)*.7),hit:0,boss:true,giant:true,ph:0,stomp:0};
  G.enemies=[G.boss]; G.units=[]; G.parts=[]; G.coins=[]; G.decals=[]; G.fx=[];
- G.waveK=k; G.rt=0; G.spawnT=2; G.giantT=14; G.giantN=0;
+ G.waveK=k; G.rt=0; G.roundQ=0; G.roundC=0; G.spawnT=2; G.giantT=14; G.giantN=0;
  const c=G.crate; c.alive=true; c.max=c.hp=40+(n-1)*30; G.crateT=0;
  const st=G.statue; st.alive=true; st.max=st.hp=Math.round(1500*(1+.3*(n-1))/10)*10;
  // 문 구성을 라운드마다 조금씩 바꿔요
  const opts=[["+",3],["+",4],["+",5],["+",4],["+",3]];   // 곱하기 문은 맨 아래 하나만(두 번째 문은 항상 + 문)
  G.gates[0].op="x"; G.gates[0].v=2; const o=opts[(n+1)%opts.length]; G.gates[1].op=o[0]; G.gates[1].v=o[1]; G.gates[2].op="+"; G.gates[2].v=2+Math.min(2,Math.floor(n/2));
  if(G.up.start){ G.rush=Math.max(G.rush,G.up.start*5); }
- G.mode="play"; playMusic(stageSong()); toast(fin?`최종 ROUND ${n}/${MAX_ROUND} · 대마왕 ${hp}`:`ROUND ${n}/${MAX_ROUND} · 오개념 대마왕 ${hp}`); SFX.alarm();
+ G.mode="play"; $("pauseBtn").classList.remove("hidden"); playMusic(stageSong()); toast(fin?`최종 ROUND ${n}/${MAX_ROUND} · 대마왕 ${hp}`:`ROUND ${n}/${MAX_ROUND} · 오개념 대마왕 ${hp}`); SFX.alarm();
 }
 function roundClear(){
  if(G.round>=MAX_ROUND){ G.score+=500*G.round+3000; G.boss.hp=0; updHUD(); return endGame(true); }
- G.mode="clear"; G.clearT=3.2; G.score+=500*G.round; addCoin(100*G.round); stopMusic(.3); G.boss.hp=0; updHUD();
+ G.mode="clear"; G.clearT=3.4; G.score+=500*G.round; addCoin(100*G.round);
+ G.slowT=1.1; G.zoom={x:G.boss.x,y:G.boss.y,t:1.4};
+ // ⭐ 별점: 기본 1 + 빠른 클리어 + 정답률 80% 이상
+ const fastClear=G.rt<=Math.max(35,30+G.round*3), acc=(G.roundQ||0)>0? (G.roundC||0)/(G.roundQ||1) : 0;
+ G.lastStars={n:1+(fastClear?1:0)+((G.roundQ||0)>0&&acc>=.8?1:0), fast:fastClear, acc:(G.roundQ||0)>0?Math.round(acc*100):null, t:Math.round(G.rt)};
+ G.starTotal=(G.starTotal||0)+G.lastStars.n; addCoin(60*G.lastStars.n); stopMusic(.3); G.boss.hp=0; updHUD();
  burst(G.boss.x,G.boss.y,"#ffd23f",90); burst(G.boss.x,G.boss.y,"#ff6a80",60); G.shake=.6;
  setTimeout(()=>{ SFX.win(); const f=$("flash"),s2=$("success"); s2.textContent=`ROUND ${G.round}/${MAX_ROUND} 클리어!`; f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); s2.classList.remove("go"); void s2.offsetWidth; s2.classList.add("go"); },250);
 }
@@ -644,7 +663,7 @@ const up=()=>{ drag=null; }; addEventListener("pointerup",up); addEventListener(
 // 대원이 너무 많아지면 지우지 않고 가까운 대원에게 합쳐요(겹친 무리, 체력 = 인원 수)
 const UNIT_CAP=420;
 function addUnit(x,y,o={}){
- if(!o.big && G.units.length>=UNIT_CAP){
+ if(!o.big && !o.gold && G.units.length>=UNIT_CAP){
   let tgt=o.parent&&o.parent.hp>0?o.parent:null;
   if(!tgt){ let bd=70*70; for(let i=G.units.length-1,c=0;i>=0&&c<80;i--,c++){ const u=G.units[i]; if(u.big||u.hp<=0) continue; const d=(u.x-x)**2+(u.y-y)**2; if(d<bd){ bd=d; tgt=u; } } }
   if(tgt){ tgt.hp+=1+G.up.hp; return; }
@@ -673,7 +692,7 @@ function update(dt){
  // 자동 발사
  G.fireT-=dt;
  if(G.fireT<=0){ const rate=(G.rush>0?14:7)*(1+.2*G.up.rate); G.fireT=1/rate; const n=G.lvl;
-  for(let i=0;i<n;i++) addUnit(G.cx+(n>1?(i-(n-1)/2)*16:rnd(-3,3)), 44); G.recoil=.07; SFX.shot(); if(G.fx.length<260) G.fx.push({k:"puff",x:G.cx,y:60,life:.25,T:.25,c:"#e8dcff"}); }
+  for(let i=0;i<n;i++){ const gold=Math.random()<.035; addUnit(G.cx+(n>1?(i-(n-1)/2)*16:rnd(-3,3)), 44, gold?{gold:true,hp:3+G.up.hp,mult:false}:{}); if(gold){ SFX.gold(); } } G.recoil=.07; SFX.shot(); if(G.fx.length<260) G.fx.push({k:"puff",x:G.cx,y:60,life:.25,T:.25,c:"#e8dcff"}); }
  if(G.rush>0) G.rush-=dt; if(G.recoil>0) G.recoil-=dt; if(G.spCD>0) G.spCD-=dt;
  // 적
  G.spawnT-=dt; if(G.spawnT<=0){ spawnWave(); G.spawnT=Math.max(1.2,2.6-G.rt*.01); }
@@ -705,11 +724,13 @@ function update(dt){
  for(const u of G.units){
   if(u.hp<=0) continue;
   for(const e of ens){ if(e.hp<=0) continue; const dx=u.x-e.x, dy=u.y-e.y, rr=u.r+e.r; if(dx*dx+dy*dy<rr*rr){
+    if(u.gold&&!u.goldDone){ u.goldDone=true; let n2=0; for(const o of ens){ if(o!==e&&!o.giant&&o.hp>0&&(o.x-u.x)**2+(o.y-u.y)**2<55*55){ o.hp=0; n2++; burst(o.x,o.y,"#ffd23f",3); } } G.kills+=n2; addKill(n2); addCoin(15); G.coins.push({x:u.x,y:u.y,h:40,vh:200,vx:rnd(-60,60),vy:rnd(-80,0),life:1});
+     G.fx.push({k:"ring",x:u.x,y:u.y,life:.4,T:.4,c:"#ffe680"}); floatT("✨+15",u.x,u.y,"#ffe14a"); SFX.gold(); }
     const k=Math.min(u.hp,e.hp); u.hp-=k; e.hp-=k; if(e.hp<=0) G.kills+=e.giant?e.max:1;
     const hx=(u.x+e.x)/2, hy=(u.y+e.y)/2;
     if(e.giant){ e.hit=.09; e.squash=.12; addGauge(k*.4); e.dmgAcc=(e.dmgAcc||0)+k; e.y=Math.min(L-20,e.y+k*(e.boss?.06:.3));   // 맞으면 살짝 밀려나요
      if(G.fx.length<260) G.fx.push({k:"spark",x:hx,y:hy,life:.16,T:.16,s:rnd(.8,1.3),c:"#fff6c0"}); if(Math.random()<.5) SFX.thump(); }
-    else { addGauge(1); if(Math.random()<.3) addCoin(1); if(G.decals.length<160) G.decals.push({x:e.x,y:e.y,life:2.5,r:rnd(6,11)});
+    else { addGauge(1); addKill(1); if(Math.random()<.3) addCoin(1); if(G.decals.length<160) G.decals.push({x:e.x,y:e.y,life:2.5,r:rnd(6,11)});
      if(G.fx.length<260){ G.fx.push({k:"spark",x:hx,y:hy,life:.14,T:.14,s:rnd(.6,1),c:"#ffffff"}); G.fx.push({k:"puff",x:e.x,y:e.y,life:.32,T:.32,c:"#ff8a96"}); G.fx.push({k:"puff",x:u.x,y:u.y,life:.3,T:.3,c:"#9cc8ff"}); }
      burst(hx,hy,"#ff6a80",2); burst(hx,hy,"#7ab8ff",2); SFX.clash(); }
     if(e.hp<=0&&e.giant){ addCoin(Math.round(e.max/5)); SFX.boom(); G.shake=.5; G.hitStop=e.boss?.25:.09; burst(e.x,e.y,"#ffd23f",40); burst(e.x,e.y,"#ff6a80",40); G.fx.push({k:"ring",x:e.x,y:e.y,life:.5,T:.5,c:"#fff3a0"}); floatT(e.boss?"대왕 쓰러짐!":"거인 처치!",e.x,e.y,"#ffd23f"); }
@@ -720,7 +741,7 @@ function update(dt){
   const s=G.statue; if(s.alive&&u.y>=s.y-20&&u.x>LANE.R0){ const k=Math.min(u.hp,s.hp); s.hp-=k; s.hit=.08; u.hp=0; addCoin(2*k); G.coinFly=(G.coinFly||0)+1;
    if(Math.random()<.6) G.coins.push({x:s.x+rnd(-30,30),y:s.y-10,h:rnd(40,70),vh:rnd(120,220),vx:rnd(-80,80),vy:rnd(-160,-60),life:1.2}); SFX.base();
    if(s.hp<=0){ s.alive=false; const jack=300+60*G.round; addCoin(jack); G.shake=.5; G.hitStop=.12; for(let i=0;i<40;i++) G.coins.push({x:s.x+rnd(-40,40),y:s.y-10,h:rnd(30,90),vh:rnd(200,380),vx:rnd(-160,160),vy:rnd(-260,-40),life:1.6});
-    burst(s.x,s.y,"#ffd23f",70); G.fx.push({k:"ring",x:s.x,y:s.y,life:.6,T:.6,c:"#ffe680"}); SFX.win(); toast(`🏆 트로피 파괴! +${jack} 💰`); floatT(`+${jack} 💰`,s.x,s.y,"#ffe14a"); }
+    burst(s.x,s.y,"#ffd23f",70); G.fx.push({k:"ring",x:s.x,y:s.y,life:.6,T:.6,c:"#ffe680"}); SFX.win(); toast(`🏆 트로피 파괴! +${jack} 💰`); flyCoins(s.x,s.y-40,18); floatT(`+${jack} 💰`,s.x,s.y,"#ffe14a"); }
    continue; }
   if(u.y>=L+40) u.hp=0;
  }
@@ -744,9 +765,14 @@ function update(dt){
  G.coins=G.coins.filter(c=>c.life>0);
  for(const f of G.floats) f.life-=dt; G.floats=G.floats.filter(f=>f.life>0);
  for(const d of G.decals) d.life-=dt; G.decals=G.decals.filter(d=>d.life>0);
- G.shake=Math.max(0,G.shake-dt); if(G.coinBump>0) G.coinBump-=dt;
+ G.shake=Math.max(0,G.shake-dt); if(G.coinBump>0) G.coinBump-=dt; if(G.kStreakT>0){ G.kStreakT-=dt; if(G.kStreakT<=0){ G.kStreak=0; G.kShown=0; } }
  updHUD();
 }
+function bigPop(txt,col){ const b=$("bigPop"); b.textContent=txt; b.style.color=col||"#fff36b"; b.classList.remove("go"); void b.offsetWidth; b.classList.add("go"); }
+// 금화가 화면 위 금화 표시로 날아가요
+function flyCoins(wx,wy,n){ const p=P(wx,wy), box=$("coinBox").getBoundingClientRect(); for(let i=0;i<n;i++){ const c=document.createElement("div"); c.className="flycoin"; c.textContent="🪙"; c.style.left=(p.x+rnd(-30,30))+"px"; c.style.top=(p.y+rnd(-40,10))+"px"; document.body.appendChild(c);
+  setTimeout(()=>{ c.style.left=(box.left+box.width*.3)+"px"; c.style.top=(box.top)+"px"; c.style.transform="scale(.6)"; },30+i*35); setTimeout(()=>{ c.remove(); G&&(G.coinBump=.25); if(i%3===0) SFX.pop&&SFX.pop(); },760+i*35); } }
+function addKill(n){ if(G.mode!=="play") return; G.kStreak=(G.kStreak||0)+n; G.kStreakT=1.6; const ms=[30,60,100,150,200,300,500]; const next=ms.find(m=>m>(G.kShown||0)); if(next && G.kStreak>=next){ G.kShown=next; bigPop(`${next} KILL!`, next>=150?"#ff6ad8":next>=60?"#ffb347":"#fff36b"); SFX.kill(); G.shake=Math.max(G.shake,.15); } }
 function addCoin(n){ G.coin+=n; G.coinTotal=(G.coinTotal||0)+n; G.coinBump=.25; }
 function addGauge(v){ if(G.mode!=="play") return; G.gauge+=v*(1+.25*G.up.gauge); if(G.gauge>=G.gaugeMax && !G.quizPending){ G.quizPending=true; setTimeout(()=>{ if(G&&!G.end){ if(G.mode==='play') openQuiz(); else G.quizPending=false; } },350); } }
 function burst(x,y,col,n){ for(let i=0;i<n;i++) G.parts.push({x,y,h:rnd(4,14),vx:rnd(-90,90),vy:rnd(-90,90),vh:rnd(80,240),life:rnd(.3,.7),col}); }
@@ -757,7 +783,7 @@ function updHUD(){
  $("bossLbl").textContent=`😈 오개념 대마왕 · ROUND ${G.round}/${MAX_ROUND}`+(G.round===MAX_ROUND?" (최종)":"");
  const b=G.boss; $("baseBar").firstElementChild.style.width=(b.hp/b.max*100)+"%"; $("baseTxt").textContent=`${Math.max(0,b.hp)} / ${b.max}`;
  $("gaugeBar").firstElementChild.style.width=Math.min(100,G.gauge/G.gaugeMax*100)+"%"; $("gaugeTxt").textContent=G.rush>0?`팩폭 타임 ${G.rush.toFixed(1)}초`:`${Math.min(G.gaugeMax,Math.floor(G.gauge))} / ${G.gaugeMax}`;
- $("coinTxt").textContent=G.coin; $("shieldTxt").textContent=G.shield; $("coinBox").classList.toggle("bump",G.coinBump>0); $("spN").textContent=G.sp+"개"; $("spBtn").disabled=!(G.sp>0&&G.spCD<=0&&G.mode==="play");
+ G.coinShown=G.coinShown===undefined?G.coin:G.coinShown+(G.coin-G.coinShown)*.15; if(Math.abs(G.coin-G.coinShown)<1) G.coinShown=G.coin; $("coinTxt").textContent=Math.round(G.coinShown); $("shieldTxt").textContent=G.shield; $("coinBox").classList.toggle("bump",G.coinBump>0); $("spN").textContent=G.sp+"개"; $("spBtn").disabled=!(G.sp>0&&G.spCD<=0&&G.mode==="play");
 }
 // 💣 팩트 폭탄: 화면의 잡몹을 모두 지우고, 거인·대왕은 뒤로 날려 잠시 기절시켜요
 function fireSpecial(){ if(!G||G.sp<=0||G.spCD>0||G.mode!=="play") return; G.sp--; G.spCD=1.5;
@@ -766,7 +792,7 @@ function fireSpecial(){ if(!G||G.sp<=0||G.spCD>0||G.mode!=="play") return; G.sp-
   if(!e.giant){ e.hp=0; n++; burst(e.x,e.y,"#7dd8ff",3); if(G.decals.length<160) G.decals.push({x:e.x,y:e.y,life:2,r:rnd(6,10)}); }
   else { const dmg=Math.round(e.max*(e.boss?.04:.25)); e.hp=Math.max(1,e.hp-dmg); e.y=Math.min(L-20,e.y+(e.boss?150:220)); e.stun=e.boss?2.2:3; e.hit=.25; e.dmgAcc=(e.dmgAcc||0)+dmg; G.fx.push({k:"ring",x:e.x,y:e.y,life:.6,T:.6,c:"#ffe680"}); }
  }
- G.kills+=n; addCoin(Math.round(n*.3)); G.enemies=G.enemies.filter(e=>e.hp>0);
+ G.kills+=n; addKill(n); addCoin(Math.round(n*.3)); G.enemies=G.enemies.filter(e=>e.hp>0);
  G.fx.push({k:"wave",x:0,y:0,life:.7,T:.7}); G.shake=.7; G.hitStop=.1; SFX.boom(); setTimeout(()=>SFX.boom(),120);
  const f=$("flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
  toast(`💣 팩트 폭탄! 오개념 ${n}명 소탕`); updHUD(); }
@@ -776,11 +802,11 @@ addEventListener("keydown",e=>{ if(e.code==="Space"||e.code==="KeyQ"){ e.prevent
 
 // ================= 실험실 상점(라운드 사이) =================
 const SHOP=[
- {id:"rate",   icon:"🔫", name:"연사 속도", desc:"대포가 20% 더 빨리 쏴요", max:5, cost:l=>Math.round(300*Math.pow(1.6,l)/10)*10},
- {id:"gate",   icon:"✖️", name:"증식 문 강화", desc:"+ 문은 단계마다 +2, × 문은 ×3으로", max:3, cost:l=>[700,1500,2800][l]},
- {id:"newgate",icon:"🚪", name:"증식 문 추가", desc:"길에 움직이는 + 문을 하나 더 설치해요", max:2, cost:l=>[900,1800][l]},
- {id:"barrel", icon:"💥", name:"포신 추가", desc:"보급 상자로 강화할 수 있는 포신 한도 +1 (최대 5연발)", max:2, cost:l=>[1000,2200][l]},
- {id:"start",  icon:"🔥", name:"선제 팩폭", desc:"라운드 시작마다 팩폭 타임 5초 (단계마다 +5초)", max:3, cost:l=>[500,1000,1700][l]},
+ {id:"rate",   icon:"🔫", name:"연사 속도", desc:"대포가 20% 더 빨리 쏴요", max:5, cost:l=>Math.round(400*Math.pow(1.75,l)/10)*10},
+ {id:"gate",   icon:"✖️", name:"증식 문 강화", desc:"+ 문은 단계마다 +2, × 문은 ×3으로", max:3, cost:l=>[1000,2400,4800][l]},
+ {id:"newgate",icon:"🚪", name:"증식 문 추가", desc:"길에 움직이는 + 문을 하나 더 설치해요", max:2, cost:l=>[1400,3200][l]},
+ {id:"barrel", icon:"💥", name:"포신 추가", desc:"보급 상자로 강화할 수 있는 포신 한도 +1 (최대 5연발)", max:2, cost:l=>[1800,4200][l]},
+ {id:"start",  icon:"🔥", name:"선제 팩폭", desc:"라운드 시작마다 팩폭 타임 5초 (단계마다 +5초)", max:3, cost:l=>[700,1600,3000][l]},
  {id:"bomb",   icon:"💣", name:"팩트 폭탄", desc:"잡몹 전부 소탕 + 거인·대왕 밀쳐내기", max:5, cost:()=>350, once:true},
  {id:"shield", icon:"🛡️", name:"방어막", desc:"방어선이 뚫릴 때 한 번 막아 줘요", max:3, cost:()=>600, once:true},
 ];
@@ -791,8 +817,10 @@ function addShopGate(n){
 }
 function shopLevel(it){ if(it.id==="bomb") return G.sp; if(it.id==="shield") return G.shield; return G.up[it.id]; }
 function openShop(){
- G.mode="shop"; $("shopRound").textContent=`ROUND ${G.round} 클리어!`; $("nextBtn").innerHTML=`ROUND ${G.round+1} 출동! ▶ <span class="kbd">Enter</span>`;
- renderShop(); $("shop").classList.remove("hidden"); playMusic("title");
+ G.mode="shop"; $("shopRound").textContent=`ROUND ${G.round} 클리어!`;
+ const st=G.lastStars||{n:1}; const sp=[...$("stars").children]; sp.forEach(s=>s.classList.remove("on")); for(let i=0;i<st.n;i++) setTimeout(()=>{ sp[i].classList.add("on"); SFX.star(); },350+i*380);
+ $("starWhy").textContent=`⭐ 클리어 · ${st.fast?"⭐":"☆"} 빠른 클리어(${st.t}초) · ${st.acc!==null&&st.acc>=80?"⭐":"☆"} 정답률 80%↑${st.acc!==null?`(${st.acc}%)`:"(문제 없음)"} · 별마다 💰60`; $("nextBtn").innerHTML=`ROUND ${G.round+1} 출동! ▶ <span class="kbd">Enter</span>`;
+ renderShop(); $("shop").classList.remove("hidden"); $("pauseBtn").classList.add("hidden"); playMusic("title");
 }
 function renderShop(){
  $("shopCoin").textContent=G.coin; const box=$("shopList"); box.innerHTML="";
@@ -809,7 +837,7 @@ let curQ=null;
 function openQuiz(){
  G.mode="quiz"; drag=null; const q=pickQ(G.quizN); G.quizN++;
  const order=[0,1,2,3].sort(()=>Math.random()-.5);
- curQ={q,order,done:false};
+ curQ={q,order,done:false,t0:performance.now()};
  $("qTag").textContent=`문제 ${G.quizN} · 맞히면 팩폭 타임!`; $("qQ").textContent=q[2]; $("qExp").textContent="";
  const box=$("qC"); box.innerHTML="";
  order.forEach((i,k)=>{ const b=document.createElement("button"); b.className="choice"; b.innerHTML=`<span class="kn">${k+1}</span>`; b.appendChild(document.createTextNode(q[3][i])); b.onclick=()=>answer(i,b); box.appendChild(b); });
@@ -818,10 +846,15 @@ function openQuiz(){
 function answer(i,btn){
  if(curQ.done) return; curQ.done=true; const q=curQ.q, ok=i===q[4];
  [...$("qC").children].forEach((b,k)=>{ if(curQ.order[k]===q[4]) b.classList.add("ok"); });
- if(ok){ G.correct++; addCoin(50); SFX.good(); $("qExp").textContent="정답! 팩폭 타임 8초(2배 연사) + 💣 팩트 폭탄 1개 + 💰50 🎉"; }
- else { btn.classList.add("no"); SFX.bad(); G.wrong.push(q); $("qExp").textContent="아쉬워요! "+(q[5]||""); }
+ const fast=(performance.now()-curQ.t0)<5000; G.roundQ=(G.roundQ||0)+1;
+ if(ok){ G.correct++; G.roundC=(G.roundC||0)+1; G.combo=(G.combo||0)+1; G.maxCombo=Math.max(G.maxCombo||0,G.combo);
+  const coin=40*Math.min(G.combo,4)*(fast?2:1); addCoin(coin); SFX.good(); if(G.combo>=2) setTimeout(()=>SFX.combo(G.combo),180);
+  const rushT=Math.min(16,8+2*(G.combo-1)); G.pendRush=rushT;
+  $("qExp").innerHTML=`<b style="color:#4fe39a">정답!</b> 팩폭 타임 ${rushT}초 + 💣 1개 + 💰${coin}`+(G.combo>=2?` · <b style="color:#ffd23f">${G.combo} COMBO 🔥</b>`:"")+(fast?` · <b style="color:#7dd8ff">⚡ 번개 정답 ×2</b>`:"");
+  if(G.combo>=2) bigPop(`${G.combo} COMBO! 🔥`,"#ffd23f"); else if(fast) bigPop("⚡ 번개 정답!","#7dd8ff"); }
+ else { btn.classList.add("no"); SFX.bad(); G.wrong.push(q); const had=G.combo||0; G.combo=0; $("qExp").innerHTML=(had>=2?`<b style="color:#ff8a96">${had} COMBO 끊김…</b> `:"")+"아쉬워요! "+(q[5]||""); }
  setTimeout(()=>{ $("quiz").classList.add("hidden"); G.mode="play"; G.gauge=0; G.gaugeMax=Math.min(1100,G.gaugeMax+70); G.quizPending=false; last=performance.now();
-  if(ok){ G.rush=8; G.sp=Math.min(5,G.sp+1); toast("🔥 팩폭 타임!"); } updHUD(); }, ok?1100:2600);
+  if(ok){ G.rush=G.pendRush||8; G.sp=Math.min(5,G.sp+1); toast("🔥 팩폭 타임!"); } updHUD(); }, ok?1300:2600);
 }
 
 function endGame(win){
@@ -831,7 +864,7 @@ function endGame(win){
  else { SFX.boom(); G.shake=.6; }
  setTimeout(()=>{
   $("rTitle").textContent=win?"🏆 10라운드 완전 정복!":`ROUND ${G.round}/10에서 멈췄어요`; $("rSub").textContent=win?"오개념 대마왕 10마리를 모두 물리쳤어요!":`오개념 군단이 대포까지 밀려왔어요. 대마왕 ${G.round-1}마리 격파!`;
-  $("rScore").textContent=score; $("rAcc").textContent=G.quizN?acc+"%":"-"; $("rKill").textContent=G.kills+" (💰"+(G.coinTotal||0)+")"; $("rTime").textContent=(win?10:G.round)+" / 10";
+  $("rScore").textContent=score; $("rAcc").textContent=(G.quizN?acc+"%":"-")+(G.maxCombo>=2?` · 최대 ${G.maxCombo}콤보`:""); $("rKill").textContent=G.kills+" (💰"+(G.coinTotal||0)+")"; $("rTime").textContent=(win?10:G.round)+" / 10"+(G.starTotal?` · ⭐${G.starTotal}`:"");
   $("wrongList").innerHTML=G.wrong.length?"<b>틀린 문제 다시 보기</b>"+G.wrong.map(q=>`<p>${q[2]}<br>→ <em>${q[3][q[4]]}</em>${q[5]?" · "+q[5]:""}</p>`).join(""):(G.quizN?"<b>퀴즈 모두 정답! 👏</b>":"");
   $("result").classList.remove("hidden"); $("hudTop").classList.add("hidden");
  }, win?2000:900);
@@ -1110,6 +1143,7 @@ function drawEnemy(e){
 }
 function draw(){
  ctx.save(); if(G&&G.shake>0) ctx.translate(rnd(-1,1)*G.shake*12,rnd(-1,1)*G.shake*10);
+ if(G&&G.zoom&&G.zoom.t>0){ const z=G.zoom, k=1+.35*Math.min(1,z.t/.5)*Math.min(1,(1.4-z.t)/.25+.0001), p=P(z.x,z.y-30); ctx.translate(p.x,p.y); ctx.scale(k,k); ctx.translate(-p.x,-p.y); }
  if(!BGC) makeBg(); ctx.drawImage(BGC,0,0,W,H);
  if(G){
   // 바닥에 흐르는 빛줄기
@@ -1128,6 +1162,7 @@ function draw(){
   const fr=RUN.blue;
   for(const u of G.units) items.push({y:u.y,f:()=>{ const p=P(u.x,u.y);
    if(u.big){ const sz=58*p.s; ctx.fillStyle="rgba(255,210,63,.3)"; ctx.beginPath(); ctx.arc(p.x,p.y-sz*.4,sz*.6,0,7); ctx.fill(); ctx.drawImage(RUN.gold[((G.t*10)|0)%6],p.x-sz/2,p.y-sz*1.15,sz,sz*1.33); const fs=Math.max(11,14*p.s); ctx.font=`900 ${fs}px sans-serif`; ctx.textAlign="center"; ctx.fillStyle="#ffe14a"; ctx.strokeStyle="#000"; ctx.lineWidth=3; ctx.strokeText(u.hp,p.x,p.y-sz*1.15); ctx.fillText(u.hp,p.x,p.y-sz*1.15); return; }
+   if(u.gold){ const sz=36*p.s; ctx.fillStyle=`rgba(255,220,80,${.35+.2*Math.sin(G.t*12)})`; ctx.beginPath(); ctx.arc(p.x,p.y-sz*.55,sz*.55,0,7); ctx.fill(); ctx.drawImage(RUN.gold[((G.t*13)|0)%6],p.x-sz/2,p.y-sz*1.15,sz,sz*1.33); return; }
    const n=Math.ceil(u.hp/(1+G.up.hp)), sz=31*p.s*(1+Math.min(.35,(n-1)*.03));
    if(n>1){ const m=Math.min(n-1,3); for(let j=m;j>=1;j--){ const ox=((j*37+u.id)%3-1)*sz*.32, oy=-j*sz*.12; ctx.drawImage(fr[((G.t*13+u.ph*1.5+j*2)|0)%6],p.x+ox-sz/2,p.y+oy-sz*1.15,sz,sz*1.33); } }
    ctx.drawImage(fr[((G.t*13+u.ph*1.5)|0)%6],p.x-sz/2,p.y-sz*1.15,sz,sz*1.33);
@@ -1154,7 +1189,7 @@ function draw(){
 function loop(now){
  requestAnimationFrame(loop);
  let dt=(now-last)/1000; last=now; dt=clamp(dt,0,.05);
- try{ if(G&&G.mode==="play"){ update(dt); } else if(G&&G.mode==="clear"){ G.clearT-=dt; for(const p of G.parts){ p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.h+=p.vh*dt; p.vh-=500*dt; if(p.h<0){p.h=0;p.vh*=-.3;} } G.parts=G.parts.filter(p=>p.life>0); G.shake=Math.max(0,G.shake-dt);
+ try{ if(G&&G.mode==="play"){ update(dt); } else if(G&&G.mode==="clear"){ if(G.slowT>0){ G.slowT-=dt; dt*=.25; } G.clearT-=dt; if(G.zoom) G.zoom.t-=dt; for(const p of G.parts){ p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.h+=p.vh*dt; p.vh-=500*dt; if(p.h<0){p.h=0;p.vh*=-.3;} } G.parts=G.parts.filter(p=>p.life>0); G.shake=Math.max(0,G.shake-dt);
    // 남은 오개념은 정리되며 사라져요
    for(const e of G.enemies){ if(!e.boss&&Math.random()<dt*3){ e.hp=0; burst(e.x,e.y,"#ff6a80",3); } } G.enemies=G.enemies.filter(e=>e.hp>0&&!e.boss); G.units.forEach(u=>u.y+=200*dt); G.units=G.units.filter(u=>u.y<L);
    if(G.clearT<=0) openShop(); }
