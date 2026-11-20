@@ -32,6 +32,16 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
 .shopItem em{position:absolute;left:10px;bottom:8px;font-style:normal;font-size:11px;color:#9fd8ff;font-weight:800}
 .shopItem i{position:absolute;right:8px;bottom:6px;font-style:normal;font-weight:900;font-size:14px;color:#2a1d00;background:#ffd23f;border-radius:8px;padding:2px 8px}
 .shopItem:not(.off):hover{border-color:#ffd23f;transform:translateY(-2px)} .shopItem.off{opacity:.5;cursor:default} .shopItem.max i{background:#4fe39a}
+.btn.sub2{background:linear-gradient(180deg,#3a4590,#2a3270);color:#fff;box-shadow:0 5px 0 #161a40;font-size:17px;padding:12px}
+.btn.big{font-size:26px;padding:18px}
+#title{background:#0a0c1e center/cover no-repeat}
+#title::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,10,30,.55),rgba(8,10,30,.25) 40%,rgba(8,10,30,.8))}
+.tbox{position:relative;width:min(92vw,460px);text-align:center;padding:20px}
+.tbox .logo-main{font-size:clamp(52px,15vw,84px)}
+.tstory{margin:22px 0 26px;font-size:16px;line-height:1.6;color:#f4f0ff;text-shadow:0 2px 6px #000;font-weight:700}
+.trow{display:flex;gap:8px}
+#pauseBtn{position:fixed;left:10px;top:10px;z-index:12;width:40px;height:40px;border-radius:50%;border:2px solid #4b4390;background:rgba(20,16,44,.85);color:#fff;font-size:16px;cursor:pointer}
+@media (max-width:600px){ #pauseBtn{top:auto;bottom:24px;left:58px} }
 .label{font-size:13px;color:var(--sub);margin-top:6px}
 .how{font-size:13px;color:#dfe6ff;line-height:1.6;margin-top:12px;background:#181d44;border-radius:12px;padding:10px}
 .credit{position:fixed;right:10px;bottom:6px;font-size:11px;color:rgba(255,255,255,.45);z-index:20;pointer-events:none}
@@ -81,19 +91,45 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
 <div id="flash"></div>
 <div id="success">성공!</div>
 
-<div class="ov" id="menu">
- <div class="panel">
+<div class="ov" id="title">
+ <div class="tbox">
   <div class="logo"><div class="logo-top">💥 FACT BOMBERS 💥</div><h1 class="logo-main">팩트 폭격대</h1><div class="logo-sub">오개념 군단을 막아라!</div></div>
-  <div class="sub">팩트 대포가 과학 탐구대를 계속 내보내요!<br>밀려오는 오개념 군단을 막고 다가오는 오개념 대마왕을 쓰러뜨려라!</div>
-  <div class="label">학년</div><div class="row" id="gradeRow"></div>
-  <div class="label">단원</div><div class="row" id="unitRow"></div>
-  <button class="btn" id="startBtn">출동!</button>
-  <div class="how">대포는 <b>자동으로 계속 발사</b>돼요. 화면을 좌우로 끌어서 대포를 움직여요 (키보드 ← →)<br>
+  <div class="tstory">과학실 책상에서 우주 끝까지,<br>정답의 힘으로 오개념 대마왕 10마리를 무찌르자!</div>
+  <button class="btn big" id="goSetup">▶ 게임 시작</button>
+  <div class="trow"><button class="btn sub2" id="goHelp">📖 게임 방법</button></div>
+ </div>
+</div>
+<div class="ov hidden" id="help">
+ <div class="panel" style="text-align:left">
+  <h1 style="text-align:center;font-size:30px">📖 게임 방법</h1>
+  <div class="how" id="helpBody">대포는 <b>자동으로 계속 발사</b>돼요. 화면을 좌우로 끌어서 대포를 움직여요 (키보드 ← →)<br>
   길은 두 갈래! <b>왼쪽 오개념 길</b>에서는 탐구대원 1명과 오개념 1명이 맞바꿔 사라지고, 숫자 붙은 거인은 그 수만큼 필요해요<br>
   <b>오른쪽 보급로</b>: 실험 보급 상자 → <b>대포 강화 + 팩트 폭탄</b> · 황금 트로피 → 맞힐 때마다 <b>💰금화</b>, 부수면 대박 금화!<br>
   라운드를 깨면 <b>실험실 상점</b>에서 금화로 연사 속도·대원 체력·증식 문·방어막을 강화해요<br>
   파란 문(+, ×)을 지나면 대원이 늘어나요 · 퀴즈 게이지가 차면 문제 → 정답이면 <b>팩폭 타임</b><br>
   💣 팩트 폭탄 버튼(스페이스): 잡몹을 모두 지우고 거인·대왕을 뒤로 날려 기절시켜요</div>
+  <button class="btn" id="helpBack">돌아가기</button>
+ </div>
+</div>
+<div class="ov hidden" id="pauseOv">
+ <div class="panel">
+  <h1>⏸ 일시정지</h1>
+  <div class="sub" id="pauseInfo"></div>
+  <button class="btn" id="resumeBtn">▶ 계속하기</button>
+  <button class="btn sub2" id="restartBtn">🔄 처음부터 다시</button>
+  <button class="btn sub2" id="homeBtn">🏠 메인 화면으로</button>
+  <div class="label" style="margin-top:10px">ESC 키로도 일시정지·계속하기를 할 수 있어요</div>
+ </div>
+</div>
+<button id="pauseBtn" class="hidden" title="일시정지 (ESC)">⏸</button>
+<div class="ov hidden" id="menu">
+ <div class="panel">
+  <h1 style="font-size:30px">출동 준비</h1>
+  <div class="sub">학년과 단원을 고르면 그 범위에서 문제가 나와요</div>
+  <div class="label">학년</div><div class="row" id="gradeRow"></div>
+  <div class="label">단원</div><div class="row" id="unitRow"></div>
+  <button class="btn" id="startBtn">출동!</button>
+  <button class="btn sub2" id="setupBack">← 뒤로</button>
  </div>
 </div>
 
@@ -126,7 +162,7 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
    <div><b id="rTime">0</b><span>도달 라운드</span></div>
   </div>
   <div id="wrongList"></div>
-  <button class="btn" id="againBtn">다시 하기</button>
+  <button class="btn" id="againBtn">🏠 메인 화면으로</button>
  </div>
 </div>
 <button id="muteBtn" title="배경음악 켜기/끄기">🔊</button>
@@ -171,17 +207,55 @@ const NM={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 function nn(s){ if(!s||s==="-"||s===".") return null; const m=s.match(/^([A-G])(#?)(\d)$/); return 12*(+m[3]+1)+NM[m[1]]+(m[2]?1:0); }
 // 한 마디 = 16칸(16분음표). 리드는 8분음표 8칸, '-'는 늘이기
 const SONGS={
- run:{ bpm:150, bars:[
-  {ch:["C3","E3","G3"], lead:"E5 G5 C6 G5 E5 G5 A5 G5"},
-  {ch:["G2","B2","D3"], lead:"D5 G5 B5 G5 D5 G5 A5 B5"},
-  {ch:["A2","C3","E3"], lead:"C6 B5 A5 E5 A5 B5 C6 E6"},
-  {ch:["F2","A2","C3"], lead:"D6 C6 A5 F5 G5 A5 B5 -"},
-  {ch:["C3","E3","G3"], lead:"G5 - E5 G5 C6 - B5 C6"},
-  {ch:["G2","B2","D3"], lead:"D6 - B5 G5 A5 B5 D6 -"},
-  {ch:["A2","C3","E3"], lead:"E6 D6 C6 A5 C6 D6 E6 G6"},
-  {ch:["F2","A2","C3"], lead:"F6 E6 D6 C6 D6 - B5 -"},
+ // 메인 화면: 잔잔하고 설레는
+ title:{ bpm:100, lead:"triangle", arp:"triangle", drum:"light", bars:[
+  {ch:["C3","E3","G3"], lead:"E5 - G5 - C6 - B5 -"},
+  {ch:["A2","C3","E3"], lead:"A5 - G5 - E5 - - -"},
+  {ch:["F2","A2","C3"], lead:"F5 - A5 - C6 - D6 -"},
+  {ch:["G2","B2","D3"], lead:"B5 - A5 - G5 - - -"},
  ]},
- boss:{ bpm:172, bars:[
+ // 1~3라운드 과학실 책상: 통통 튀는 실험실
+ lab:{ bpm:140, lead:"square", arp:"square", drum:"full", bars:[
+  {ch:["C3","E3","G3"], lead:"C6 . G5 . E5 G5 C6 ."},
+  {ch:["A2","C3","E3"], lead:"A5 . E5 . C5 E5 A5 ."},
+  {ch:["F2","A2","C3"], lead:"F5 A5 C6 A5 F5 . G5 ."},
+  {ch:["G2","B2","D3"], lead:"G5 B5 D6 B5 G5 - - ."},
+  {ch:["C3","E3","G3"], lead:"E6 . D6 . C6 . G5 ."},
+  {ch:["A2","C3","E3"], lead:"A5 . C6 . E6 . D6 ."},
+  {ch:["F2","A2","C3"], lead:"C6 . A5 . F5 A5 C6 D6"},
+  {ch:["G2","B2","D3"], lead:"B5 - G5 - D6 - - -"},
+ ]},
+ // 4~6라운드 구름 위 노을: 몽글몽글 꿈결
+ sky:{ bpm:118, lead:"triangle", arp:"triangle", drum:"light", bars:[
+  {ch:["F2","A2","C3"], lead:"A5 - C6 - F6 - E6 -"},
+  {ch:["C3","E3","G3"], lead:"G5 - C6 - E6 - D6 -"},
+  {ch:["D3","F3","A3"], lead:"F5 - A5 - D6 - C6 -"},
+  {ch:["A#2","D3","F3"], lead:"D6 - C6 - A#5 - A5 -"},
+  {ch:["F2","A2","C3"], lead:"C6 - A5 - F5 - A5 -"},
+  {ch:["C3","E3","G3"], lead:"E6 - G6 - E6 - C6 -"},
+  {ch:["A#2","D3","F3"], lead:"D6 - F6 - A#5 - D6 -"},
+  {ch:["C3","E3","G3"], lead:"C6 - - - E6 - G6 -"},
+ ]},
+ // 7~9라운드 우주 정거장: 신비로운 신스
+ space:{ bpm:128, lead:"sawtooth", arp:"square", arp16:true, drum:"full", bars:[
+  {ch:["A2","C3","E3"], lead:"E6 - - - D6 - C6 -"},
+  {ch:["F2","A2","C3"], lead:"C6 - - - A5 - C6 -"},
+  {ch:["C3","E3","G3"], lead:"G5 - C6 - E6 - G6 -"},
+  {ch:["G2","B2","D3"], lead:"F#6 - D6 - B5 - - -"},
+  {ch:["A2","C3","E3"], lead:"A5 C6 E6 A6 G6 E6 C6 -"},
+  {ch:["F2","A2","C3"], lead:"F6 - E6 - C6 - A5 -"},
+  {ch:["D3","F3","A3"], lead:"D6 - F6 - A6 - G6 -"},
+  {ch:["E2","G#2","B2"], lead:"G#6 - E6 - B5 - - -"},
+ ]},
+ // 10라운드 붉은 일식: 긴박한 최종전
+ final:{ bpm:168, lead:"square", arp:"square", bass16:true, drum:"heavy", bars:[
+  {ch:["D3","F3","A3"], lead:"D6 - A5 D6 F6 E6 D6 A5"},
+  {ch:["A#2","D3","F3"], lead:"A#5 - F5 A#5 D6 C6 A#5 F5"},
+  {ch:["C3","E3","G3"], lead:"C6 - G5 C6 E6 D6 C6 G5"},
+  {ch:["A2","C#3","E3"], lead:"C#6 D6 E6 - A6 - G6 E6"},
+ ]},
+ // 대마왕이 가까이 오면(1~9라운드 공통)
+ boss:{ bpm:172, lead:"square", arp:"square", drum:"heavy", bars:[
   {ch:["A2","C3","E3"], lead:"A5 - E5 A5 C6 B5 A5 E5"},
   {ch:["F2","A2","C3"], lead:"F5 - C5 F5 A5 G5 F5 C5"},
   {ch:["G2","B2","D3"], lead:"G5 - D5 G5 B5 A5 G5 D5"},
@@ -210,14 +284,19 @@ function playMusic(name){
   while(MUS.next<a.currentTime+.15){
    const t=MUS.next, st=MUS.step, bi=Math.floor(st/16)%song.bars.length, s16=st%16, bar=song.bars[bi], ch=bar.ch.map(nn);
    // 베이스
-   if(s16%2===0) mNote(bus,N2F(ch[0]-12+(s16%4===2?12:0)),t,sx*1.8,"triangle",.5);
+   if(song.bass16) mNote(bus,N2F(ch[0]-12+(s16%2?12:0)),t,sx*.9,"sawtooth",.18);
+   else if(s16%2===0) mNote(bus,N2F(ch[0]-12+(s16%4===2?12:0)),t,sx*1.8,"triangle",.5);
    // 화음 아르페지오
-   mNote(bus,N2F(ch[s16%3]+12),t,sx*.9,"square",.05);
+   if(song.arp16 || s16%2===0 || song.drum!=="light") mNote(bus,N2F(ch[s16%3]+12+(song.arp16&&s16%8>=4?12:0)),t,sx*.9,song.arp||"square",song.arp==="triangle"?.09:.045);
    // 리드
-   if(s16%2===0){ const L=leads[bi], k=s16/2, n=nn(L[k]); if(n!==null){ let len=1; while(k+len<8 && L[k+len]==="-") len++; mNote(bus,N2F(n),t,sx*2*len*.95,"square",.11); } }
+   if(s16%2===0){ const L=leads[bi], k=s16/2, n=nn(L[k]); if(n!==null){ let len=1; while(k+len<8 && L[k+len]==="-") len++; mNote(bus,N2F(n),t,sx*2*len*.95,song.lead||"square",song.lead==="sawtooth"?.06:song.lead==="triangle"?.16:.11); } }
    // 드럼
-   if(s16%8===0) mDrum(bus,"k",t); if(s16%8===4) mDrum(bus,"s",t); if(s16%2===0) mDrum(bus,"h",t);
-   if(name==="boss" && s16%4===2) mDrum(bus,"k",t);
+   if(song.drum!=="none"){
+    if(s16%8===0) mDrum(bus,"k",t);
+    if(song.drum!=="light"){ if(s16%8===4) mDrum(bus,"s",t); if(s16%2===0) mDrum(bus,"h",t); }
+    else if(s16%4===2) mDrum(bus,"h",t);
+    if(song.drum==="heavy" && s16%4===2) mDrum(bus,"k",t);
+   }
    MUS.step++; MUS.next+=sx;
   } };
  MUS.timer=setInterval(tick,25); tick();
@@ -518,8 +597,8 @@ function newGame(){
      boss:null, shake:0, end:false, uid:0,
      gates:[ {id:1,y:170,x:-50,w:120,op:"x",v:2,dir:1,sp:60,min:-180,max:180}, {id:2,y:300,x:80,w:80,op:"+",v:3,dir:-1,sp:45,min:-180,max:180}, {id:3,y:560,x:-104,w:60,op:"+",v:2,dir:1,sp:35,min:LANE.L0,max:LANE.L1} ] };
  G.round=0; G.decals=[]; startRound(1);
- $("menu").classList.add("hidden"); $("result").classList.add("hidden"); $("hudTop").classList.remove("hidden"); $("spBtn").classList.remove("hidden");
- playMusic("run"); updHUD(); last=performance.now();
+ $("menu").classList.add("hidden"); $("result").classList.add("hidden"); $("hudTop").classList.remove("hidden"); $("spBtn").classList.remove("hidden"); $("pauseBtn").classList.remove("hidden"); $("pauseOv").classList.add("hidden");
+ playMusic(stageSong()); updHUD(); last=performance.now();
 }
 const MAX_ROUND=10;
 // 라운드: 보스를 잡으면 다음 라운드(대포 강화·T세포는 그대로)
@@ -535,7 +614,7 @@ function startRound(n){
  const opts=[["+",3],["+",4],["+",5],["+",4],["+",3]];   // 곱하기 문은 맨 아래 하나만(두 번째 문은 항상 + 문)
  G.gates[0].op="x"; G.gates[0].v=2; const o=opts[(n+1)%opts.length]; G.gates[1].op=o[0]; G.gates[1].v=o[1]; G.gates[2].op="+"; G.gates[2].v=2+Math.min(2,Math.floor(n/2));
  if(G.up.start){ G.rush=Math.max(G.rush,G.up.start*5); }
- G.mode="play"; playMusic(fin?"boss":"run"); toast(fin?`최종 ROUND ${n}/${MAX_ROUND} · 대마왕 ${hp}`:`ROUND ${n}/${MAX_ROUND} · 오개념 대마왕 ${hp}`); SFX.alarm();
+ G.mode="play"; playMusic(stageSong()); toast(fin?`최종 ROUND ${n}/${MAX_ROUND} · 대마왕 ${hp}`:`ROUND ${n}/${MAX_ROUND} · 오개념 대마왕 ${hp}`); SFX.alarm();
 }
 function roundClear(){
  if(G.round>=MAX_ROUND){ G.score+=500*G.round+3000; G.boss.hp=0; updHUD(); return endGame(true); }
@@ -543,6 +622,7 @@ function roundClear(){
  burst(G.boss.x,G.boss.y,"#ffd23f",90); burst(G.boss.x,G.boss.y,"#ff6a80",60); G.shake=.6;
  setTimeout(()=>{ SFX.win(); const f=$("flash"),s2=$("success"); s2.textContent=`ROUND ${G.round}/${MAX_ROUND} 클리어!`; f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); s2.classList.remove("go"); void s2.offsetWidth; s2.classList.add("go"); },250);
 }
+function stageSong(){ return ["lab","sky","space","final"][bgStage()]; }
 function laneClamp(o,r){ // 위치에 맞게 길 안으로
  if(o.y<SPLIT){ o.x=clamp(o.x,-ROADW+r,ROADW-r); return; }
  if(o.x<(LANE.L1+LANE.R0)/2) o.x=clamp(o.x,LANE.L0+r,LANE.L1-r); else o.x=clamp(o.x,LANE.R0+r,LANE.R1-r);
@@ -653,7 +733,7 @@ function update(dt){
   if(G.shield>0){ G.shield--; for(const e of G.enemies){ if(e.y<SPLIT){ if(e.giant){ e.y+=e.boss?260:200; } else { e.hp=0; burst(e.x,e.y,"#7dd8ff",3); } } }
    G.enemies=G.enemies.filter(e=>e.hp>0); G.fx.push({k:"ring",x:0,y:30,life:.7,T:.7,c:"#7dd8ff"}); G.shake=.6; G.hitStop=.15; SFX.boom(); toast(`🛡️ 방어막 발동! (남은 방어막 ${G.shield})`); }
   else return endGame(false); }
- if(G.boss.y<SPLIT+120 && MUS.cur!=="boss"){ playMusic("boss"); toast("⚠ 오개념 대마왕이 가까이 왔어요!"); }
+ if(G.round<MAX_ROUND && G.boss.y<SPLIT+120 && MUS.cur!=="boss"){ playMusic("boss"); toast("⚠ 오개념 대마왕이 가까이 왔어요!"); }
  // 효과
  for(const p of G.parts){ p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.h+=p.vh*dt; p.vh-=520*dt; if(p.h<0){ p.h=0; p.vh*=-.3; } }
  G.parts=G.parts.filter(p=>p.life>0); if(G.parts.length>700) G.parts.splice(0,G.parts.length-700);
@@ -709,7 +789,7 @@ function addShopGate(n){
 function shopLevel(it){ if(it.id==="bomb") return G.sp; if(it.id==="shield") return G.shield; return G.up[it.id]; }
 function openShop(){
  G.mode="shop"; $("shopRound").textContent=`ROUND ${G.round} 클리어!`; $("nextBtn").textContent=`ROUND ${G.round+1} 출동! ▶`;
- renderShop(); $("shop").classList.remove("hidden"); playMusic("run");
+ renderShop(); $("shop").classList.remove("hidden"); playMusic("title");
 }
 function renderShop(){
  $("shopCoin").textContent=G.coin; const box=$("shopList"); box.innerHTML="";
@@ -742,7 +822,7 @@ function answer(i,btn){
 }
 
 function endGame(win){
- G.end=true; G.mode="end"; stopMusic(.4); $("spBtn").classList.add("hidden");
+ G.end=true; G.mode="end"; $("pauseBtn").classList.add("hidden"); stopMusic(.4); $("spBtn").classList.add("hidden");
  const acc=G.quizN?Math.round(G.correct/G.quizN*100):0, score=G.kills*2+G.correct*100+G.score;
  if(win){ burst(G.boss.x,G.boss.y,"#ffd23f",90); setTimeout(()=>{ SFX.win(); const f=$("flash"),s=$("success"); s.textContent="완전 정복 성공!"; f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); s.classList.remove("go"); void s.offsetWidth; s.classList.add("go"); },300); }
  else { SFX.boom(); G.shake=.6; }
@@ -1078,9 +1158,29 @@ function loop(now){
   else if(G){ for(const p of G.parts){ p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.h+=p.vh*dt; p.vh-=500*dt; } G.parts=G.parts.filter(p=>p.life>0); G.shake=Math.max(0,G.shake-dt); } draw(); }catch(e){ console.error(e); }
 }
 requestAnimationFrame(loop);
+// ---------- 메인 화면 · 일시정지 ----------
+function showTitle(){ for(const id of ["menu","help","pauseOv","result","shop","quiz"]) $(id).classList.add("hidden"); $("title").classList.remove("hidden"); $("hudTop").classList.add("hidden"); $("spBtn").classList.add("hidden"); $("pauseBtn").classList.add("hidden"); G=null; BGC=null;
+ try{ if(BG_IMG[0].complete) $("title").style.backgroundImage=`url(${BG_SRC[0]})`; else BG_IMG[0].addEventListener("load",()=>$("title").style.backgroundImage=`url(${BG_SRC[0]})`); }catch(e){}
+ if(AC) playMusic("title"); }
+$("goSetup").onclick=()=>{ au(); playMusic("title"); $("title").classList.add("hidden"); $("menu").classList.remove("hidden"); buildMenu(); };
+$("goHelp").onclick=()=>{ au(); playMusic("title"); $("title").classList.add("hidden"); $("help").classList.remove("hidden"); };
+$("helpBack").onclick=()=>{ $("help").classList.add("hidden"); $("title").classList.remove("hidden"); };
+$("setupBack").onclick=()=>{ $("menu").classList.add("hidden"); $("title").classList.remove("hidden"); };
+let pausedMusic=null;
+function pauseGame(){ if(!G||G.mode!=="play") return; G.mode="pause"; drag=null; keys.L=keys.R=0; pausedMusic=MUS.cur; stopMusic(.2); MUS.cur=null;
+ $("pauseInfo").textContent=`ROUND ${G.round}/10 · 💰 ${G.coin} · 정답 ${G.correct}/${G.quizN}`; $("pauseOv").classList.remove("hidden"); }
+function resumeGame(){ if(!G||G.mode!=="pause") return; $("pauseOv").classList.add("hidden"); G.mode="play"; last=performance.now(); if(pausedMusic) playMusic(pausedMusic); }
+$("pauseBtn").onclick=e=>{ e.stopPropagation(); au(); G&&G.mode==="pause"?resumeGame():pauseGame(); };
+$("pauseBtn").addEventListener("pointerdown",e=>e.stopPropagation());
+$("resumeBtn").onclick=resumeGame;
+$("restartBtn").onclick=()=>{ $("pauseOv").classList.add("hidden"); stopMusic(.2); newGame(); };
+$("homeBtn").onclick=()=>{ stopMusic(.2); showTitle(); };
+addEventListener("keydown",e=>{ if(e.code==="Escape"||e.code==="KeyP"){ if(!G) return; if(G.mode==="play") pauseGame(); else if(G.mode==="pause") resumeGame(); } });
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) pauseGame(); });
+showTitle();
 buildMenu();
 $("startBtn").onclick=()=>{ au(); newGame(); };
-$("againBtn").onclick=()=>{ $("result").classList.add("hidden"); $("menu").classList.remove("hidden"); G=null; buildMenu(); };
+$("againBtn").onclick=()=>{ showTitle(); };
 $("muteBtn").onclick=()=>{ au(); toggleMusic(); }; $("muteBtn").textContent=MUS.on?"🔊":"🔇";
 window.__CAN={get G(){return G}, setBg:t=>{BG_THEME=t;BGC=null;}, RUN, fireSpecial, newGame, update, startRound, keys, setFire:()=>{}, MUS};
 })();
