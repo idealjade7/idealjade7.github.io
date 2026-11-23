@@ -136,6 +136,8 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 .ranks th{font-family:'Do Hyeon';font-weight:400;color:var(--dim);border-bottom:2px solid var(--line);padding:5px 4px;text-align:center}
 .ranks td{padding:6px 4px;border-bottom:1px solid #33264a;text-align:center}
 .ranks td.nm{text-align:left;font-weight:700}
+.cbadge{display:inline-block;margin-left:5px;padding:1px 6px;border-radius:8px;background:#ffd84a;color:#2a1a00;font-size:11px;font-weight:900;vertical-align:1px}
+#contestNote{margin-top:4px;font-size:13px;font-weight:700}
 .ranks tr.me td{background:#3a2c18;color:var(--gold)}
 .ranks .no{font-family:'DotGothic16';color:var(--gold)}
 .ranks .tm{font-family:'DotGothic16'}
@@ -191,7 +193,7 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
   <div class="row" id="unitRow"></div>
   <div class="sec">문제 수준 (여러 개 선택 가능)</div>
   <div class="row" id="levelRow"></div>
-  <div class="cnt" id="poolCnt"></div>
+  <div class="cnt" id="poolCnt"></div><div class="cnt" id="contestNote"></div>
   <div class="sec">캐릭터</div>
   <div class="row" id="heroRow"></div>
   <div class="sec">스테이지</div>
@@ -1205,6 +1207,7 @@ function buildMenu(){
  document.getElementById("weapDesc").textContent = WEAPONS[sel.weapon].desc + "  ·  짝 패시브: " + PASSIVES[WEAPONS[sel.weapon].pair].ic + " " + PASSIVES[WEAPONS[sel.weapon].pair].name;
  const n = pool().length;
  document.getElementById("poolCnt").textContent = `선택한 범위의 문제 ${n}개`;
+ { const cn=document.getElementById("contestNote"), ok=isContest(); cn.textContent= ok ? "🏆 대회 조건 충족 · 이 설정으로 클리어하면 대회 기록이 돼요" : "대회 기록 조건: 3학년 · 단원 전체 · 기초·보통·도전 모두 · 한밤의 과학실"; cn.style.color= ok ? "#ffd84a" : "#9a90b8"; }
  document.getElementById("warn").textContent = n===0 ? "단원과 수준을 하나 이상 골라 주세요." : "";
 }
 function pool(){ return QDATA[sel.grade].q.filter(q=>sel.units.has(q[0]-1) && sel.levels.has(q[1])); }
@@ -1250,6 +1253,8 @@ function fmt(t){ t=Math.max(0,Math.floor(t)); return `${Math.floor(t/60)}:${Stri
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 // ================= 게임 시작 =================
+// 반별 대회 기록 조건: 3학년 전 범위(모든 단원·모든 수준) + 1. 한밤의 과학실
+function isContest(){ return sel.grade===3 && QDATA[3] && sel.units.size===QDATA[3].units.length && [1,2,3].every(l=>sel.levels.has(l)) && sel.stage===0; }
 function startGame(){
  audioInit();
  const p = pool();
@@ -1265,6 +1270,7 @@ function startGame(){
   kills:0, quizRight:0, quizTotal:0, quizTime:0, wrongs:[], qpool:shuffle(p.slice()), qused:new Set(),
   cdmul:1, dmgmul:1, areamul:1, durmul:1, magnet:110, buffs:{atk:0,spd:0,inv:0,rapid:0,coin2:0}, score:0, shake:0, cleared:false, over:false,
  };
+ G.contest = isContest();
  addWeapon(sel.weapon);
  if(st.corridor){ G.bounds = {y1:-290, y2:290}; }
  hideAll(); document.getElementById("topbtns").classList.remove("hidden");
@@ -1819,7 +1825,7 @@ function showResult(win){
  if(win){ const mt=document.getElementById("rankMap"); mt.innerHTML="";
   try{ const c=document.createElement("canvas"); c.width=240; c.height=112; const x=c.getContext("2d"); const cx=Math.floor(G.p.x/CHUNK), cy=Math.floor(G.p.y/CHUNK), ch=getChunk(cx,cy), sx=((G.p.x%CHUNK)+CHUNK)%CHUNK, sy=((G.p.y%CHUNK)+CHUNK)%CHUNK; x.drawImage(ch.cv, 16, 144, 480,224, 0,0,240,112); mt.appendChild(c); }catch(e){}
   const sp=document.createElement("span"); sp.innerHTML=`🗺️ 맵: <b style="color:var(--gold)">${esc(G.stage.name.replace(/^\d+\.\s*/,""))}</b>`; mt.appendChild(sp);
-  rb.classList.remove("hidden"); document.getElementById("rankMsg").textContent=`클리어 타임 ${fmtT(totalT())} (문제 풀이 ${fmtT(G.quizTime)} 포함) · 정답률 ${rate}% · 반과 이름을 적고 등록하세요`; document.getElementById("rankMini").innerHTML=""; const inp=document.getElementById("rankName"); const cs=document.getElementById("rankClass"); cs.innerHTML=`<option value="">반 선택</option>`+Array.from({length:CLASS_COUNT},(_,i)=>`<option value="${i+1}">${G.grade}학년 ${i+1}반</option>`).join(""); try{ inp.value=localStorage.getItem("germ-name")||""; cs.value=localStorage.getItem("germ-class")||""; }catch(e){} document.getElementById("rankSave").disabled=false; setTimeout(()=>inp.focus(),300); }
+  rb.classList.remove("hidden"); document.getElementById("rankMsg").textContent=`클리어 타임 ${fmtT(totalT())} (문제 풀이 ${fmtT(G.quizTime)} 포함) · 정답률 ${rate}%${G.contest?" · 🏆 대회 기록":" · 연습 기록(대회 조건 아님)"} · 반과 이름을 적고 등록하세요`; document.getElementById("rankMini").innerHTML=""; const inp=document.getElementById("rankName"); const cs=document.getElementById("rankClass"); cs.innerHTML=`<option value="">반 선택</option>`+Array.from({length:CLASS_COUNT},(_,i)=>`<option value="${i+1}">${G.grade}학년 ${i+1}반</option>`).join(""); try{ inp.value=localStorage.getItem("germ-name")||""; cs.value=localStorage.getItem("germ-class")||""; }catch(e){} document.getElementById("rankSave").disabled=false; setTimeout(()=>inp.focus(),300); }
  else { rb.classList.add("hidden"); }
  document.getElementById("resultOv").classList.remove("hidden");
 }
@@ -1842,7 +1848,8 @@ const RANK = {
  async add(rec){
   if(this.online()){
    try{ await this.post(rec); return {where:"online"}; }
-   catch(e){ this.saveLocal(rec); if(!/HTTP 4/.test(e.message)){ const a=this.pending(); a.push(rec); this.setPending(a); } return {where:"local", err:true}; }
+   catch(e){ if(rec.contest && /HTTP 4/.test(e.message)){ try{ const r2=Object.assign({},rec); delete r2.contest; await this.post(r2); this.saveLocal(rec); return {where:"online"}; }catch(e2){} }
+    this.saveLocal(rec); if(!/HTTP 4/.test(e.message)){ const a=this.pending(); a.push(rec); this.setPending(a); } return {where:"local", err:true}; }
   }
   this.saveLocal(rec); return {where:"local"};
  },
@@ -1853,7 +1860,7 @@ const RANK = {
     let data;
     try{ data=await this.req(this.url('?orderBy="time"&limitToFirst=300')); }
     catch(e){ data=await this.req(this.url()); }          // 색인(.indexOn)이 없을 때
-    const rows=Object.values(data||{}).filter(r=>r&&typeof r.time==="number").map(r=>({cls:+r.cls||0,name:String(r.name||"?"),time:r.time,play:+r.play||0,qtime:+r.qtime||0,acc:+r.acc||0,stage:+r.stage||0,weapon:String(r.weapon||""),quiz:+r.quiz||0,at:String(r.at||""),grade:+r.grade||RANK_GRADE}));
+    const rows=Object.values(data||{}).filter(r=>r&&typeof r.time==="number").map(r=>({cls:+r.cls||0,name:String(r.name||"?"),time:r.time,play:+r.play||0,qtime:+r.qtime||0,acc:+r.acc||0,stage:+r.stage||0,weapon:String(r.weapon||""),quiz:+r.quiz||0,at:String(r.at||""),grade:+r.grade||RANK_GRADE,contest:+r.contest||0}));
     for(const r of this.pending()) if(!rows.some(x=>x.at===r.at&&x.name===r.name)) rows.push(Object.assign({grade:RANK_GRADE},r,{wait:true}));   // 아직 못 올린 내 기록
     rows.sort((a,b)=>a.time-b.time||b.acc-a.acc);
     return {rows, where:"online"};
@@ -1865,7 +1872,7 @@ const RANK = {
   if(!rows.length) return `<div class="cnt" style="margin:14px 0">아직 등록된 기록이 없어요. 첫 번째 주인공이 되어 보세요!</div>`;
   return `<table class="ranks"><tr><th>순위</th><th>반</th><th>이름</th><th>클리어 타임</th><th>문제 풀이</th><th>정답률</th><th>맵</th><th>무기</th><th>날짜</th></tr>`+
    rows.map((r,i)=>{ const d=r.at?new Date(r.at):null; const ds=d&&!isNaN(d)?`${d.getMonth()+1}/${d.getDate()}`:""; const isMe=me&&r.at===me.at&&r.name===me.name;
-    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td>${r.cls?r.cls+"반":"-"}</td><td class="nm">${esc(r.name)}${r.wait?' <small title="아직 못 올린 기록">⏳</small>':""}</td><td class="tm">${fmtT(r.time)}</td><td class="tm" style="color:var(--dim)">${r.qtime?fmtT(r.qtime):"-"}</td><td>${r.acc}%</td><td class="map">${STAGES[(r.stage||1)-1]?STAGES[(r.stage||1)-1].name.replace(/^\d+\.\s*/,""):"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
+    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td>${r.cls?r.cls+"반":"-"}</td><td class="nm">${esc(r.name)}${r.contest?'<span class="cbadge">대회</span>':""}${r.wait?' <small title="아직 못 올린 기록">⏳</small>':""}</td><td class="tm">${fmtT(r.time)}</td><td class="tm" style="color:var(--dim)">${r.qtime?fmtT(r.qtime):"-"}</td><td>${r.acc}%</td><td class="map">${STAGES[(r.stage||1)-1]?STAGES[(r.stage||1)-1].name.replace(/^\d+\.\s*/,""):"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
  },
  srcText(where, err){ if(where!=="online" && !/github\.io$/.test(location.hostname)) return "이 화면(미리보기)에서는 공유 순위표에 연결되지 않아요 · idealjade7.github.io 홈페이지의 '과학 게임' 탭에서 하면 모든 기기에서 같은 순위표가 보여요";
   return where==="online" ? "모든 기기에서 함께 보는 온라인 순위표" : (err ? "온라인 순위표에 연결하지 못해 이 기기에 저장된 기록을 보여 줘요 · 인터넷이 되면 다음에 순위표를 열 때 자동으로 다시 올려요" : "이 기기(브라우저)에만 저장된 기록이에요 · 반 전체 순위표는 선생님이 온라인 설정을 하면 열려요"); },
@@ -1879,6 +1886,7 @@ document.getElementById("rankSave").onclick=async ()=>{
  btn.disabled=true; msg.textContent="등록하는 중…";
  try{ localStorage.setItem("germ-name",name); localStorage.setItem("germ-class",cls); }catch(e){}
  const rec={grade:G.grade, cls, name, time:Math.round(totalT()*10)/10, play:Math.round(G.t*10)/10, qtime:Math.round(G.quizTime*10)/10, acc:Math.round(accNow()*100), stage:G.stageIdx+1, weapon:sel.weapon, quiz:G.quizTotal, at:new Date().toISOString()};
+ if(G.contest) rec.contest=1;
  const r=await RANK.add(rec); G.saved=true;
  const L=await RANK.list(); const same=x=>x.at===rec.at&&x.name===rec.name;
  const all=L.rows.filter(x=>(x.grade||RANK_GRADE)===rec.grade&&x.stage===rec.stage), rows=all.filter(x=>x.cls===cls);
@@ -1889,20 +1897,21 @@ document.getElementById("rankSave").onclick=async ()=>{
  document.getElementById("rankMini").innerHTML=RANK.table(top, rec)+`<div class="src">${RANK.srcText(L.where,L.err)}</div>`;
 };
 document.getElementById("rankName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); document.getElementById("rankSave").click(); } });
-let rankTab=0, rankCls=0, rankGrade=0; try{ rankCls=+(localStorage.getItem("germ-class")||0); }catch(e){}
+let rankTab=0, rankCls=0, rankGrade=0, rankContest=false; try{ rankCls=+(localStorage.getItem("germ-class")||0); }catch(e){}
 let rankReq=0;
 async function openRanks(){
  const my=++rankReq;
  document.getElementById("rankOv").classList.remove("hidden");
  const tabs=document.getElementById("rankTabs"); tabs.innerHTML="";
- ["전체",...STAGES.map(s=>s.name)].forEach((n,i)=>{ const b=document.createElement("button"); b.className="chip"+(rankTab===i?" on":""); b.textContent=n; b.onclick=()=>{ rankTab=i; openRanks(); }; tabs.appendChild(b); });
+ ["전체",...STAGES.map(s=>s.name)].forEach((n,i)=>{ const b=document.createElement("button"); b.className="chip"+(rankTab===i?" on":""); b.textContent=n; b.onclick=()=>{ rankTab=i; rankContest=false; openRanks(); }; tabs.appendChild(b); });
+ { const b=document.createElement("button"); b.className="chip"+(rankContest?" on":""); b.textContent="🏆 대회 기록만"; b.onclick=()=>{ rankContest=!rankContest; if(rankContest){ rankGrade=3; rankTab=0; } openRanks(); }; tabs.appendChild(b); }
  if(!rankGrade) rankGrade=sel.grade;
  const gt=document.getElementById("rankGrades"); gt.innerHTML="";
  [1,2,3].forEach(g=>{ const b=document.createElement("button"); b.className="chip grade"+(rankGrade===g?" on":""); b.textContent=`${g}학년`; b.onclick=()=>{ rankGrade=g; openRanks(); }; gt.appendChild(b); });
  const ct=document.getElementById("rankCls"); ct.innerHTML="";
  [0,...Array.from({length:CLASS_COUNT},(_,i)=>i+1)].forEach(c=>{ const b=document.createElement("button"); b.className="chip"+(rankCls===c?" on":""); b.textContent=c?`${c}반`:"전체 반"; b.onclick=()=>{ rankCls=c; openRanks(); }; ct.appendChild(b); });
  document.getElementById("rankFull").innerHTML=`<div class="cnt" style="margin:14px 0">불러오는 중…</div>`;
- const L=await RANK.list(); if(my!==rankReq) return; const rows=L.rows.filter(r=>(r.grade||RANK_GRADE)===rankGrade&&(!rankTab||r.stage===rankTab)&&(!rankCls||r.cls===rankCls)).slice(0,30);
+ const L=await RANK.list(); if(my!==rankReq) return; const rows=L.rows.filter(r=>(r.grade||RANK_GRADE)===rankGrade&&(!rankTab||r.stage===rankTab)&&(!rankCls||r.cls===rankCls)&&(!rankContest||r.contest)).slice(0,30);
  document.getElementById("rankFull").innerHTML=RANK.table(rows);
  document.getElementById("rankSrc").textContent=RANK.srcText(L.where,L.err);
 }
