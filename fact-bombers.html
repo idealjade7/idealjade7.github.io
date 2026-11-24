@@ -137,9 +137,10 @@ h1{margin:0 0 4px;font-size:clamp(28px,7vw,44px);letter-spacing:-1px;background:
 <div class="ov hidden" id="menu">
  <div class="panel">
   <h1 style="font-size:30px">출동 준비</h1>
-  <div class="sub">학년과 단원을 고르면 그 범위에서 문제가 나와요<br><small>키보드: 학년 <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span> · 단원 <span class="kbd">←</span><span class="kbd">→</span> · 출동 <span class="kbd">Enter</span></small></div>
+  <div class="sub">학년과 단원을 고르면 그 범위에서 문제가 나와요<br><small>키보드: 학년 <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span> · 단원 하나씩 <span class="kbd">←</span><span class="kbd">→</span> · 출동 <span class="kbd">Enter</span></small></div>
   <div class="label">학년</div><div class="row" id="gradeRow"></div>
-  <div class="label">단원</div><div class="row" id="unitRow"></div>
+  <div class="label">단원 <small style="opacity:.7">(여러 개 선택 가능)</small></div><div class="row" id="unitRow"></div>
+  <div id="poolCnt" style="font-size:13px;opacity:.75;margin:-2px 0 8px"></div>
   <button class="btn" id="startBtn">출동! <span class="kbd">Enter</span></button>
   <button class="btn sub2" id="setupBack">← 뒤로 <span class="kbd">Esc</span></button>
  </div>
@@ -586,16 +587,24 @@ RUN.blueS=RUN.blue.map(shrink); RUN.redS=RUN.red.map(shrink);
 
 
 // ================= 문제 =================
-let sel={grade:3, unit:-1};
+let sel={grade:3, units:new Set()};
+const allUnits=g=>new Set(QDATA[g].short.map((_,i)=>i));
+sel.units=allUnits(3);
 function buildMenu(){
  const gr=$("gradeRow"); gr.innerHTML="";
- [1,2,3].forEach(g=>{ const b=document.createElement("button"); b.className="chip"+(sel.grade===g?" on":""); b.textContent=g+"학년"; b.onclick=()=>{ sel.grade=g; sel.unit=-1; buildMenu(); }; gr.appendChild(b); });
+ [1,2,3].forEach(g=>{ const b=document.createElement("button"); b.className="chip"+(sel.grade===g?" on":""); b.textContent=g+"학년"; b.onclick=()=>{ sel.grade=g; sel.units=allUnits(g); buildMenu(); }; gr.appendChild(b); });
  const ur=$("unitRow"); ur.innerHTML=""; const D=QDATA[sel.grade];
- const mk=(i,t)=>{ const b=document.createElement("button"); b.className="chip"+(sel.unit===i?" on":""); b.textContent=t; b.onclick=()=>{ sel.unit=i; buildMenu(); }; ur.appendChild(b); };
- mk(-1,"전체"); D.short.forEach((s,i)=>mk(i,s));
+ const n=D.short.length, all=sel.units.size===n;
+ const mk=(on,t,fn)=>{ const b=document.createElement("button"); b.className="chip"+(on?" on":""); b.textContent=t; b.onclick=()=>{ fn(); buildMenu(); }; ur.appendChild(b); };
+ // 세균 대침공처럼: '전체'는 모두 켜기/끄기, 단원은 하나씩 켜고 끄기
+ mk(all,"전체",()=>{ sel.units= all? new Set() : allUnits(sel.grade); });
+ D.short.forEach((s,i)=>mk(sel.units.has(i),s,()=>{ sel.units.has(i)? sel.units.delete(i) : sel.units.add(i); }));
+ const cnt=D.q.filter(q=>sel.units.has(q[0])).length;
+ $("poolCnt").textContent= cnt? `선택한 범위의 문제 ${cnt}개` : "단원을 하나 이상 골라 주세요";
+ $("startBtn").disabled=!cnt; $("startBtn").style.opacity=cnt?"":".45";
 }
 let pool=[], used=new Set(), uSeen=new Set(), uLast=-1;
-function makePool(){ pool=QDATA[sel.grade].q.filter(q=>sel.unit<0||q[0]===sel.unit); used.clear(); uSeen.clear(); uLast=-1; }
+function makePool(){ pool=QDATA[sel.grade].q.filter(q=>sel.units.has(q[0])); used.clear(); uSeen.clear(); uLast=-1; }
 function pickQ(n){
  const pref=n<2?1:n<5?2:3;
  let cand=pool.filter(q=>!used.has(q)); if(!cand.length){ used.clear(); cand=pool.slice(); }
@@ -1243,8 +1252,8 @@ addEventListener("keydown",e=>{
  if(vis("result")){ if(k==="Enter"){ e.preventDefault(); $("againBtn").click(); } return; }
  if(vis("help")){ if(k==="Escape"||k==="Enter"){ e.preventDefault(); $("helpBack").click(); } return; }
  if(vis("menu")){
-  if(d>=1&&d<=3){ sel.grade=d; sel.unit=-1; buildMenu(); }
-  else if(k==="ArrowRight"||k==="ArrowLeft"){ e.preventDefault(); const n=QDATA[sel.grade].short.length; sel.unit=((sel.unit+1+(k==="ArrowRight"?1:-1))%(n+1)+n+1)%(n+1)-1; buildMenu(); }
+  if(d>=1&&d<=3){ sel.grade=d; sel.units=allUnits(d); buildMenu(); }
+  else if(k==="ArrowRight"||k==="ArrowLeft"){ e.preventDefault(); const n=QDATA[sel.grade].short.length; const cur=sel.units.size===1?[...sel.units][0]:-1; const nx=((cur+1+(k==="ArrowRight"?1:-1))%(n+1)+n+1)%(n+1)-1; sel.units= nx<0? allUnits(sel.grade) : new Set([nx]); buildMenu(); }
   else if(k==="Enter"){ e.preventDefault(); $("startBtn").click(); }
   else if(k==="Escape"){ $("setupBack").click(); }
   return; }
@@ -1253,7 +1262,7 @@ addEventListener("keydown",e=>{
 });
 showTitle();
 buildMenu();
-$("startBtn").onclick=()=>{ au(); newGame(); };
+$("startBtn").onclick=()=>{ if(!QDATA[sel.grade].q.some(q=>sel.units.has(q[0]))) return; au(); newGame(); };
 $("againBtn").onclick=()=>{ showTitle(); };
 $("muteBtn").onclick=()=>{ au(); toggleMusic(); }; $("muteBtn").textContent=MUS.on?"🔊":"🔇";
 window.__CAN={get G(){return G}, draw, setBg:t=>{BG_THEME=t;BGC=null;}, RUN, fireSpecial, newGame, update, startRound, wrongHeal, rightHit, keys, setFire:()=>{}, MUS};
