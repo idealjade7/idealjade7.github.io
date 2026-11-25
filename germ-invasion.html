@@ -1413,6 +1413,7 @@ function spawnEnemy(){
  G.enemies.push({x,y,type,seed:Math.random()*3,r:base.r,hp:base.hp*grow*st.hp*HP_TUNE,maxhp:base.hp*grow*st.hp*HP_TUNE,spd:base.spd*st.spd*(1+Math.min(.35,t/1200)),dmg:base.dmg*(1+t/500),xp:(base.xp+(t>420&&type!=="amoeba"&&Math.random()<.25?4:0))*st.xp,hitT:0,slow:0,kb:{x:0,y:0}, st:rnd(1.5,3)});
 }
 function spawnBoss(k){
+ emote("boss",1.8);
  const p=G.p, a=Math.random()*Math.PI*2;
  let x=p.x+Math.cos(a)*(VW/2), y=p.y+Math.sin(a)*(VH/2);
  if(G.stage.corridor){ x=p.x+(Math.random()<.5?-1:1)*(VW/2); y=0; }
@@ -1581,6 +1582,7 @@ function finishAnswer(i){
  if(counted) G.quizTotal++;
  choiceBtns().forEach((b,j)=>{ b.disabled=true; if(j===curQ.ans) b.classList.add("right"); if(j===i&&!ok) b.classList.add("wrong"); });
  const q=curQ.q;
+ emote(ok?"ok":"bad");
  if(ok){ if(counted) G.quizRight++; SFX.ok(); }
  else { SFX.bad(); G.wrongs.push({q:q[2],ans:q[3][q[4]],mine:q[3][curQ.order[i]],exp:q[5],unit:q[0]});
   if(!curQ.review && G.review && !G.review.includes(q)) G.review.push(q); }   // 처음 틀린 문제만 복습 대기열에
@@ -1737,12 +1739,13 @@ function showCards(n, allowEvo, title, done, lucky){
 function cardKey(e){ const i=+e.key-1; if(i>=0&&i<curCards.length) pickCard(i); }
 function pickCard(i){
  const c=curCards[i]; if(!c) return;
+ if(c.type!=="evo") emote("love");
  const up = c.double?2:1;
  if(c.type==="wnew"){ addWeapon(c.k); if(c.double) G.weapons[c.k].lv=2; }
  else if(c.type==="wup") G.weapons[c.k].lv=Math.min(5,G.weapons[c.k].lv+up);
  else if(c.type==="pas"){ G.passives[c.k]=Math.min(5,(G.passives[c.k]||0)+up); recalcPassives(); }
  if(c.double) G.fx.push({kind:"ring",x:G.p.x,y:G.p.y,r:10,R:160,life:.5,T:.5,col:"#ffd84a"});
- else if(c.type==="evo"){ G.evolved[c.k]=true; G.fx.push({kind:"ring",x:G.p.x,y:G.p.y,r:10,R:220,life:.6,T:.6,col:"#ff9cf6"}); }
+ else if(c.type==="evo"){ emote("star",2); G.evolved[c.k]=true; G.fx.push({kind:"ring",x:G.p.x,y:G.p.y,r:10,R:220,life:.6,T:.6,col:"#ff9cf6"}); }
  else if(c.type==="heal") G.p.hp=Math.min(G.p.maxhp,G.p.hp+G.p.maxhp*.4);
  else if(c.type==="score") G.score+=500;
  SFX.chest();
@@ -1959,6 +1962,10 @@ function update(dt){
  if(keys.KeyW||keys.ArrowUp) my-=1; if(keys.KeyS||keys.ArrowDown) my+=1;
  if(drag.on){ const dx=drag.x-drag.sx, dy=drag.y-drag.sy, L=Math.hypot(dx,dy); if(L>6){ mx=dx/Math.max(L,40); my=dy/Math.max(L,40); } }
  const ml=Math.hypot(mx,my); p.moving=ml>0; if(ml>0){ p.mvx=mx/ml; p.mvy=my/ml; }
+ if(G.emo) G.emo.t-=dt;
+ p.still = p.moving ? 0 : (p.still||0)+dt;
+ if(p.still>5 && (!G.emo||G.emo.t<=0)) emote("zzz",2.2);
+ if(p.hp<p.maxhp*.3 && (!G.emo||G.emo.t<=0) && Math.random()<dt*.5) emote("sweat",1.2);
  const bsp=p.spd*(G.buffs.spd>0?1.45:1);
  if(ml>0){ if(ml>1){mx/=ml;my/=ml;} p.x+=mx*bsp*dt; p.y+=my*bsp*dt; const fl=Math.hypot(mx,my); p.face={x:mx/fl,y:my/fl}; if(mx) p.flip=mx<0; p.walk+=dt*10; }
  if(G.bounds){ p.y=clamp(p.y,G.bounds.y1+p.r,G.bounds.y2-p.r); }
@@ -2043,7 +2050,7 @@ function update(dt){
  for(const g of G.gems){
   const d=Math.sqrt(dist2(g,p));
   if(d<G.magnet || g.pull){ g.pull=true; const a=Math.atan2(p.y-g.y,p.x-g.x), sp=Math.max(260,520-d); g.x+=Math.cos(a)*sp*dt; g.y+=Math.sin(a)*sp*dt; }
-  if(d<p.r+8){ g.dead=true; if(g.heal){ p.hp=Math.min(p.maxhp,p.hp+30); G.texts.push({x:p.x,y:p.y-20,txt:"+30",life:.8,col:"#7ff59a"}); } else { const xv=g.v*(G.buffs.coin2>0?2:1); gainXp(xv); if(g.v>=20){ /* 큰 금화를 연달아 먹으면 숫자 하나에 합쳐서 보여 줘요 */ const xt=G.texts.find(t=>t.xpSum && t.life>.3); if(xt){ xt.xpSum+=xv; xt.txt="+"+xt.xpSum+" XP"; xt.life=xt.T=.8; xt.x=p.x; xt.y=p.y-30; } else { SFX.bigCoin(); G.fx.push({kind:"ring",x:p.x,y:p.y,r:8,R:70,life:.35,T:.35,col:"#ffd84a"}); for(let i=0;i<10;i++) G.fx.push({kind:"spark",x:p.x,y:p.y,vx:rnd(-160,160),vy:rnd(-160,160),life:.4,T:.4,col:i%2?"#ffd84a":"#fff3a0"}); G.texts.push({x:p.x,y:p.y-30,txt:"+"+xv+" XP",life:.8,T:.8,col:"#ffd84a",xpSum:xv}); } } else SFX.gem(); } }
+  if(d<p.r+8){ g.dead=true; if(g.heal){ emote("yum"); p.hp=Math.min(p.maxhp,p.hp+30); G.texts.push({x:p.x,y:p.y-20,txt:"+30",life:.8,col:"#7ff59a"}); } else { const xv=g.v*(G.buffs.coin2>0?2:1); gainXp(xv); if(g.v>=20){ /* 큰 금화를 연달아 먹으면 숫자 하나에 합쳐서 보여 줘요 */ const xt=G.texts.find(t=>t.xpSum && t.life>.3); if(xt){ xt.xpSum+=xv; xt.txt="+"+xt.xpSum+" XP"; xt.life=xt.T=.8; xt.x=p.x; xt.y=p.y-30; } else { SFX.bigCoin(); G.fx.push({kind:"ring",x:p.x,y:p.y,r:8,R:70,life:.35,T:.35,col:"#ffd84a"}); for(let i=0;i<10;i++) G.fx.push({kind:"spark",x:p.x,y:p.y,vx:rnd(-160,160),vy:rnd(-160,160),life:.4,T:.4,col:i%2?"#ffd84a":"#fff3a0"}); G.texts.push({x:p.x,y:p.y-30,txt:"+"+xv+" XP",life:.8,T:.8,col:"#ffd84a",xpSum:xv}); } } else SFX.gem(); } }
  }
  G.gems=G.gems.filter(g=>!g.dead);
  if(G.gems.length>320){ // 너무 많으면 합치기
@@ -2530,6 +2537,32 @@ function draw(){
  if(drag.on){ ctx.globalAlpha=.35; ctx.strokeStyle="#fff"; ctx.lineWidth=3*DPR; ctx.beginPath(); ctx.arc(drag.sx*DPR,drag.sy*DPR,44*DPR,0,7); ctx.stroke(); const dx=drag.x-drag.sx, dy=drag.y-drag.sy, L=Math.min(44,Math.hypot(dx,dy)), a=Math.atan2(dy,dx); ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc((drag.sx+Math.cos(a)*L)*DPR,(drag.sy+Math.sin(a)*L)*DPR,18*DPR,0,7); ctx.fill(); ctx.globalAlpha=1; }
  drawHUD();
 }
+// ---------- 감정 표현: 머리 옆에 작은 도트 말풍선 아이콘 ----------
+// k: ok(정답 반짝) · bad(오답 땀방울) · love(레벨업 하트) · star(진화 별) · boss(깜짝 !) · sweat(체력 낮음) · zzz(가만히 있을 때) · yum(회복)
+function emote(k, dur){ if(!G||!G.p) return; const pr={sweat:1,zzz:0}; if(G.emo && G.emo.t>0 && (pr[k]??2)<(pr[G.emo.k]??2)) return; G.emo={k,t:dur||1.6,T:dur||1.6}; }
+const EMO_PIX={
+ ok:   {c:{y:"#ffd84a",w:"#fff6c8"}, p:["..y......y..","..y..y...y..",".....y......","yy..yyy..yy.",".....y......","..y..y...y..","..y......y.."]},
+ bad:  {c:{b:"#5fb8ff",w:"#e6f6ff",d:"#2a6fb8"}, p:["...b...","..bbb..",".bbwbb.",".bwbbb.","bbbbbbd",".bbbbd.","..ddd.."]},
+ love: {c:{p:"#ff6f9c",w:"#ffd0de",d:"#c23a66"}, p:[".pp.pp.","pwppppp","pwppppp","ppppppd",".pppdd.","..pdd..","...d..."]},
+ star: {c:{y:"#ffe14a",w:"#fffbe0",o:"#e0a21a"}, p:["....y....","....y....","...yyy...","yyyywyyyy",".yyyyyyo.","..yyyyo..","..yy.yo..",".yo...yo."]},
+ boss: {c:{r:"#ff4f5e",w:"#ffe0e3"}, p:["rr.rr","rr.rr","rr.rr","rr.rr",".....","rr.rr","rr.rr"]},
+ sweat:{c:{b:"#7fd0ff",w:"#ffffff"}, p:[".b..",".bb.","bwbb","bbbb",".bb."]},
+ zzz:  {c:{z:"#a9bcff"}, p:["zzzz.....","...z.....","..z......",".z.......","zzzz.zzz.",".......z.","......z..",".....zzz."]},
+ yum:  {c:{g:"#7ff59a",w:"#e8ffe8",d:"#2fa84f"}, p:["..gg..","..gg..","gggggg","gwgggd","..gg..","..dd.."]},
+};
+function drawEmote(){
+ const p=G.p, e=G.emo; if(!e || e.t<=0) return;
+ const s=EMO_PIX[e.k]; if(!s) return;
+ const age=e.T-e.t, pop=age<.15? .4+age/.15*.8 : age<.25? 1.2-(age-.15)/.1*.2 : 1;
+ const a=e.t<.3? e.t/.3 : 1, sc=3*pop, w=s.p[0].length*sc, h=s.p.length*sc;
+ const bob=Math.sin(G.t*6)*1.5, x=Math.round(p.x+20), y=Math.round(p.y-58+bob-(e.k==="zzz"?age*6:0));
+ ctx.save(); ctx.globalAlpha=a; ctx.translate(x,y);
+ // 배경 없이 아이콘만: 어두운 테두리를 한 겹 둘러 밝은 바닥에서도 보이게
+ const px=(fill)=>s.p.forEach((row,j)=>{ for(let i=0;i<row.length;i++){ const ch=row[i]; if(ch==="."||!s.c[ch]) continue; ctx.fillStyle=fill||s.c[ch]; ctx.fillRect(Math.round(-w/2+i*sc),Math.round(-h/2+j*sc),Math.ceil(sc),Math.ceil(sc)); } });
+ for(const [ox,oy] of [[-2,0],[2,0],[0,-2],[0,2]]){ ctx.save(); ctx.translate(ox,oy); px("#120c1d"); ctx.restore(); }
+ px();
+ ctx.restore();
+}
 function drawHero(){
  const p=G.p, H=heroSet(sel.hero);
  if(p.moving){
@@ -2560,6 +2593,7 @@ function drawHero(){
  const img = hurt ? (H.red.get(fr)||fr) : fr;
  ctx.drawImage(img, -24 + (hurt?(Math.random()<.5?-1:1):0), -32);
  ctx.globalAlpha=1; ctx.restore();
+ drawEmote();
  // 머리 위 체력바
  const W=34, hpR=Math.max(0,Math.min(1,p.hp/p.maxhp)), bx=Math.round(p.x-W/2), by=Math.round(p.y-40);
  ctx.fillStyle="rgba(10,6,18,.85)"; ctx.fillRect(bx-1,by-1,W+2,6);
