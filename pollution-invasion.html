@@ -125,6 +125,15 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 .vol input{width:180px;accent-color:var(--gold)}
 .vol .pct{font-family:'DotGothic16';color:var(--gold);min-width:42px;text-align:right}
 /* rank */
+.rsbadge{display:inline-block;margin-left:5px;padding:1px 6px;border-radius:8px;background:#3a5a7a;color:#dff0ff;font-size:11px;font-weight:700;vertical-align:1px}
+#resumeBox{margin:4px auto 10px;max-width:520px}
+.rsCard{display:flex;align-items:center;gap:12px;padding:10px 14px;border:3px solid #7dd3ff;background:linear-gradient(#1d3550,#16263a);box-shadow:0 0 18px rgba(125,211,255,.35)}
+.rsCard canvas{width:40px;height:52px;image-rendering:pixelated;flex:0 0 40px}
+.rsCard .inf{flex:1;text-align:left;line-height:1.4}
+.rsCard .inf b{font-family:'Do Hyeon';font-size:19px;color:#bfe8ff;font-weight:400}
+.rsCard .inf div{font-size:13px;color:#d8e8f5}
+.rsCard button{font-family:'Do Hyeon';font-size:17px;padding:7px 12px;border:2px solid #7dd3ff;background:#2b6a96;color:#fff;cursor:pointer}
+.rsCard button.no{background:transparent;color:#bcd;border-color:#5a7890;font-size:14px}
 .rankform{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0}
 .rankform input{font-family:'Gowun Dodum';font-weight:700;font-size:17px;padding:8px 10px;background:#140f20;color:var(--text);border:2px solid var(--line);width:260px;outline:none}
 .rankform input:focus{border-color:var(--gold)}
@@ -189,6 +198,12 @@ h1.logo{font-family:'Do Hyeon',sans-serif;color:var(--gold);font-size:54px;lette
 #menu .warn{color:#e0445a}
 #menu h1.logo{white-space:nowrap}
 @media(max-width:420px){#menu h1.logo{font-size:32px;letter-spacing:2px}}
+#menu .rsCard{border-color:#f39a86;background:linear-gradient(#fff4ec,#ffe6dc);box-shadow:0 0 0 3px #fff,0 6px 18px rgba(230,120,100,.25);border-radius:12px}
+#menu .rsCard .inf b{color:#e0603e}
+#menu .rsCard .inf div{color:#6a4a40}
+#menu .rsCard button{background:#ff8f7a;border-color:#e46d5a;border-radius:9px}
+#menu .rsCard button.no{background:#fff;color:#a07c72;border-color:#f3b9a4}
+#menu .rsbadge{background:#ffd2c4;color:#8a3f2c}
 body:has(#menu:not(.hidden)) .credit{color:rgba(150,95,90,.6)}
 </style>
 </head>
@@ -207,6 +222,7 @@ body:has(#menu:not(.hidden)) .credit{color:rgba(150,95,90,.6)}
  <div class="panel">
   <div class="logo-row"><canvas id="logoSprite" width="48" height="62"></canvas><h1 class="logo">오염 대침공</h1><canvas id="logoVirus" width="56" height="56"></canvas></div>
   <div class="sub" id="menuSub">조리실을 지켜라! — 기술·가정 개념 서바이벌</div>
+  <div id="resumeBox"></div>
   <div class="sec">학년</div>
   <div class="row" id="gradeRow"></div>
   <div class="sec">단원 (여러 개 선택 가능)</div>
@@ -1293,6 +1309,7 @@ function buildMonsterSprites(){
 // ================= 시작 화면 =================
 function chip(text, on, onclick, cls="chip"){ const b=document.createElement("button"); b.className=cls+(on?" on":""); b.innerHTML=text; b.onclick=()=>{audioInit(); onclick(b)}; return b; }
 function buildMenu(){
+ renderResume();
  const gr = document.getElementById("gradeRow"); gr.innerHTML="";
  [1,2,3].forEach(g=> gr.appendChild(chip(`${g}학년`, sel.grade===g, ()=>{ if(sel.grade===g) return; setGrade(g); try{ localStorage.setItem("germ-grade-tech",g); }catch(e){} buildMenu(); }, "chip grade")));
  const ur = document.getElementById("unitRow"); ur.innerHTML="";
@@ -1330,7 +1347,7 @@ const keys = {};
 addEventListener("keydown", e=>{
  if(e.target && e.target.tagName==="INPUT" && e.target.type!=="range") return;
  if(e.code) keys[e.code] = true;   // 한/영 상태와 관계없이 같은 자판 위치로 인식
- if(!document.getElementById("menu").classList.contains("hidden") && document.getElementById("rankOv").classList.contains("hidden") && document.getElementById("guideOv").classList.contains("hidden") && e.key==="Enter"){ startGame(); e.preventDefault(); return; }
+ if(!document.getElementById("menu").classList.contains("hidden") && document.getElementById("rankOv").classList.contains("hidden") && document.getElementById("guideOv").classList.contains("hidden") && e.key==="Enter"){ menuStart(); e.preventDefault(); return; }
  if(G && G.mode==="quiz") quizKey(e);
  else if(G && G.mode==="cards") cardKey(e);
  else if(G && G.mode==="slot"){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); closeSlot(); } }
@@ -1355,8 +1372,94 @@ function fmt(t){ t=Math.max(0,Math.floor(t)); return `${Math.floor(t/60)}:${Stri
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 // ================= 게임 시작 =================
-function startGame(){
+// ================= 이어하기 (중간 저장) =================
+// 같은 기기·같은 브라우저에서 오늘 안에 다시 들어오면 이어서 할 수 있어요.
+const SAVE_KEY="germ-save-tech";
+const SAVE_SKIP=new Set(["enemies","shots","pools","gems","chests","fx","texts","bolts","ebullets","hazards","drops","mobShots","emo","revFx","amb","_chs","__stuck","shake","stage","mode"]);
+function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+function qIdx(q){ return QDATA[G.grade].q.indexOf(q); }
+function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+function loadSave(){ try{ const S=JSON.parse(localStorage.getItem(SAVE_KEY)||"null"); if(!S||!S.g) return null; if(S.day!==todayStr()){ clearSave(); return null; } return S; }catch(e){ return null; } }
+function saveRun(){
+ if(!G||G.over||G.cleared||G.mode==="end") return;
+ try{
+  const g={};
+  for(const [k,v] of Object.entries(G)){ if(SAVE_SKIP.has(k)) continue;
+   if(k==="qpool"||k==="review") g[k]=v.map(qIdx);
+   else if(k==="qused") g[k]=[...v].map(qIdx);
+   else if(k==="uSeen") g[k]=[...v];
+   else if(k==="weapons"){ g[k]={}; for(const [wk,w] of Object.entries(v)) g[k][wk]={lv:w.lv,cd:w.cd||0,ang:w.ang||0}; }
+   else if(k==="p"){ const p={}; for(const [pk,pv] of Object.entries(v)) if(typeof pv!=="object"||pk==="face") p[pk]=pv; g.p=p; }
+   else g[k]=v;
+  }
+  let pend=null;
+  if(G.mode==="quiz" && curQ && curQ.q){
+   if(qAnswered) pend={t:"reward", item:curQ.item, ok:curQ.ok};
+   else { const bs=choiceBtns(); pend={t:"quiz", item:curQ.item, qi:qIdx(curQ.q), order:curQ.order, review:curQ.review, el:Math.min(90,(performance.now()-curQ.t0)/1000),
+    halfUsed:!!curQ.halfUsed, usedAnswer:!!curQ.usedAnswer, retried:!!curQ.retried, asking:!!curQ.asking, pw:curQ.pendingWrong,
+    gone:bs.map((b,j)=>b.classList.contains("gone")?j:-1).filter(j=>j>=0), wrong:bs.map((b,j)=>b.classList.contains("wrong")&&!(curQ.asking&&j===curQ.pendingWrong)?j:-1).filter(j=>j>=0)}; }
+  } else if(G.mode==="cards" && curCards.length) pend={t:"cards", cards:curCards, title:document.getElementById("cTitle").textContent, fin:!!cardDone};
+  else if(G.mode==="slot" && slot) pend={t:"slot", ok:slot.ok, pick:slot.pick};
+  const bosses=G.enemies.filter(e=>e.type==="boss"&&!e.dead&&e.hp>0).map(e=>({k:e.k,hp:e.hp}));
+  const S={v:1, day:todayStr(), at:Date.now(), sel:{grade:sel.grade, units:[...sel.units], levels:[...sel.levels], stage:sel.stage, weapon:sel.weapon, hero:sel.hero}, g, pend, bosses, queue:quizQueue.slice()};
+  localStorage.setItem(SAVE_KEY, JSON.stringify(S));
+ }catch(e){}
+}
+setInterval(()=>{ if(G && (G.mode==="play"||G.mode==="pause")) saveRun(); }, 3000);
+addEventListener("pagehide", ()=>saveRun());
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden) saveRun(); });
+function resumeRun(){
+ const S=loadSave(); if(!S){ buildMenu(); return; }
+ const s0=S.sel; sel.grade=s0.grade; sel.units=new Set(s0.units); sel.levels=new Set(s0.levels); sel.stage=s0.stage; sel.weapon=s0.weapon; if(HEROES.some(h=>h.id===s0.hero)) sel.hero=s0.hero;
+ startGame(true); if(!G) return;
+ const g=S.g, Q=QDATA[g.grade].q, toQ=a=>(a||[]).map(i=>Q[i]).filter(Boolean);
+ for(const [k,v] of Object.entries(g)){
+  if(k==="qpool"||k==="review") G[k]=toQ(v);
+  else if(k==="qused") G[k]=new Set(toQ(v));
+  else if(k==="uSeen") G[k]=new Set(v);
+  else if(k==="weapons"){ G.weapons={}; for(const [wk,w] of Object.entries(v)) G.weapons[wk]={lv:w.lv,cd:w.cd,ang:w.ang,hits:new Map()}; }
+  else if(k==="p") Object.assign(G.p, v);
+  else G[k]=v;
+ }
+ if(!G.qpool.length) G.qpool=shuffle(pool());
+ G.stage=STAGES[G.stageIdx]; G.bounds = G.stage.corridor ? {y1:-290, y2:290} : undefined;
+ G.resumes=(g.resumes||0)+1;
+ G.p.inv=3; G.p.hp=Math.max(1,G.p.hp);
+ for(const b of S.bosses||[]){ const fa=G.finalAt; spawnBoss(b.k); G.finalAt=fa; const e=G.enemies[G.enemies.length-1]; e.hp=Math.min(e.maxhp,b.hp); }
+ quizQueue=S.queue||[];
+ G.mode="play"; last=performance.now();
+ G.texts.push({x:G.p.x,y:G.p.y-40,txt:`이어하기! (${G.resumes}회째) 3초 무적`,life:2.4,col:"#7dd3ff"});
+ const P=S.pend;
+ if(P && P.t==="quiz" && Q[P.qi]){
+  openQuiz(P.item,{q:Q[P.qi],order:P.order,review:P.review,el:P.el});
+  curQ.halfUsed=P.halfUsed; curQ.usedAnswer=P.usedAnswer; curQ.retried=P.retried;
+  const bs=choiceBtns(); P.gone.forEach(j=>{ bs[j].disabled=true; bs[j].classList.add("gone"); }); P.wrong.forEach(j=>{ bs[j].disabled=true; bs[j].classList.add("wrong"); });
+  if(P.usedAnswer){ bs[curQ.ans].classList.add("hint"); }
+  renderQItems();
+  if(P.asking && P.pw!=null) answer(P.pw);
+ } else if(P && P.t==="reward"){ curQ={q:null,item:P.item,ok:P.ok}; qAnswered=true; giveReward(); }
+ else if(P && P.t==="cards"){ G.mode="cards"; drag.on=false; curCards=P.cards; cardDone=P.fin?()=>{ if(G.bossKilled>=BOSS_ROUNDS) return winGame(); }:null; drawCards(P.title); document.getElementById("cardOv").classList.remove("hidden"); }
+ else if(P && P.t==="slot"){ giveBuff(P.ok, P.pick); nextModal(); }
+ else nextModal();
+ saveRun();
+}
+function renderResume(){
+ const box=document.getElementById("resumeBox"); if(!box) return; box.innerHTML="";
+ const S=loadSave(); if(!S) return;
+ const g=S.g, H=HEROES.find(h=>h.id===S.sel.hero)||HEROES[0], st=STAGES[S.sel.stage]||STAGES[0];
+ const acc=g.quizTotal?Math.round(g.quizRight/g.quizTotal*100)+"%":"-";
+ const tm=new Date(S.at), hm=String(tm.getHours()).padStart(2,"0")+":"+String(tm.getMinutes()).padStart(2,"0");
+ box.innerHTML=`<div class="rsCard"><canvas width="48" height="62"></canvas><div class="inf"><b>💾 이어하기</b>${g.contest?' <span class="cbadge">대회</span>':""}${g.resumes?` <span class="rsbadge">이어하기 ${g.resumes}회</span>`:""}
+  <div>${H.name} · Lv.${g.lvl} · ROUND ${Math.min(BOSS_ROUNDS,(g.bossKilled||0)+1)} · ${fmt(g.t)} · 정답률 ${acc}</div><div style="opacity:.7">${S.sel.grade}학년 · ${st.name} · ${hm} 저장 · 오늘까지 유효</div></div>
+  <div style="display:flex;flex-direction:column;gap:5px"><button id="rsGo">이어하기</button><button class="no" id="rsNo">지우기</button></div></div>`;
+ const cx=box.querySelector("canvas").getContext("2d"); cx.imageSmoothingEnabled=false; cx.drawImage(heroSet(H.id).down.idle[0],0,0);
+ document.getElementById("rsGo").onclick=resumeRun;
+ document.getElementById("rsNo").onclick=()=>{ if(confirmClear()){ clearSave(); renderResume(); } };
+}
+function confirmClear(){ const b=document.getElementById("rsNo"); if(b.dataset.sure){ return true; } b.dataset.sure=1; b.textContent="한 번 더 누르면 삭제"; return false; }
+function startGame(resuming){
  audioInit();
+ if(!resuming) clearSave();
  const p = pool();
  if(!p.length){ buildMenu(); return; }
  const st = STAGES[sel.stage];
@@ -1626,12 +1729,12 @@ function pickQuestion(kind){
  G.qused.add(q); G.uSeen.add(q[0]); G.uLast=q[0]; return q;
 }
 let curQ=null, qAnswered=false;
-function openQuiz(item){ clearKeys();
+function openQuiz(item, fixed){ clearKeys();
  G.mode="quiz"; drag.on=false;
- const q=pickQuestion(item.kind), isReview=!!q.__review; delete q.__review;
- // 보기 순서를 매번 섞는다
- const order=shuffle([0,1,2,3]);
- curQ={q,item,order,ans:order.indexOf(q[4]),t0:performance.now(),review:isReview};
+ const q=fixed?fixed.q:pickQuestion(item.kind), isReview=fixed?!!fixed.review:!!q.__review; delete q.__review;
+ // 보기 순서를 매번 섞는다 (이어하기면 저장된 순서 그대로)
+ const order=fixed?fixed.order.slice():shuffle([0,1,2,3]);
+ curQ={q,item,order,ans:order.indexOf(q[4]),t0:performance.now()-(fixed&&fixed.el||0)*1000,review:isReview};
  qAnswered=false;
  document.getElementById("qTitle").textContent = item.kind==="boss" ? `ROUND ${item.k} 보스 격파! 퀴즈` : item.kind==="level" ? `레벨 업! Lv.${item.k} 퀴즈` : "보급 상자 퀴즈";
  document.getElementById("qUnit").textContent = shortOf(G.grade, q[0]);
@@ -1644,6 +1747,7 @@ function openQuiz(item){ clearKeys();
  document.getElementById("qNext").classList.add("hidden");
  renderQItems();
  document.getElementById("quizOv").classList.remove("hidden");
+ if(!fixed) saveRun();
 }
 function renderQItems(){
  const box=document.getElementById("qItems"); box.innerHTML="";
@@ -1693,6 +1797,7 @@ function finishAnswer(i){
  renderQItems();
  document.getElementById("qFeed").innerHTML = `<div class="feedback ${ok?"":"bad"}"><b>${ok?win:lose}</b><br>${esc(q[5])}<br><span style="color:var(--dim);font-size:13px">현재 정답률 ${G.quizTotal?Math.round(accNow()*100)+"%":"-"}${note}</span></div>`;
  const nb=document.getElementById("qNext"); nb.classList.remove("hidden"); nb.focus();
+ saveRun();
 }
 function quizKey(e){
  if(curQ && curQ.asking){ if(e.code==="KeyR") useRetry(); else if(e.key==="Enter"){ e.preventDefault(); finishAnswer(curQ.pendingWrong); } return; }
@@ -1727,7 +1832,7 @@ function spinSlot(ok){
  document.getElementById("slotSub").textContent = ok ? `정답! 효과 ${BUFF_TIME.ok}초` : `오답… 효과 ${BUFF_TIME.no}초`;
  document.getElementById("slotRes").innerHTML=""; document.getElementById("slotBtn").innerHTML='건너뛰기 <small>(Enter)</small>';
  document.getElementById("slotOv").classList.remove("hidden");
- slot={ok,pick,endY,dur,t0,done:false,lastIdx:-1};
+ slot={ok,pick,endY,dur,t0,done:false,lastIdx:-1}; saveRun();
  const ease=t=>1-Math.pow(1-t,3.2);
  const step=now=>{ if(!slot||slot.done) return; const t=Math.min(1,(now-slot.t0)/slot.dur), y=slot.endY*ease(t);
   reel.style.transform=`translateY(${y}px)`; const idx=Math.floor(-y/H+.5); if(idx!==slot.lastIdx){ slot.lastIdx=idx; beep(520+(idx%3)*90,.03,"square",.025); }
@@ -1746,7 +1851,7 @@ function closeSlot(){
  if(!slot) return; if(!slot.done){ landSlot(); return; }
  clearTimeout(slot.closeT); const s=slot; slot=null;
  document.getElementById("slotOv").classList.add("hidden");
- G.mode="play"; giveBuff(s.ok, s.pick); last=performance.now(); nextModal();
+ G.mode="play"; giveBuff(s.ok, s.pick); last=performance.now(); nextModal(); saveRun();
 }
 document.getElementById("slotBtn").onclick=()=>closeSlot();
 function screenClear(){
@@ -1768,6 +1873,9 @@ function giveBuff(ok, forced){
 function afterQuiz(){
  if(!qAnswered || document.getElementById("quizOv").classList.contains("hidden")) return;
  document.getElementById("quizOv").classList.add("hidden");
+ giveReward();
+}
+function giveReward(){
  const kind=curQ.item.kind, isBoss = kind==="boss", k = curQ.item.k;
  if(kind==="chest"){ spinSlot(curQ.ok); return; }
  const n = curQ.ok?3:(kind==="level"?1:2);
@@ -1775,6 +1883,7 @@ function afterQuiz(){
  showCards(n, true, isBoss?`ROUND ${k} 보상`:kind==="level"?`레벨 업! Lv.${k}`:"보급 상자 보상", ()=>{
   if(isBoss && G.bossKilled>=BOSS_ROUNDS) return winGame();
  }, lucky);
+ saveRun();
 }
 
 // ================= 카드 =================
@@ -1829,6 +1938,9 @@ function showCards(n, allowEvo, title, done, lucky){
    c.double=true; c.cls="double"; c.lv = cur===0 ? "NEW → Lv.2" : `Lv.${cur} → ${Math.min(5,cur+2)}`;
    c.ds = `<b style="color:#ffd84a">한 번에 2단계 강화!</b><br>`+c.ds; SFX.lucky(); }
  }
+ drawCards(title);
+}
+function drawCards(title){
  document.getElementById("cTitle").textContent=title;
  document.getElementById("cSub").textContent= curCards.length===1 ? "오답 패널티: 이 카드 1장만 받을 수 있어요 (1)" : `카드를 하나 고르세요 (1~${curCards.length})`;
  const box=document.getElementById("cards"); box.innerHTML="";
@@ -1854,6 +1966,7 @@ function pickCard(i){
  if(done){ const r=done(); if(r===false) return; }
  if(G.over||G.cleared) return;
  nextModal();
+ saveRun();
 }
 function nextModal(){
  if(G.mode!=="play") return;
@@ -1890,7 +2003,7 @@ document.getElementById("homeBtn").onclick=toMenu;
 document.getElementById("retryBtn").onclick=()=>{ quizQueue=[]; startGame(); };
 
 function winGame(){
- G.cleared=true; G.mode="end"; musicVictory();   // 축하곡 팡파르가 승리 효과음을 대신해요
+ G.cleared=true; G.mode="end"; clearSave(); musicVictory();   // 축하곡 팡파르가 승리 효과음을 대신해요
  const f=document.getElementById("flash"), s=document.getElementById("successSign");
  f.classList.remove("go"); s.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); s.classList.add("go");
  setTimeout(()=>showResult(true), 2600);
@@ -1911,7 +2024,7 @@ function tryRevive(){
  const rf=document.getElementById("reviveFx"); rf.querySelector("small").textContent=`정답률 ${Math.round(acc*100)}% · 체력 ${Math.round(r.hp*100)}%로 부활`; rf.classList.remove("go"); void rf.offsetWidth; rf.classList.add("go");
  SFX.revive(); return true;
 }
-function loseGame(){ G.over=true; G.mode="end"; musicStop(1.2); SFX.bad(); setTimeout(()=>showResult(false), 900); }
+function loseGame(){ G.over=true; G.mode="end"; clearSave(); musicStop(1.2); SFX.bad(); setTimeout(()=>showResult(false), 900); }
 function showResult(win){
  document.getElementById("topbtns").classList.add("hidden");
  document.getElementById("rTitle").textContent = win ? "클리어! 조리실을 지켜냈어요" : "게임 오버";
@@ -1950,7 +2063,8 @@ const RANK = {
  async add(rec){
   if(this.online()){
    try{ await this.post(rec); return {where:"online"}; }
-   catch(e){ this.saveLocal(rec); if(!/HTTP 4/.test(e.message)){ const a=this.pending(); a.push(rec); this.setPending(a); } return {where:"local", err:true}; }
+   catch(e){ if(rec.resumes && /HTTP 4/.test(e.message)){ try{ const r2=Object.assign({},rec); delete r2.resumes; await this.post(r2); this.saveLocal(rec); return {where:"online"}; }catch(e2){} }
+   this.saveLocal(rec); if(!/HTTP 4/.test(e.message)){ const a=this.pending(); a.push(rec); this.setPending(a); } return {where:"local", err:true}; }
   }
   this.saveLocal(rec); return {where:"local"};
  },
@@ -1961,7 +2075,7 @@ const RANK = {
     let data;
     try{ data=await this.req(this.url('?orderBy="time"&limitToFirst=300')); }
     catch(e){ data=await this.req(this.url()); }          // 색인(.indexOn)이 없을 때
-    const rows=Object.values(data||{}).filter(r=>r&&typeof r.time==="number").map(r=>({cls:+r.cls||0,name:String(r.name||"?"),time:r.time,play:+r.play||0,qtime:+r.qtime||0,acc:+r.acc||0,stage:+r.stage||0,weapon:String(r.weapon||""),quiz:+r.quiz||0,at:String(r.at||""),grade:+r.grade||RANK_GRADE}));
+    const rows=Object.values(data||{}).filter(r=>r&&typeof r.time==="number").map(r=>({cls:+r.cls||0,name:String(r.name||"?"),time:r.time,play:+r.play||0,qtime:+r.qtime||0,acc:+r.acc||0,stage:+r.stage||0,weapon:String(r.weapon||""),quiz:+r.quiz||0,at:String(r.at||""),grade:+r.grade||RANK_GRADE,resumes:+r.resumes||0}));
     for(const r of this.pending()) if(!rows.some(x=>x.at===r.at&&x.name===r.name)) rows.push(Object.assign({grade:RANK_GRADE},r,{wait:true}));   // 아직 못 올린 내 기록
     rows.sort((a,b)=>a.time-b.time||b.acc-a.acc);
     return {rows, where:"online"};
@@ -1973,7 +2087,7 @@ const RANK = {
   if(!rows.length) return `<div class="cnt" style="margin:14px 0">아직 등록된 기록이 없어요. 첫 번째 주인공이 되어 보세요!</div>`;
   return `<table class="ranks"><tr><th>순위</th><th>반</th><th>이름</th><th>클리어 타임</th><th>문제 풀이</th><th>정답률</th><th>맵</th><th>무기</th><th>날짜</th></tr>`+
    rows.map((r,i)=>{ const d=r.at?new Date(r.at):null; const ds=d&&!isNaN(d)?`${d.getMonth()+1}/${d.getDate()}`:""; const isMe=me&&r.at===me.at&&r.name===me.name;
-    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td>${r.cls?r.cls+"반":"-"}</td><td class="nm">${esc(r.name)}${r.wait?' <small title="아직 못 올린 기록">⏳</small>':""}</td><td class="tm">${fmtT(r.time)}</td><td class="tm" style="color:var(--dim)">${r.qtime?fmtT(r.qtime):"-"}</td><td>${r.acc}%</td><td class="map">${STAGES[(r.stage||1)-1]?STAGES[(r.stage||1)-1].name.replace(/^\d+\.\s*/,""):"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
+    return `<tr class="${isMe?"me":""}"><td class="no">${i+1}</td><td>${r.cls?r.cls+"반":"-"}</td><td class="nm">${esc(r.name)}${r.resumes?`<span class="rsbadge" title="방전·종료 뒤 이어서 한 기록">이어하기 ${r.resumes}회</span>`:""}${r.wait?' <small title="아직 못 올린 기록">⏳</small>':""}</td><td class="tm">${fmtT(r.time)}</td><td class="tm" style="color:var(--dim)">${r.qtime?fmtT(r.qtime):"-"}</td><td>${r.acc}%</td><td class="map">${STAGES[(r.stage||1)-1]?STAGES[(r.stage||1)-1].name.replace(/^\d+\.\s*/,""):"-"}</td><td>${WEAPONS[r.weapon]?WEAPONS[r.weapon].ic:""}</td><td>${ds}</td></tr>`; }).join("")+`</table>`;
  },
  srcText(where, err){ if(where!=="online" && !/github\.io$/.test(location.hostname)) return "이 화면(미리보기)에서는 공유 순위표에 연결되지 않아요 · idealjade7.github.io 홈페이지의 게임 탭에서 하면 모든 기기에서 같은 순위표가 보여요";
   return where==="online" ? "모든 기기에서 함께 보는 온라인 순위표" : (err ? "온라인 순위표에 연결하지 못해 이 기기에 저장된 기록을 보여 줘요 · 인터넷이 되면 다음에 순위표를 열 때 자동으로 다시 올려요" : "이 기기(브라우저)에만 저장된 기록이에요 · 반 전체 순위표는 선생님이 온라인 설정을 하면 열려요"); },
@@ -1987,6 +2101,7 @@ document.getElementById("rankSave").onclick=async ()=>{
  btn.disabled=true; msg.textContent="등록하는 중…";
  try{ localStorage.setItem("germ-name",name); localStorage.setItem("germ-class",cls); }catch(e){}
  const rec={grade:G.grade, cls, name, time:Math.round(totalT()*10)/10, play:Math.round(G.t*10)/10, qtime:Math.round(G.quizTime*10)/10, acc:Math.round(accNow()*100), stage:G.stageIdx+1, weapon:sel.weapon, quiz:G.quizTotal, at:new Date().toISOString()};
+ if(G.resumes) rec.resumes=G.resumes;
  const r=await RANK.add(rec); G.saved=true;
  const L=await RANK.list(); const same=x=>x.at===rec.at&&x.name===rec.name;
  const all=L.rows.filter(x=>(x.grade||RANK_GRADE)===rec.grade&&x.stage===rec.stage), rows=all.filter(x=>x.cls===cls);
@@ -2874,7 +2989,10 @@ function watchdog(dt){
 }
 // 시작
 buildSprites(); buildMenu();
-document.getElementById("startBtn").onclick=()=>startGame();
+function menuStart(){ const b=document.getElementById("startBtn");
+ if(loadSave() && !b.dataset.sure){ b.dataset.sure=1; b.innerHTML='새로 시작할까요? <small>이어하기 저장이 지워져요 · 한 번 더 누르기</small>'; setTimeout(()=>{ b.dataset.sure=""; b.innerHTML='게임 시작 <small>(Enter)</small>'; },4000); return; }
+ b.dataset.sure=""; b.innerHTML='게임 시작 <small>(Enter)</small>'; startGame(); }
+document.getElementById("startBtn").onclick=menuStart;
 requestAnimationFrame(loop);
 // 테스트용 훅
 window.__LAB = {get G(){return G}, keys, pickQuestion, get curCards(){return curCards}, get curQ(){return curQ}, afterQuiz, sel, startGame, openQuiz, answer, pickCard, update, spawnBoss, gainXp, winGame};
