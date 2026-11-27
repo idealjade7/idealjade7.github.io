@@ -159,6 +159,7 @@ body.mppt .ctabs{display:none}
   .grid{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:no-preference){.btn,.chip{transition:background .15s,filter .15s}}
+.gtabs.g5{grid-template-columns:repeat(5,1fr)}
 </style>
 </head>
 <body>
@@ -284,10 +285,15 @@ const UNITS = [
   { id: '2022-2-all', cur: '2022', grade: 2, no: '', name: '전 단원 종합', only: 'game' },
   { id: '2015-3-all', cur: '2015', grade: 3, no: '', name: '전 단원 종합', only: 'game' },
   { id: 'tech-2015-3', cur: '2015', grade: 3, no: '', name: '기술·가정 ➋', only: 'game' },
+  // ── 과학 게임 탭 · 고등 (grade 4 = '고등' 칸, 두 교육과정 탭 어디서든 보이게 두 개로 둠)
+  { id: 'hs-2015-chem', cur: '2015', grade: 4, no: '', name: '물질과 에너지 · 화학', only: 'game' },
+  { id: 'hs-2022-chem', cur: '2022', grade: 4, no: '', name: '물질과 에너지 · 화학', only: 'game' },
 ];
 
 /* 첫 화면 위쪽 학년 칸 */
 const GRADES = [1, 2, 3];
+const GAME_GRADES = [1, 2, 3, 4];   // 과학 게임 탭에는 '고등' 칸(4)을 하나 더 둬요
+const gLabel=g=>g===4?'고등':g+'학년';
 
 /* ============================================================
    여기만 고치면 돼요 ④ 콘텐츠 목록 (단원 안에서 이 순서로 보여요)
@@ -386,6 +392,15 @@ const APPS = [
     desc: '조리실로 몰려오는 먼지·기름때·곰팡이·초파리를 물리치며 레벨업·보급 상자·보스마다 기술·가정 ➋ 개념 퀴즈를 풀어요. 가족·안전·생애 설계·수송·정보 통신·생명 기술 단원과 수준을 골라 485문제가 랜덤으로 나오고, 오답 노트와 클리어 순위표를 볼 수 있어요.',
     tags: ['기술·가정', '개념 복습 게임', '4지선다 퀴즈', '오답 노트'],
     thumb: 'thumbs/pollution-invasion.jpg'
+  },
+  {
+    file: 'germ-invasion-hs.html',
+    unit: ['hs-2015-chem', 'hs-2022-chem'],
+    kind: 'game',
+    title: '세균 대침공 (고등 화학 개념 서바이벌 게임)',
+    desc: '몰려오는 세균·바이러스를 물리치며 레벨업·보급 상자·보스마다 고등 화학 개념 퀴즈를 풀어요. 「물질과 에너지」와 「화학」 중 과목을 고르고 단원·수준을 골라 380문제가 랜덤으로 나오며, 오답 노트와 과목별 클리어 순위표를 볼 수 있어요.',
+    tags: ['물질과 에너지', '화학', '고등', '개념 복습 게임', '4지선다 퀴즈'],
+    thumb: 'thumbs/germ-invasion-hs.jpg'
   },
   {
     file: 'germ-invasion.html',
@@ -499,7 +514,7 @@ let ALLU=ALLU0;
 const setUnits=()=>{ALLU=ALLU0.filter(u=>!u.only||u.only===mode)};
 const appsIn=id=>SHOWN.filter(a=>unitsOfApp(a).includes(id));
 const appsWhere=f=>SHOWN.filter(a=>unitsOfApp(a).some(id=>f(unitOf(id)))).length;
-const gName=g=>g?g+'학년':'기타';
+const gName=g=>g?gLabel(g):'기타';
 const uLabel=u=>(u.no?u.no+'. ':'')+u.name;
 let cur=DEFAULT_CUR,grade=0,unit='';
 try{mode=localStorage.getItem('hub-mode');if(!MODES[mode])mode='lab';cur=localStorage.getItem('hub-cur')||cur;grade=+(localStorage.getItem('hub-grade')||0);unit=localStorage.getItem('hub-unit')||''}catch(e){}
@@ -522,20 +537,21 @@ function nav(){
     if(mode!=='lab'){cur=modeCur()}else{try{cur=localStorage.getItem('hub-cur')||DEFAULT_CUR}catch(e){cur=DEFAULT_CUR}}unit='';setUnits();if(grade&&!ALLU.some(u=>u.cur===cur&&u.grade===grade))grade=0;setShown();save();nav();render()}});
   $('#ctabs').innerHTML='<span class="clabel">교육과정</span>'+CURRICULA.map(c=>{const n=appsWhere(u=>u.cur===c.id);
     return '<button class="ctab" type="button" data-c="'+esc(c.id)+'" aria-pressed="'+(c.id===cur)+'">'+esc(c.name)+'<span class="n">'+n+'</span></button>'}).join('');
-  const tabs=[0,...GRADES];
+  const tabs=[0,...(mode==='game'?GAME_GRADES:GRADES)];
+  $('#gtabs').classList.toggle('g5',tabs.length===5);
   $('#gtabs').innerHTML=tabs.map(g=>{const n=appsWhere(u=>u.cur===cur&&(!g||u.grade===g));const has=ALLU.some(u=>u.cur===cur&&(!g||u.grade===g));
-    return '<button class="gtab" type="button" data-g="'+g+'" aria-pressed="'+(g===grade)+'">'+(g?g+'학년':'전체')+'<small>'+(n?n+'개':has?'준비 중':'단원 없음')+'</small></button>'}).join('');
+    return '<button class="gtab" type="button" data-g="'+g+'" aria-pressed="'+(g===grade)+'">'+(g?gLabel(g):'전체')+'<small>'+(n?n+'개':has?'준비 중':'단원 없음')+'</small></button>'}).join('');
   const us=ALLU.filter(u=>u.cur===cur&&(grade?u.grade===grade:appsIn(u.id).length));
-  $('#units').innerHTML=us.length?'<button class="uchip" type="button" data-u="" aria-pressed="'+(!unit)+'">'+(grade?grade+'학년 ':'')+'모든 단원</button>'+us.map(u=>{const n=appsIn(u.id).length;
+  $('#units').innerHTML=us.length?'<button class="uchip" type="button" data-u="" aria-pressed="'+(!unit)+'">'+(grade?gLabel(grade)+' ':'')+'모든 단원</button>'+us.map(u=>{const n=appsIn(u.id).length;
     return '<button class="uchip'+(n?'':' soon')+'" type="button" data-u="'+esc(u.id)+'" aria-pressed="'+(unit===u.id)+'">'+(u.no?'<span class="no">'+esc(u.no)+'</span>':'')+
-      (!grade&&u.grade?'<span class="no">'+u.grade+'학년</span>':'')+esc(u.name)+'<span class="n">'+(n||'준비 중')+'</span></button>'}).join(''):'';
+      (!grade&&u.grade?'<span class="no">'+gLabel(u.grade)+'</span>':'')+esc(u.name)+'<span class="n">'+(n||'준비 중')+'</span></button>'}).join(''):'';
   $('#ctabs').querySelectorAll('.ctab').forEach(b=>b.onclick=()=>{cur=b.dataset.c;unit='';if(grade&&!ALLU.some(u=>u.cur===cur&&u.grade===grade))grade=0;save();nav();render()});
   $('#gtabs').querySelectorAll('.gtab').forEach(b=>b.onclick=()=>{grade=+b.dataset.g;unit='';save();nav();render()});
   $('#units').querySelectorAll('.uchip').forEach(b=>b.onclick=()=>{unit=unit===b.dataset.u?'':b.dataset.u;save();nav();render()});
 }
 function match(a,q){if(!q)return true;return [a.title,a.desc,unitsOfApp(a).map(id=>unitOf(id).name).join(' '),(a.tags||[]).join(' ')].join(' ').toLowerCase().includes(q)}
 function card(a,u,n){
-  const code=(u.grade?'중'+u.grade+' · ':'')+(u.no?u.no+' · ':u.name+' · ')+String(n).padStart(2,'0');
+  const code=(u.grade?(u.grade===4?'고등':'중'+u.grade)+' · ':'')+(u.no?u.no+' · ':u.name+' · ')+String(n).padStart(2,'0');
   const ph='<div class="ph" aria-hidden="true">'+esc(a.title.slice(0,2))+'</div>';
   const kd=kindOf(a),ppt=kd!=='lab';
   return '<article class="card'+(ppt?' '+kd:'')+'"><a class="thumb" href="'+esc(urlOf(a))+'" target="_blank" rel="noopener" aria-label="'+esc(a.title)+' 열기">'+ph+
@@ -545,7 +561,7 @@ function card(a,u,n){
     '<div class="acts"><a class="btn primary" href="'+esc(urlOf(a))+'" target="_blank" rel="noopener">열기 ↗</a><button class="btn" type="button" data-qr="'+esc(a.file)+'">QR 띄우기</button></div></div></article>';
 }
 function unitHTML(u,list,all){
-  return '<section class="unit" aria-labelledby="u-'+esc(u.id)+'"><div class="unit-head">'+(u.grade?'<span class="grade">중'+u.grade+(u.no?' · '+esc(u.no):'')+'</span>':'')+
+  return '<section class="unit" aria-labelledby="u-'+esc(u.id)+'"><div class="unit-head">'+(u.grade?'<span class="grade">'+(u.grade===4?'고등':'중'+u.grade)+(u.no?' · '+esc(u.no):'')+'</span>':'')+
     '<h3 id="u-'+esc(u.id)+'">'+esc(u.name)+'</h3>'+(u.note?'<p>'+esc(u.note)+'</p>':'')+'</div><div class="grid">'+
     list.map(a=>card(a,u,all.indexOf(a)+1)).join('')+'</div></section>';
 }
@@ -571,11 +587,11 @@ function render(){
   });
   if(!h){
     if(q)h='<div class="empty">'+esc(curName(cur))+'에서 ‘'+esc($('#q').value)+'’에 맞는 콘텐츠가 없어요. 다른 낱말로 찾아보거나 다른 교육과정을 골라 보세요.</div>';
-    else if(grade&&!CU.some(u=>u.grade===grade))h='<div class="empty">'+esc(curName(cur))+' '+grade+'학년 단원은 아직 등록하지 않았어요.</div>';
-    else h='<div class="empty">'+esc(curName(cur))+(grade?' '+grade+'학년':'')+'에는 아직 등록한 콘텐츠가 없어요. 학년을 골라 단원 목록을 확인해 보세요.</div>';
+    else if(grade&&!CU.some(u=>u.grade===grade))h='<div class="empty">'+esc(curName(cur))+' '+gLabel(grade)+' 단원은 아직 등록하지 않았어요.</div>';
+    else h='<div class="empty">'+esc(curName(cur))+(grade?' '+gLabel(grade):'')+'에는 아직 등록한 콘텐츠가 없어요. 학년을 골라 단원 목록을 확인해 보세요.</div>';
   }
   $('#list').innerHTML=h;
-  const scope=curName(cur)+(unit?' · '+uLabel(unitOf(unit)):grade?' · '+grade+'학년':'');
+  const scope=curName(cur)+(unit?' · '+uLabel(unitOf(unit)):grade?' · '+gLabel(grade):'');
   $('#count').textContent=(MODES[mode]?MODES[mode]+' · ':'')+scope+' · '+(q?'찾은 ':'')+(mode==='ppt'?'자료 ':mode==='game'?'게임 ':'콘텐츠 ')+seen.size+'개';
   $('#list').querySelectorAll('[data-qr]').forEach(b=>b.onclick=()=>{const a=SHOWN.find(x=>x.file===b.dataset.qr);showQR(a.title,urlOf(a),b)});
 }
@@ -592,7 +608,7 @@ function closeQR(){$('#qr').hidden=true;if(lastFocus)lastFocus.focus()}
 $('#qrClose').onclick=closeQR;
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#qr').hidden)closeQR()});
 $('#hubQR').onclick=e=>showQR('SM Science Hub',base,e.currentTarget);
-$('#viewQR').onclick=e=>{const t=curName(cur)+(unit?' · '+uLabel(unitOf(unit)):grade?' · '+grade+'학년':'');showQR('SM Science Hub · '+(MODES[mode]?MODES[mode]+' · ':'')+t,base+viewHash(),e.currentTarget)};
+$('#viewQR').onclick=e=>{const t=curName(cur)+(unit?' · '+uLabel(unitOf(unit)):grade?' · '+gLabel(grade):'');showQR('SM Science Hub · '+(MODES[mode]?MODES[mode]+' · ':'')+t,base+viewHash(),e.currentTarget)};
 window.addEventListener('hashchange',()=>{fromHash();if(mode!=='lab')cur=modeCur();setShown();setUnits();nav();render()});
 $('#q').addEventListener('input',render);
 document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{
