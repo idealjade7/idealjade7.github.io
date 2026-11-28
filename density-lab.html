@@ -400,6 +400,10 @@ function onDown(e){
   if(!hits.length)return;
   let it=hits[0].object.userData.item;
   e.stopPropagation();e.preventDefault();
+  // 물체를 잡는 동안에는 화면 회전을 멈춤(터치는 OrbitControls가 touchstart로 따로 받기 때문)
+  controls.enabled=false;
+  const reEnable=()=>{removeEventListener('pointerup',reEnable);removeEventListener('pointercancel',reEnable);if(!camAnim)controls.enabled=true;};
+  addEventListener('pointerup',reEnable);addEventListener('pointercancel',reEnable);
   if(it.onClick){it.onClick(it);return;}
   if(it.spawn){it=it.spawn(it);if(!it)return;}
   if(it.rotate){drag={it,rot:true,last:screenAngle(e,it)};}
